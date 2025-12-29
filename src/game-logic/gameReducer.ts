@@ -1,4 +1,4 @@
-import { GameState, GameAction, GamePhase, Player } from '../types'
+import { GameState, GameAction, GamePhase, Player, Card } from '../types'
 import { createShuffledDeck, shuffleArray } from './cards'
 
 /**
@@ -454,8 +454,49 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
     
     case 'PLAY_ACTION_CARD': {
-      // TODO: Implement in future tasks
-      return state
+      const { playerId, cardId } = action
+      
+      // Validate player exists
+      if (playerId < 0 || playerId >= state.players.length) {
+        throw new Error(`Invalid player ID: ${playerId}`)
+      }
+      
+      // Validate that current phase is action phase
+      if (state.currentPhase !== GamePhase.ACTION_PHASE) {
+        throw new Error('Action cards can only be played during action phase')
+      }
+      
+      const player = state.players[playerId]
+      
+      // Find the action card in player's collection
+      const actionCard = player.collection.find(card => card.id === cardId && card.type === 'action')
+      if (!actionCard) {
+        throw new Error(`Action card with ID ${cardId} not found in player's collection`)
+      }
+      
+      // Create new state with the action card removed from collection and added to discard pile
+      const newState = { ...state }
+      newState.players = state.players.map((p, index) => {
+        if (index !== playerId) {
+          return p
+        }
+        
+        // Remove the action card from collection
+        const newCollection = p.collection.filter(card => card.id !== cardId)
+        
+        return {
+          ...p,
+          collection: newCollection
+        }
+      })
+      
+      // Add the played card to discard pile
+      newState.discardPile = [...state.discardPile, actionCard]
+      
+      // Execute the action card effect immediately
+      const stateAfterEffect = executeActionCardEffect(newState, actionCard, playerId)
+      
+      return stateAfterEffect
     }
     
     case 'SELECT_OFFER': {
@@ -469,6 +510,86 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
     
     default:
+      return state
+  }
+}
+
+/**
+ * Executes the immediate effect of an action card
+ */
+function executeActionCardEffect(state: GameState, actionCard: Card, playerId: number): GameState {
+  switch (actionCard.subtype) {
+    case 'flip-one': {
+      // Flip One: Allows player to flip one face-down card in any offer
+      // For now, we'll just return the state as-is since the actual flipping
+      // will be handled by subsequent FLIP_CARD actions
+      // The effect is that the player gains the ability to flip a card
+      return state
+    }
+    
+    case 'add-one': {
+      // Add One: Player draws one additional card from the draw pile
+      const newState = { ...state }
+      newState.players = [...state.players]
+      newState.drawPile = [...state.drawPile]
+      newState.discardPile = [...state.discardPile]
+      
+      // Check if we need to reshuffle (excluding the action card that was just played)
+      if (newState.drawPile.length === 0) {
+        if (newState.discardPile.length === 0) {
+          // No cards available - effect cannot be executed
+          return newState
+        }
+        
+        // Reshuffle discard pile into draw pile (excluding the action card just played)
+        const cardsToReshuffle = newState.discardPile.filter(card => card.id !== actionCard.id)
+        if (cardsToReshuffle.length === 0) {
+          // No cards available after filtering out the action card
+          return newState
+        }
+        
+        newState.drawPile = shuffleArray(cardsToReshuffle)
+        newState.discardPile = [actionCard] // Keep only the played action card in discard
+      }
+      
+      // Draw one card for the player
+      if (newState.drawPile.length > 0) {
+        const drawnCard = newState.drawPile.shift()!
+        newState.players[playerId] = {
+          ...newState.players[playerId],
+          hand: [...newState.players[playerId].hand, drawnCard]
+        }
+      }
+      
+      return newState
+    }
+    
+    case 'remove-one': {
+      // Remove One: Player discards one card from their hand
+      // For now, we'll just return the state as-is since the actual card selection
+      // will be handled by subsequent actions or UI interactions
+      // The effect is that the player must discard a card
+      return state
+    }
+    
+    case 'remove-two': {
+      // Remove Two: Player discards two cards from their hand
+      // For now, we'll just return the state as-is since the actual card selection
+      // will be handled by subsequent actions or UI interactions
+      // The effect is that the player must discard two cards
+      return state
+    }
+    
+    case 'steal-point': {
+      // Steal A Point: Player steals one point from another player
+      // For now, we'll just return the state as-is since the actual target selection
+      // will be handled by subsequent actions or UI interactions
+      // The effect is that the player can steal a point from another player
+      return state
+    }
+    
+    default:
+      // Unknown action card subtype - no effect
       return state
   }
 }

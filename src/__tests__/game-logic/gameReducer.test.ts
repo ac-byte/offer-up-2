@@ -923,5 +923,205 @@ describe('Game Reducer', () => {
         expect(gameState.currentPhase).toBe(GamePhase.BUYER_FLIP)
       })
     })
+
+    describe('PLAY_ACTION_CARD action', () => {
+      let gameState: ReturnType<typeof createInitialGameState>
+
+      beforeEach(() => {
+        // Create a game state with 3 players in action phase
+        gameState = gameReducer(initialState, { type: 'START_GAME', players: ['Alice', 'Bob', 'Charlie'] })
+        gameState = { ...gameState, currentPhase: GamePhase.ACTION_PHASE, currentBuyerIndex: 0 }
+        
+        // Give players some action cards in their collections
+        const actionCards = [
+          { id: 'add-one-0', type: 'action' as const, subtype: 'add-one', name: 'Add One', setSize: 1, effect: 'This card has an effect' },
+          { id: 'remove-one-0', type: 'action' as const, subtype: 'remove-one', name: 'Remove One', setSize: 1, effect: 'This card has an effect' },
+          { id: 'flip-one-0', type: 'action' as const, subtype: 'flip-one', name: 'Flip One', setSize: 1, effect: 'This card has an effect' },
+          { id: 'steal-point-0', type: 'action' as const, subtype: 'steal-point', name: 'Steal A Point', setSize: 1, effect: 'This card has an effect' }
+        ]
+        
+        gameState.players[0].collection = [actionCards[0]] // Alice has Add One
+        gameState.players[1].collection = [actionCards[1], actionCards[2]] // Bob has Remove One and Flip One
+        gameState.players[2].collection = [actionCards[3]] // Charlie has Steal A Point
+        
+        // Add some cards to draw pile for Add One effect
+        gameState.drawPile = [
+          { id: 'giant-0', type: 'thing' as const, subtype: 'giant', name: 'Giant Thing', setSize: 1 },
+          { id: 'big-0', type: 'thing' as const, subtype: 'big', name: 'Big Thing', setSize: 2 }
+        ]
+      })
+
+      test('successfully plays action card from collection', () => {
+        const action = { type: 'PLAY_ACTION_CARD' as const, playerId: 0, cardId: 'add-one-0' }
+        
+        const newState = gameReducer(gameState, action)
+        
+        // Action card should be removed from collection
+        expect(newState.players[0].collection).toHaveLength(0)
+        
+        // Action card should be added to discard pile
+        expect(newState.discardPile).toHaveLength(1)
+        expect(newState.discardPile[0].id).toBe('add-one-0')
+      })
+
+      test('executes Add One effect immediately', () => {
+        const action = { type: 'PLAY_ACTION_CARD' as const, playerId: 0, cardId: 'add-one-0' }
+        
+        const newState = gameReducer(gameState, action)
+        
+        // Player should have drawn one card
+        expect(newState.players[0].hand).toHaveLength(1)
+        expect(newState.players[0].hand[0].id).toBe('giant-0')
+        
+        // Draw pile should have one less card
+        expect(newState.drawPile).toHaveLength(1)
+        expect(newState.drawPile[0].id).toBe('big-0')
+      })
+
+      test('handles Add One effect when draw pile is empty', () => {
+        // Empty draw pile but add cards to discard pile
+        gameState.drawPile = []
+        gameState.discardPile = [
+          { id: 'medium-0', type: 'thing' as const, subtype: 'medium', name: 'Medium Thing', setSize: 3 },
+          { id: 'tiny-0', type: 'thing' as const, subtype: 'tiny', name: 'Tiny Thing', setSize: 4 }
+        ]
+        
+        const action = { type: 'PLAY_ACTION_CARD' as const, playerId: 0, cardId: 'add-one-0' }
+        
+        const newState = gameReducer(gameState, action)
+        
+        // Player should have drawn one card
+        expect(newState.players[0].hand).toHaveLength(1)
+        
+        // Discard pile should have been reshuffled and now contains the played action card
+        expect(newState.discardPile).toHaveLength(1)
+        expect(newState.discardPile[0].id).toBe('add-one-0')
+        
+        // Draw pile should have remaining card after reshuffling and drawing
+        expect(newState.drawPile).toHaveLength(1)
+      })
+
+      test('handles Add One effect when no cards available', () => {
+        // Empty both piles
+        gameState.drawPile = []
+        gameState.discardPile = []
+        
+        const action = { type: 'PLAY_ACTION_CARD' as const, playerId: 0, cardId: 'add-one-0' }
+        
+        const newState = gameReducer(gameState, action)
+        
+        // Player should not have drawn any cards
+        expect(newState.players[0].hand).toHaveLength(0)
+        
+        // Action card should still be discarded
+        expect(newState.discardPile).toHaveLength(1)
+        expect(newState.discardPile[0].id).toBe('add-one-0')
+      })
+
+      test('allows multiple action card plays from same player', () => {
+        // Play first action card
+        let newState = gameReducer(gameState, { 
+          type: 'PLAY_ACTION_CARD', 
+          playerId: 1, 
+          cardId: 'remove-one-0' 
+        })
+        
+        // Bob should have one action card left
+        expect(newState.players[1].collection).toHaveLength(1)
+        expect(newState.players[1].collection[0].id).toBe('flip-one-0')
+        
+        // Play second action card
+        newState = gameReducer(newState, { 
+          type: 'PLAY_ACTION_CARD', 
+          playerId: 1, 
+          cardId: 'flip-one-0' 
+        })
+        
+        // Bob should have no action cards left
+        expect(newState.players[1].collection).toHaveLength(0)
+        
+        // Both cards should be in discard pile
+        expect(newState.discardPile).toHaveLength(2)
+        expect(newState.discardPile.map(card => card.id)).toContain('remove-one-0')
+        expect(newState.discardPile.map(card => card.id)).toContain('flip-one-0')
+      })
+
+      test('throws error when not in action phase', () => {
+        gameState.currentPhase = GamePhase.OFFER_PHASE
+        
+        const action = { type: 'PLAY_ACTION_CARD' as const, playerId: 0, cardId: 'add-one-0' }
+        
+        expect(() => gameReducer(gameState, action)).toThrow('Action PLAY_ACTION_CARD is not allowed during phase offer_phase')
+      })
+
+      test('throws error for invalid player ID', () => {
+        const invalidPlayerIds = [-1, 10]
+        
+        for (const playerId of invalidPlayerIds) {
+          const action = { type: 'PLAY_ACTION_CARD' as const, playerId, cardId: 'add-one-0' }
+          
+          expect(() => gameReducer(gameState, action)).toThrow(`Invalid player ID: ${playerId}`)
+        }
+      })
+
+      test('throws error when action card not found in collection', () => {
+        const action = { type: 'PLAY_ACTION_CARD' as const, playerId: 0, cardId: 'nonexistent-card' }
+        
+        expect(() => gameReducer(gameState, action)).toThrow('Action card with ID nonexistent-card not found in player\'s collection')
+      })
+
+      test('throws error when trying to play non-action card', () => {
+        // Add a thing card to collection
+        gameState.players[0].collection.push({
+          id: 'giant-1',
+          type: 'thing',
+          subtype: 'giant',
+          name: 'Giant Thing',
+          setSize: 1
+        })
+        
+        const action = { type: 'PLAY_ACTION_CARD' as const, playerId: 0, cardId: 'giant-1' }
+        
+        expect(() => gameReducer(gameState, action)).toThrow('Action card with ID giant-1 not found in player\'s collection')
+      })
+
+      test('executes different action card effects', () => {
+        // Test Flip One effect (should not change state immediately)
+        const flipAction = { type: 'PLAY_ACTION_CARD' as const, playerId: 1, cardId: 'flip-one-0' }
+        const flipState = gameReducer(gameState, flipAction)
+        
+        // Card should be removed and discarded
+        expect(flipState.players[1].collection.find(card => card.id === 'flip-one-0')).toBeUndefined()
+        expect(flipState.discardPile.find(card => card.id === 'flip-one-0')).toBeDefined()
+        
+        // Test Remove One effect (should not change state immediately)
+        const removeAction = { type: 'PLAY_ACTION_CARD' as const, playerId: 1, cardId: 'remove-one-0' }
+        const removeState = gameReducer(gameState, removeAction)
+        
+        // Card should be removed and discarded
+        expect(removeState.players[1].collection.find(card => card.id === 'remove-one-0')).toBeUndefined()
+        expect(removeState.discardPile.find(card => card.id === 'remove-one-0')).toBeDefined()
+        
+        // Test Steal A Point effect (should not change state immediately)
+        const stealAction = { type: 'PLAY_ACTION_CARD' as const, playerId: 2, cardId: 'steal-point-0' }
+        const stealState = gameReducer(gameState, stealAction)
+        
+        // Card should be removed and discarded
+        expect(stealState.players[2].collection.find(card => card.id === 'steal-point-0')).toBeUndefined()
+        expect(stealState.discardPile.find(card => card.id === 'steal-point-0')).toBeDefined()
+      })
+
+      test('does not mutate original state', () => {
+        const originalCollection = [...gameState.players[0].collection]
+        const originalDiscardPile = [...gameState.discardPile]
+        const action = { type: 'PLAY_ACTION_CARD' as const, playerId: 0, cardId: 'add-one-0' }
+        
+        gameReducer(gameState, action)
+        
+        // Original state should be unchanged
+        expect(gameState.players[0].collection).toEqual(originalCollection)
+        expect(gameState.discardPile).toEqual(originalDiscardPile)
+      })
+    })
   })
 })

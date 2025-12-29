@@ -39,12 +39,12 @@ export const GameBoard: React.FC = () => {
     }
   }
 
-  const handleCardFlip = (offerId: number, cardIndex: number) => {
-    const action: GameAction = { type: 'FLIP_CARD', offerId, cardIndex }
+  const handleCardPlay = (playerId: number, card: Card) => {
+    const action: GameAction = { type: 'PLAY_ACTION_CARD', playerId, cardId: card.id }
     try {
       dispatch(action)
     } catch (error) {
-      console.error('Error flipping card:', error)
+      console.error('Error playing action card:', error)
       // In a real app, you'd show this error to the user
     }
   }
@@ -187,7 +187,7 @@ export const GameBoard: React.FC = () => {
             isBuyer={index === gameState.currentBuyerIndex}
             perspective={gameState.selectedPerspective}
             phase={gameState.currentPhase}
-            onCardPlay={() => {}} // Placeholder - will be implemented in future tasks
+            onCardPlay={(card) => handleCardPlay(player.id, card)}
             onOfferPlace={(cards, faceUpIndex) => handleOfferPlace(player.id, cards, faceUpIndex)}
             onCardFlip={(cardIndex) => handleCardFlip(index, cardIndex)} // index is the player index (offerId)
             canFlipCards={gameState.currentPhase === GamePhase.BUYER_FLIP && gameState.selectedPerspective === gameState.currentBuyerIndex}

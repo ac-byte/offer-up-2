@@ -108,7 +108,7 @@ This implementation plan breaks down the trading card game into discrete, testab
     - **Validates: Requirements 6.1, 6.2, 6.3, 6.5**
 
 - [ ] 8. Implement action phase mechanics
-  - [ ] 8.1 Create action card play system
+  - [x] 8.1 Create action card play system
     - Allow players to play action cards from collection
     - Support multiple action card plays
     - Implement immediate effect execution

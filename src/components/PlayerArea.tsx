@@ -261,8 +261,15 @@ export const PlayerArea: React.FC<PlayerAreaProps> = ({
       return
     }
 
-    // Handle action card clicks during action phase
-    if (phase === GamePhase.ACTION_PHASE && card.type === 'action') {
+    // Handle action card clicks during action phase from collection
+    if (phase === GamePhase.ACTION_PHASE && card.type === 'action' && isOwnPerspective) {
+      onCardPlay(card);
+    }
+  };
+
+  const handleCollectionCardClick = (card: Card) => {
+    // Handle action card clicks during action phase from collection
+    if (phase === GamePhase.ACTION_PHASE && card.type === 'action' && isOwnPerspective) {
       onCardPlay(card);
     }
   };
@@ -403,7 +410,7 @@ export const PlayerArea: React.FC<PlayerAreaProps> = ({
           <CollectionArea
             cards={player.collection}
             points={player.points}
-            onCardClick={handleCardClick}
+            onCardClick={handleCollectionCardClick}
           />
         </div>
       </div>
