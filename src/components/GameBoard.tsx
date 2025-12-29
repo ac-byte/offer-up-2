@@ -49,6 +49,16 @@ export const GameBoard: React.FC = () => {
     }
   }
 
+  const handleCardFlip = (offerId: number, cardIndex: number) => {
+    const action: GameAction = { type: 'FLIP_CARD', offerId, cardIndex }
+    try {
+      dispatch(action)
+    } catch (error) {
+      console.error('Error flipping card:', error)
+      // In a real app, you'd show this error to the user
+    }
+  }
+
   const formatPhaseName = (phase: GamePhase): string => {
     return phase.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
   }
