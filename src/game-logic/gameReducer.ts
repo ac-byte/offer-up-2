@@ -1,4 +1,4 @@
-import { GameState, GameAction, GamePhase, Player, Card } from '../types'
+import { GameState, GameAction, GamePhase, Player } from '../types'
 import { createShuffledDeck, shuffleArray } from './cards'
 
 /**

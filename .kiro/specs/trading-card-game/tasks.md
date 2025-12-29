@@ -213,13 +213,13 @@ This implementation plan breaks down the trading card game into discrete, testab
     - Include drag and drop functionality
     - _Requirements: 12.1, 12.2, 12.3, 12.4, 12.5, 16.1_
 
-  - [ ] 14.2 Create PlayerArea component
+  - [x] 14.2 Create PlayerArea component
     - Implement Hand, OfferArea, and CollectionArea sub-components
     - Handle card interactions and drag/drop
     - Support different player perspectives
     - _Requirements: 2.3, 16.2, 16.3, 16.4, 16.5_
 
-  - [ ] 14.3 Create perspective selector
+  - [x] 14.3 Create perspective selector
     - Add dropdown for choosing player perspective
     - Maintain independence from current acting player
     - Update card displays based on selected perspective

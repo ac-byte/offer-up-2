@@ -1,0 +1,282 @@
+/* PlayerArea Component Styles */
+
+.player-area {
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  padding: 16px;
+  margin: 8px;
+  background-color: #f9f9f9;
+  min-width: 300px;
+  transition: all 0.2s ease;
+}
+
+.player-area--current {
+  border-color: #007bff;
+  background-color: #f0f8ff;
+}
+
+.player-area--buyer {
+  border-color: #28a745;
+  background-color: #f0fff0;
+}
+
+.player-area--own-perspective {
+  border-color: #ffc107;
+  background-color: #fffbf0;
+}
+
+.player-area__header {
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #ddd;
+}
+
+.player-area__name {
+  margin: 0 0 4px 0;
+  font-size: 1.2em;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.player-area__money-bag {
+  font-size: 1.2em;
+}
+
+.player-area__current-indicator {
+  font-size: 1em;
+  color: #007bff;
+}
+
+.player-area__stats {
+  font-size: 0.9em;
+  color: #666;
+}
+
+.player-area__content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.player-area__top-row,
+.player-area__middle-row,
+.player-area__bottom-row {
+  width: 100%;
+}
+
+/* Hand Component Styles */
+
+.hand {
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 12px;
+}
+
+.hand__header {
+  margin-bottom: 8px;
+}
+
+.hand__title {
+  margin: 0;
+  font-size: 1em;
+  font-weight: 600;
+  color: #333;
+}
+
+.hand__cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 60px;
+  align-items: center;
+}
+
+.hand__card {
+  flex-shrink: 0;
+}
+
+.hand__empty {
+  color: #999;
+  font-style: italic;
+  padding: 20px;
+  text-align: center;
+  width: 100%;
+}
+
+/* OfferArea Component Styles */
+
+.offer-area {
+  background-color: #fff;
+  border: 2px dashed #ddd;
+  border-radius: 6px;
+  padding: 12px;
+  min-height: 120px;
+  transition: border-color 0.2s ease;
+}
+
+.offer-area:hover {
+  border-color: #007bff;
+}
+
+.offer-area__header {
+  margin-bottom: 8px;
+}
+
+.offer-area__title {
+  margin: 0;
+  font-size: 1em;
+  font-weight: 600;
+  color: #333;
+}
+
+.offer-area__cards {
+  display: flex;
+  gap: 8px;
+  min-height: 80px;
+  align-items: center;
+  justify-content: center;
+}
+
+.offer-area__card {
+  flex-shrink: 0;
+}
+
+.offer-area__card--position-0 {
+  order: 1;
+}
+
+.offer-area__card--position-1 {
+  order: 2;
+}
+
+.offer-area__card--position-2 {
+  order: 3;
+}
+
+.offer-area__empty {
+  color: #999;
+  font-style: italic;
+  text-align: center;
+  padding: 20px;
+  width: 100%;
+}
+
+/* CollectionArea Component Styles */
+
+.collection-area {
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 12px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.collection-area__header {
+  margin-bottom: 8px;
+  position: sticky;
+  top: 0;
+  background-color: #fff;
+  z-index: 1;
+}
+
+.collection-area__title {
+  margin: 0;
+  font-size: 1em;
+  font-weight: 600;
+  color: #333;
+}
+
+.collection-area__cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.collection-area__group {
+  border: 1px solid #eee;
+  border-radius: 4px;
+  padding: 8px;
+}
+
+.collection-area__group-header {
+  margin-bottom: 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #eee;
+}
+
+.collection-area__group-title {
+  font-size: 0.9em;
+  font-weight: 600;
+  color: #555;
+}
+
+.collection-area__group-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.collection-area__card {
+  flex-shrink: 0;
+  transform: scale(0.8);
+  transform-origin: top left;
+}
+
+.collection-area__empty {
+  color: #999;
+  font-style: italic;
+  text-align: center;
+  padding: 20px;
+}
+
+/* Responsive Design */
+
+@media (max-width: 768px) {
+  .player-area {
+    margin: 4px;
+    padding: 12px;
+    min-width: 250px;
+  }
+  
+  .player-area__content {
+    gap: 12px;
+  }
+  
+  .hand__cards,
+  .offer-area__cards {
+    gap: 6px;
+  }
+  
+  .collection-area__card {
+    transform: scale(0.7);
+  }
+}
+
+@media (max-width: 480px) {
+  .player-area {
+    min-width: 200px;
+    padding: 8px;
+  }
+  
+  .player-area__name {
+    font-size: 1.1em;
+  }
+  
+  .hand__cards {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .offer-area__cards {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .collection-area__card {
+    transform: scale(0.6);
+  }
+}
