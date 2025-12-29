@@ -491,6 +491,10 @@ Based on the prework analysis, the following properties have been identified as 
 *For any* card display, partial state should be used only for player's own face down offer cards from their perspective
 **Validates: Requirements 17.3**
 
+**Property 59: Automatic perspective following**
+*For any* active player change, the selected perspective should automatically update to match the new active player
+**Validates: Requirements 20.1, 20.2**
+
 ## Error Handling
 
 The application will implement comprehensive error handling for:

@@ -1,4 +1,9 @@
-Clean up temporary commit message file
+Add automatic perspective following requirement
 
-- Remove commit_msg.txt that was left behind from previous commit
-- Maintain clean repository state
+- Add Requirement 20: Automatic Perspective Following
+- Perspective automatically updates when active player changes
+- Maintains following across all phases and rotations
+- Allows manual override with temporary disable
+- Add Property 59: Automatic perspective following
+- Add Task 14.4: Implement automatic perspective following
+- Update task numbering for subsequent tasks

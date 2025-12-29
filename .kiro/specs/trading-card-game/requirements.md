@@ -249,3 +249,15 @@ A digital trading card game implemented as a React application featuring a fixed
 3. WHEN state changes occur, THE Game_System SHALL update all dependent components efficiently
 4. THE Game_System SHALL handle user interactions through proper event handling
 5. THE Game_System SHALL maintain responsive design for different screen sizes
+
+### Requirement 20: Automatic Perspective Following
+
+**User Story:** As a player, I want the perspective to automatically follow the active player, so that I can easily track whose turn it is and see the game from their viewpoint.
+
+#### Acceptance Criteria
+
+1. WHEN the current active player changes, THE Game_System SHALL automatically update the selected perspective to match the new active player
+2. THE Game_System SHALL maintain the automatic perspective following behavior across all phases and player rotations
+3. WHEN a player manually changes the perspective, THE Game_System SHALL temporarily disable automatic following until the next player change
+4. THE Game_System SHALL provide visual indication when perspective is automatically following the active player versus manually selected
+5. THE Game_System SHALL ensure automatic perspective changes occur smoothly without disrupting the user experience

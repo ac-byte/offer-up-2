@@ -225,7 +225,14 @@ This implementation plan breaks down the trading card game into discrete, testab
     - Update card displays based on selected perspective
     - _Requirements: 15.2, 15.3, 15.4_
 
-  - [ ]* 14.4 Write property tests for display logic
+  - [ ] 14.4 Implement automatic perspective following
+    - Automatically update perspective when active player changes
+    - Maintain automatic following across all phases and rotations
+    - Allow manual override with temporary disable of auto-following
+    - Provide visual indication of auto-follow vs manual mode
+    - _Requirements: 20.1, 20.2, 20.3, 20.4, 20.5_
+
+  - [ ]* 14.5 Write property tests for display logic
     - **Property 49: Perspective independence**
     - **Property 50: Card display updates**
     - **Property 51: Perspective switching availability**
@@ -236,7 +243,8 @@ This implementation plan breaks down the trading card game into discrete, testab
     - **Property 56: Offer card visibility**
     - **Property 57: Partial card content**
     - **Property 58: Partial display conditions**
-    - **Validates: Requirements 15.2, 15.3, 15.4, 16.1, 16.2, 16.3, 16.4, 16.5, 17.1, 17.3**
+    - **Property 59: Automatic perspective following**
+    - **Validates: Requirements 15.2, 15.3, 15.4, 16.1, 16.2, 16.3, 16.4, 16.5, 17.1, 17.3, 20.1, 20.2**
 
 - [ ] 15. Create GameBoard main component
   - [x] 15.1 Implement main game interface
