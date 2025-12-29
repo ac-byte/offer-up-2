@@ -1,5 +1,5 @@
-import { GameState, GameAction, GamePhase, Player } from '../types'
-import { createShuffledDeck } from './cards'
+import { GameState, GameAction, GamePhase, Player, Card } from '../types'
+import { createShuffledDeck, shuffleArray } from './cards'
 
 /**
  * Creates initial game state
@@ -80,6 +80,10 @@ export function validatePhaseAction(phase: GamePhase, action: GameAction): boole
       // Phase advancement is always allowed (controlled by game logic)
       return true
     
+    case 'DEAL_CARDS':
+      // Can only deal cards during deal phase
+      return phase === GamePhase.DEAL
+    
     case 'CHANGE_PERSPECTIVE':
       // Perspective changes are always allowed
       return true
@@ -135,6 +139,80 @@ export function advanceToNextPhase(currentPhase: GamePhase, currentRound: number
 export function shouldContinueGame(state: GameState): boolean {
   // Game continues if no winner is declared
   return state.winner === null
+}
+
+/**
+ * Deals cards to bring all players' hands to exactly 5 cards
+ * Implements sequential dealing (one card per player at a time)
+ * Handles draw pile exhaustion by reshuffling discard pile
+ */
+export function dealCards(state: GameState): GameState {
+  const newState = { ...state }
+  newState.players = state.players.map(player => ({ ...player, hand: [...player.hand] }))
+  newState.drawPile = [...state.drawPile]
+  newState.discardPile = [...state.discardPile]
+
+  // Calculate how many cards each player needs
+  const playersNeedingCards = newState.players.map((player, index) => ({
+    playerIndex: index,
+    cardsNeeded: Math.max(0, 5 - player.hand.length)
+  })).filter(p => p.cardsNeeded > 0)
+
+  // Deal cards sequentially (one card per player per round)
+  let maxCardsNeeded = Math.max(...playersNeedingCards.map(p => p.cardsNeeded), 0)
+  
+  for (let round = 0; round < maxCardsNeeded; round++) {
+    for (const playerInfo of playersNeedingCards) {
+      const { playerIndex, cardsNeeded } = playerInfo
+      
+      // Skip if this player already has enough cards
+      if (round >= cardsNeeded) {
+        continue
+      }
+
+      // Check if we need to reshuffle
+      if (newState.drawPile.length === 0) {
+        if (newState.discardPile.length === 0) {
+          // No more cards available - stop dealing
+          break
+        }
+        
+        // Reshuffle discard pile into draw pile
+        newState.drawPile = shuffleArray(newState.discardPile)
+        newState.discardPile = []
+      }
+
+      // Deal one card to this player
+      if (newState.drawPile.length > 0) {
+        const card = newState.drawPile.shift()! // Take from beginning of array
+        newState.players[playerIndex].hand.push(card)
+      }
+    }
+  }
+
+  return newState
+}
+
+/**
+ * Handles the deal phase automatically
+ */
+export function handleDealPhase(state: GameState): GameState {
+  if (state.currentPhase !== GamePhase.DEAL) {
+    return state
+  }
+
+  // Deal cards to all players
+  const newState = dealCards(state)
+  
+  // Automatically advance to next phase after dealing
+  const { nextPhase, nextRound } = advanceToNextPhase(newState.currentPhase, newState.round)
+  
+  return {
+    ...newState,
+    currentPhase: nextPhase,
+    round: nextRound,
+    phaseInstructions: getPhaseInstructions(nextPhase)
+  }
 }
 
 /**
@@ -197,6 +275,10 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         round: nextRound,
         phaseInstructions: getPhaseInstructions(nextPhase)
       }
+    }
+    
+    case 'DEAL_CARDS': {
+      return handleDealPhase(state)
     }
     
     case 'CHANGE_PERSPECTIVE': {

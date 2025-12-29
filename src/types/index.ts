@@ -61,6 +61,7 @@ export enum GamePhase {
 export type GameAction = 
   | { type: 'START_GAME'; players: string[] }
   | { type: 'ADVANCE_PHASE' }
+  | { type: 'DEAL_CARDS' }
   | { type: 'PLACE_OFFER'; playerId: number; cards: Card[]; faceUpIndex: number }
   | { type: 'FLIP_CARD'; offerId: number; cardIndex: number }
   | { type: 'PLAY_ACTION_CARD'; playerId: number; cardId: string }

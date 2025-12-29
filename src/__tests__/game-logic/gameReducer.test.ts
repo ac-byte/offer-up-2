@@ -7,9 +7,12 @@ import {
   getPhaseOrder,
   validatePhaseAction,
   advanceToNextPhase,
-  shouldContinueGame
+  shouldContinueGame,
+  dealCards,
+  handleDealPhase
 } from '../../game-logic/gameReducer'
 import { GamePhase } from '../../types'
+import { createThingCard, createGotchaCard } from '../../game-logic/cards'
 
 describe('Game Reducer', () => {
   describe('createInitialGameState', () => {
@@ -118,6 +121,14 @@ describe('Game Reducer', () => {
       expect(validatePhaseAction(GamePhase.DEAL, action)).toBe(true)
     })
 
+    test('only allows DEAL_CARDS during deal phase', () => {
+      const action = { type: 'DEAL_CARDS' as const }
+      
+      expect(validatePhaseAction(GamePhase.DEAL, action)).toBe(true)
+      expect(validatePhaseAction(GamePhase.BUYER_ASSIGNMENT, action)).toBe(false)
+      expect(validatePhaseAction(GamePhase.OFFER_PHASE, action)).toBe(false)
+    })
+
     test('allows CHANGE_PERSPECTIVE in any phase', () => {
       const action = { type: 'CHANGE_PERSPECTIVE' as const, playerId: 0 }
       
@@ -215,6 +226,154 @@ describe('Game Reducer', () => {
       const state = { ...createInitialGameState(), winner: 0 }
       
       expect(shouldContinueGame(state)).toBe(false)
+    })
+  })
+
+  describe('dealCards', () => {
+    test('deals cards to bring all hands to 5 cards', () => {
+      const state = createInitialGameState()
+      state.players = [
+        { ...createPlayer(0, 'Alice'), hand: [createThingCard('giant', 0)] }, // needs 4 cards
+        { ...createPlayer(1, 'Bob'), hand: [createThingCard('big', 0), createThingCard('big', 1)] }, // needs 3 cards
+        { ...createPlayer(2, 'Charlie'), hand: [] } // needs 5 cards
+      ]
+      state.drawPile = Array.from({ length: 20 }, (_, i) => createThingCard('tiny', i))
+
+      const newState = dealCards(state)
+
+      expect(newState.players[0].hand).toHaveLength(5)
+      expect(newState.players[1].hand).toHaveLength(5)
+      expect(newState.players[2].hand).toHaveLength(5)
+    })
+
+    test('deals cards sequentially (one card per player per round)', () => {
+      const state = createInitialGameState()
+      state.players = [
+        { ...createPlayer(0, 'Alice'), hand: [] },
+        { ...createPlayer(1, 'Bob'), hand: [] }
+      ]
+      // Create identifiable cards to track dealing order
+      state.drawPile = [
+        createThingCard('giant', 0), // Should go to Alice (round 1)
+        createThingCard('giant', 1), // Should go to Bob (round 1)
+        createThingCard('giant', 2), // Should go to Alice (round 2)
+        createThingCard('giant', 3), // Should go to Bob (round 2)
+        createThingCard('big', 0),   // Should go to Alice (round 3)
+        createThingCard('big', 1),   // Should go to Bob (round 3)
+        createThingCard('big', 2),   // Should go to Alice (round 4)
+        createThingCard('big', 3),   // Should go to Bob (round 4)
+        createThingCard('big', 4),   // Should go to Alice (round 5)
+        createThingCard('big', 5)    // Should go to Bob (round 5)
+      ]
+
+      const newState = dealCards(state)
+
+      // Check that cards were dealt in the expected sequential order
+      expect(newState.players[0].hand[0].id).toBe('giant-0') // Alice's first card
+      expect(newState.players[1].hand[0].id).toBe('giant-1') // Bob's first card
+      expect(newState.players[0].hand[1].id).toBe('giant-2') // Alice's second card
+      expect(newState.players[1].hand[1].id).toBe('giant-3') // Bob's second card
+    })
+
+    test('handles draw pile exhaustion by reshuffling discard pile', () => {
+      const state = createInitialGameState()
+      state.players = [
+        { ...createPlayer(0, 'Alice'), hand: [] },
+        { ...createPlayer(1, 'Bob'), hand: [] }
+      ]
+      state.drawPile = [createThingCard('giant', 0)] // Only 1 card in draw pile
+      state.discardPile = [
+        createThingCard('big', 0),
+        createThingCard('big', 1),
+        createThingCard('big', 2),
+        createThingCard('big', 3),
+        createThingCard('big', 4),
+        createThingCard('big', 5),
+        createThingCard('big', 6),
+        createThingCard('big', 7),
+        createThingCard('big', 8)
+      ] // 9 cards in discard pile
+
+      const newState = dealCards(state)
+
+      // Should have dealt all available cards
+      expect(newState.players[0].hand).toHaveLength(5)
+      expect(newState.players[1].hand).toHaveLength(5)
+      
+      // Discard pile should be empty after reshuffling
+      expect(newState.discardPile).toHaveLength(0)
+      
+      // Draw pile should have remaining cards
+      expect(newState.drawPile.length).toBe(0) // All 10 cards used (1 original + 9 from discard)
+    })
+
+    test('stops dealing when insufficient cards remain after reshuffling', () => {
+      const state = createInitialGameState()
+      state.players = [
+        { ...createPlayer(0, 'Alice'), hand: [] },
+        { ...createPlayer(1, 'Bob'), hand: [] }
+      ]
+      state.drawPile = [createThingCard('giant', 0)] // Only 1 card in draw pile
+      state.discardPile = [createThingCard('big', 0)] // Only 1 card in discard pile
+
+      const newState = dealCards(state)
+
+      // Should have dealt only the available 2 cards
+      const totalCardsDealt = newState.players[0].hand.length + newState.players[1].hand.length
+      expect(totalCardsDealt).toBe(2)
+      
+      // Both piles should be empty
+      expect(newState.drawPile).toHaveLength(0)
+      expect(newState.discardPile).toHaveLength(0)
+    })
+
+    test('does not mutate original state', () => {
+      const state = createInitialGameState()
+      state.players = [{ ...createPlayer(0, 'Alice'), hand: [] }]
+      state.drawPile = [createThingCard('giant', 0), createThingCard('big', 0)]
+      
+      const originalDrawPileLength = state.drawPile.length
+      const originalHandLength = state.players[0].hand.length
+
+      dealCards(state)
+
+      // Original state should be unchanged
+      expect(state.drawPile).toHaveLength(originalDrawPileLength)
+      expect(state.players[0].hand).toHaveLength(originalHandLength)
+    })
+  })
+
+  describe('handleDealPhase', () => {
+    test('deals cards and advances phase when in deal phase', () => {
+      const state = createInitialGameState()
+      state.currentPhase = GamePhase.DEAL
+      state.players = [
+        { ...createPlayer(0, 'Alice'), hand: [] },
+        { ...createPlayer(1, 'Bob'), hand: [] }
+      ]
+      state.drawPile = Array.from({ length: 20 }, (_, i) => createThingCard('tiny', i))
+
+      const newState = handleDealPhase(state)
+
+      // Should have dealt cards
+      expect(newState.players[0].hand).toHaveLength(5)
+      expect(newState.players[1].hand).toHaveLength(5)
+      
+      // Should have advanced to next phase
+      expect(newState.currentPhase).toBe(GamePhase.OFFER_PHASE)
+      expect(newState.phaseInstructions).toBe('Offer phase: Sellers place their 3-card offers...')
+    })
+
+    test('does nothing when not in deal phase', () => {
+      const state = createInitialGameState()
+      state.currentPhase = GamePhase.OFFER_PHASE
+      state.players = [{ ...createPlayer(0, 'Alice'), hand: [] }]
+      state.drawPile = [createThingCard('giant', 0)]
+
+      const newState = handleDealPhase(state)
+
+      // Should be unchanged
+      expect(newState).toBe(state)
     })
   })
 
@@ -330,6 +489,36 @@ describe('Game Reducer', () => {
         
         expect(newState.currentPhase).toBe(GamePhase.WINNER_DETERMINATION)
         expect(newState.round).toBe(1)
+      })
+    })
+
+    describe('DEAL_CARDS action', () => {
+      test('deals cards and advances phase during deal phase', () => {
+        const state = {
+          ...initialState,
+          currentPhase: GamePhase.DEAL,
+          players: [
+            { ...createPlayer(0, 'Alice'), hand: [] },
+            { ...createPlayer(1, 'Bob'), hand: [] }
+          ],
+          drawPile: Array.from({ length: 20 }, (_, i) => createThingCard('tiny', i))
+        }
+
+        const newState = gameReducer(state, { type: 'DEAL_CARDS' })
+
+        // Should have dealt cards
+        expect(newState.players[0].hand).toHaveLength(5)
+        expect(newState.players[1].hand).toHaveLength(5)
+        
+        // Should have advanced to next phase
+        expect(newState.currentPhase).toBe(GamePhase.OFFER_PHASE)
+        expect(newState.phaseInstructions).toBe('Offer phase: Sellers place their 3-card offers...')
+      })
+
+      test('throws error when not in deal phase', () => {
+        const state = { ...initialState, currentPhase: GamePhase.OFFER_PHASE }
+        
+        expect(() => gameReducer(state, { type: 'DEAL_CARDS' })).toThrow('Action DEAL_CARDS is not allowed during phase offer_phase')
       })
     })
 

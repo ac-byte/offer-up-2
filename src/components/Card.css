@@ -1,0 +1,177 @@
+/* Card component styles */
+.card {
+  width: 120px;
+  height: 160px;
+  border: 2px solid #333;
+  border-radius: 8px;
+  background: white;
+  position: relative;
+  cursor: default;
+  user-select: none;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Card type styling - Requirements 12.1, 12.3, 12.5 */
+.card--thing {
+  color: #0066cc; /* Blue writing for Thing cards */
+  border-color: #0066cc;
+}
+
+.card--gotcha {
+  color: #cc0000; /* Red writing for Gotcha cards */
+  border-color: #cc0000;
+}
+
+.card--action {
+  color: #000000; /* Black writing for Action cards */
+  border-color: #000000;
+}
+
+/* Display state styling */
+.card--face-up {
+  /* Default styling for face up cards */
+}
+
+.card--face-down {
+  background: #4a5568;
+  color: white;
+  border-color: #2d3748;
+}
+
+.card--partial {
+  /* Partial cards show content but with overlay indicator */
+}
+
+/* Interactive states */
+.card--draggable {
+  cursor: grab;
+}
+
+.card--draggable:active {
+  cursor: grabbing;
+}
+
+.card--clickable {
+  cursor: pointer;
+}
+
+.card--clickable:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.card--draggable:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.12);
+}
+
+/* Card content layout */
+.card__front,
+.card__back {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 8px;
+  position: relative;
+}
+
+.card__header {
+  margin-bottom: 8px;
+}
+
+.card__name {
+  font-size: 14px;
+  font-weight: bold;
+  margin: 0;
+  line-height: 1.2;
+  text-align: center;
+  /* Requirement 12.1, 12.3, 12.5: Card name in largest font at top */
+}
+
+.card__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.card__set-info {
+  font-size: 11px;
+  text-align: center;
+  margin-top: 4px;
+  /* Requirement 12.2: Set info in smaller font below name */
+}
+
+.card__effect {
+  font-size: 10px;
+  text-align: center;
+  margin-top: 4px;
+  /* Requirement 12.4, 12.5: Effect text below name */
+}
+
+/* Face down card back */
+.card__back {
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
+}
+
+.card__back-pattern {
+  font-size: 12px;
+  font-weight: bold;
+  text-align: center;
+  opacity: 0.7;
+}
+
+/* Partial card overlay - Requirement 16.1, 17.1, 17.3 */
+.card--partial .card__partial-indicator {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(to bottom, rgba(74, 85, 104, 0.3), rgba(74, 85, 104, 0.8));
+  border-radius: 0 0 6px 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card__face-down-overlay {
+  color: white;
+  font-size: 10px;
+  font-weight: bold;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .card {
+    width: 100px;
+    height: 133px;
+  }
+  
+  .card__name {
+    font-size: 12px;
+  }
+  
+  .card__set-info,
+  .card__effect {
+    font-size: 9px;
+  }
+}
+
+/* Focus styles for accessibility */
+.card:focus {
+  outline: 2px solid #4299e1;
+  outline-offset: 2px;
+}
+
+/* Animation for drag operations */
+.card--dragging {
+  opacity: 0.5;
+  transform: rotate(5deg);
+}

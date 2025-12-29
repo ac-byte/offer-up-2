@@ -67,8 +67,8 @@ This implementation plan breaks down the trading card game into discrete, testab
 - [x] 4. Checkpoint - Ensure core game logic tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 5. Implement deal phase mechanics
-  - [ ] 5.1 Create card dealing logic
+- [x] 5. Implement deal phase mechanics
+  - [x] 5.1 Create card dealing logic
     - Deal cards to bring all hands to 5 cards
     - Implement sequential dealing (one card per player)
     - Handle draw pile exhaustion and reshuffling
@@ -207,7 +207,7 @@ This implementation plan breaks down the trading card game into discrete, testab
     - **Validates: Requirements 13.1, 13.2, 13.3, 14.1, 14.2, 14.3, 14.5**
 
 - [ ] 14. Create React UI components
-  - [ ] 14.1 Create Card component
+  - [x] 14.1 Create Card component
     - Implement three display states (face up, face down, partial)
     - Add card type styling (blue Thing, red Gotcha, black Action)
     - Include drag and drop functionality
