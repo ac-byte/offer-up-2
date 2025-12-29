@@ -94,6 +94,68 @@ export function shuffleArray<T>(array: T[]): T[] {
 }
 
 /**
+ * Identifies complete Gotcha sets in a player's collection
+ * Returns an array of complete sets, where each set is an array of cards
+ */
+export function identifyGotchaSets(collection: Card[]): Card[][] {
+  const gotchaCards = collection.filter(card => card.type === 'gotcha')
+  const completeSets: Card[][] = []
+  
+  // Group cards by subtype
+  const cardsBySubtype: { [key: string]: Card[] } = {}
+  for (const card of gotchaCards) {
+    if (!cardsBySubtype[card.subtype]) {
+      cardsBySubtype[card.subtype] = []
+    }
+    cardsBySubtype[card.subtype].push(card)
+  }
+  
+  // Check each subtype for complete sets
+  for (const [subtype, cards] of Object.entries(cardsBySubtype)) {
+    const setSize = cards[0]?.setSize || 0
+    
+    // Create complete sets from available cards
+    while (cards.length >= setSize) {
+      const set = cards.splice(0, setSize)
+      completeSets.push(set)
+    }
+  }
+  
+  return completeSets
+}
+
+/**
+ * Identifies complete Thing sets in a player's collection
+ * Returns an array of complete sets, where each set is an array of cards
+ */
+export function identifyThingSets(collection: Card[]): Card[][] {
+  const thingCards = collection.filter(card => card.type === 'thing')
+  const completeSets: Card[][] = []
+  
+  // Group cards by subtype
+  const cardsBySubtype: { [key: string]: Card[] } = {}
+  for (const card of thingCards) {
+    if (!cardsBySubtype[card.subtype]) {
+      cardsBySubtype[card.subtype] = []
+    }
+    cardsBySubtype[card.subtype].push(card)
+  }
+  
+  // Check each subtype for complete sets
+  for (const [subtype, cards] of Object.entries(cardsBySubtype)) {
+    const setSize = cards[0]?.setSize || 0
+    
+    // Create complete sets from available cards
+    while (cards.length >= setSize) {
+      const set = cards.splice(0, setSize)
+      completeSets.push(set)
+    }
+  }
+  
+  return completeSets
+}
+
+/**
  * Creates a complete deck with the correct composition
  */
 export function createDeck(): Card[] {

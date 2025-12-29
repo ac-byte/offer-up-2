@@ -59,6 +59,17 @@ export const GameBoard: React.FC = () => {
     }
   }
 
+  const handleOfferSelect = (sellerId: number) => {
+    const buyerId = gameState.currentBuyerIndex
+    const action: GameAction = { type: 'SELECT_OFFER', buyerId, sellerId }
+    try {
+      dispatch(action)
+    } catch (error) {
+      console.error('Error selecting offer:', error)
+      // In a real app, you'd show this error to the user
+    }
+  }
+
   const formatPhaseName = (phase: GamePhase): string => {
     return phase.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
   }
@@ -90,6 +101,42 @@ export const GameBoard: React.FC = () => {
           <button onClick={handleDealCards} className="action-button primary">
             Deal Cards
           </button>
+        )
+      
+      case GamePhase.OFFER_SELECTION:
+        const buyer = getCurrentBuyer()
+        const sellersWithOffers = gameState.players.filter((player, index) => 
+          index !== gameState.currentBuyerIndex && player.offer.length > 0
+        )
+        
+        if (sellersWithOffers.length === 0) {
+          return (
+            <div className="phase-waiting">
+              <span>No offers available to select</span>
+              <button onClick={handleAdvancePhase} className="action-button secondary">
+                Skip Phase (Debug)
+              </button>
+            </div>
+          )
+        }
+        
+        return (
+          <div className="offer-selection-controls">
+            <div className="offer-selection-header">
+              <strong>{buyer?.name}</strong> (Buyer): Select one offer to purchase
+            </div>
+            <div className="offer-selection-buttons">
+              {sellersWithOffers.map((seller) => (
+                <button
+                  key={seller.id}
+                  onClick={() => handleOfferSelect(seller.id)}
+                  className="action-button offer-select-button"
+                >
+                  Select {seller.name}'s Offer
+                </button>
+              ))}
+            </div>
+          </div>
         )
       
       case GamePhase.BUYER_ASSIGNMENT:
@@ -200,7 +247,9 @@ export const GameBoard: React.FC = () => {
             onCardPlay={(card) => handleCardPlay(player.id, card)}
             onOfferPlace={(cards, faceUpIndex) => handleOfferPlace(player.id, cards, faceUpIndex)}
             onCardFlip={(cardIndex) => handleCardFlip(index, cardIndex)} // index is the player index (offerId)
+            onOfferSelect={() => handleOfferSelect(player.id)}
             canFlipCards={gameState.currentPhase === GamePhase.BUYER_FLIP && gameState.selectedPerspective === gameState.currentBuyerIndex}
+            canSelectOffer={gameState.currentPhase === GamePhase.OFFER_SELECTION && gameState.selectedPerspective === gameState.currentBuyerIndex && index !== gameState.currentBuyerIndex && player.offer.length > 0}
           />
         ))}
       </div>

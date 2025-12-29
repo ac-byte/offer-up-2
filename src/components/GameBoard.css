@@ -270,6 +270,39 @@
   color: #666;
 }
 
+/* Offer Selection Styles */
+.offer-selection-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: center;
+}
+
+.offer-selection-header {
+  font-size: 1.1rem;
+  color: #333;
+  text-align: center;
+}
+
+.offer-selection-buttons {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.offer-select-button {
+  background-color: #17a2b8;
+  color: white;
+  box-shadow: 0 2px 4px rgba(23, 162, 184, 0.3);
+}
+
+.offer-select-button:hover {
+  background-color: #138496;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(23, 162, 184, 0.4);
+}
+
 /* Game Footer Styles */
 .game-footer {
   margin-top: 20px;

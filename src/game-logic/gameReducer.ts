@@ -1,5 +1,5 @@
 import { GameState, GameAction, GamePhase, Player, Card } from '../types'
-import { createShuffledDeck, shuffleArray } from './cards'
+import { createShuffledDeck, shuffleArray, identifyGotchaSets, identifyThingSets } from './cards'
 
 /**
  * Creates initial game state
@@ -282,6 +282,15 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         return state
       }
       
+      // Handle automatic phases
+      if (state.currentPhase === GamePhase.DEAL) {
+        return handleDealPhase(state)
+      } else if (state.currentPhase === GamePhase.GOTCHA_TRADEINS) {
+        return handleGotchaTradeinsPhase(state)
+      } else if (state.currentPhase === GamePhase.THING_TRADEINS) {
+        return handleThingTradeinsPhase(state)
+      }
+      
       const { nextPhase, nextRound } = advanceToNextPhase(state.currentPhase, state.round)
       
       return {
@@ -500,8 +509,93 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
     
     case 'SELECT_OFFER': {
-      // TODO: Implement in future tasks
-      return state
+      const { buyerId, sellerId } = action
+      
+      // Validate that current phase is offer selection
+      if (state.currentPhase !== GamePhase.OFFER_SELECTION) {
+        throw new Error('Offer selection is only allowed during offer selection phase')
+      }
+      
+      // Validate buyer ID
+      if (buyerId < 0 || buyerId >= state.players.length) {
+        throw new Error(`Invalid buyer ID: ${buyerId}`)
+      }
+      
+      // Validate that the specified buyer is actually the current buyer
+      if (buyerId !== state.currentBuyerIndex) {
+        throw new Error('Only the current buyer can select offers')
+      }
+      
+      // Validate seller ID
+      if (sellerId < 0 || sellerId >= state.players.length) {
+        throw new Error(`Invalid seller ID: ${sellerId}`)
+      }
+      
+      // Validate that seller is not the buyer
+      if (sellerId === state.currentBuyerIndex) {
+        throw new Error('Buyer cannot select their own offer (buyer has no offer)')
+      }
+      
+      const selectedSeller = state.players[sellerId]
+      
+      // Validate that the selected seller has an offer
+      if (selectedSeller.offer.length === 0) {
+        throw new Error('Selected seller has no offer to select')
+      }
+      
+      // Create new state
+      const newState = { ...state }
+      newState.players = state.players.map((player, playerIndex) => {
+        if (playerIndex === buyerId) {
+          // Buyer: remove money bag, add selected offer to collection
+          return {
+            ...player,
+            hasMoney: false,
+            collection: [...player.collection, ...selectedSeller.offer.map(offerCard => ({
+              id: offerCard.id,
+              type: offerCard.type,
+              subtype: offerCard.subtype,
+              name: offerCard.name,
+              setSize: offerCard.setSize,
+              effect: offerCard.effect
+            }))]
+          }
+        } else if (playerIndex === sellerId) {
+          // Selected seller: receive money bag, clear offer
+          return {
+            ...player,
+            hasMoney: true,
+            offer: []
+          }
+        } else {
+          // Non-selected sellers: return offer to collection, clear offer
+          const returnedCards = player.offer.map(offerCard => ({
+            id: offerCard.id,
+            type: offerCard.type,
+            subtype: offerCard.subtype,
+            name: offerCard.name,
+            setSize: offerCard.setSize,
+            effect: offerCard.effect
+          }))
+          
+          return {
+            ...player,
+            collection: [...player.collection, ...returnedCards],
+            offer: []
+          }
+        }
+      })
+      
+      // Update current buyer index to the selected seller
+      newState.currentBuyerIndex = sellerId
+      
+      // Automatically advance to offer distribution phase
+      const { nextPhase, nextRound } = advanceToNextPhase(newState.currentPhase, newState.round)
+      newState.currentPhase = nextPhase
+      newState.round = nextRound
+      newState.phaseInstructions = getPhaseInstructions(nextPhase)
+      
+      return newState
     }
     
     case 'DECLARE_DONE': {
@@ -511,6 +605,148 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     
     default:
       return state
+  }
+}
+
+/**
+ * Processes automatic Gotcha trade-ins for all players
+ * Removes complete Gotcha sets from collections and applies their effects
+ */
+export function processGotchaTradeins(state: GameState): GameState {
+  const newState = { ...state }
+  newState.players = state.players.map(player => {
+    const playerCopy = { ...player, collection: [...player.collection] }
+    
+    // Identify complete Gotcha sets
+    const completeSets = identifyGotchaSets(playerCopy.collection)
+    
+    if (completeSets.length === 0) {
+      return playerCopy
+    }
+    
+    // Remove traded-in cards from collection
+    const tradedInCardIds = new Set(
+      completeSets.flat().map(card => card.id)
+    )
+    
+    playerCopy.collection = playerCopy.collection.filter(
+      card => !tradedInCardIds.has(card.id)
+    )
+    
+    // Apply Gotcha effects (for now, just remove the cards)
+    // TODO: Implement specific Gotcha effects in future tasks
+    
+    return playerCopy
+  })
+  
+  // Add traded-in cards to discard pile
+  const tradedInCards = newState.players.flatMap(player => {
+    const originalPlayer = state.players.find(p => p.id === player.id)!
+    const originalCardIds = new Set(originalPlayer.collection.map(card => card.id))
+    const currentCardIds = new Set(player.collection.map(card => card.id))
+    
+    return originalPlayer.collection.filter(card => 
+      originalCardIds.has(card.id) && !currentCardIds.has(card.id)
+    )
+  })
+  
+  newState.discardPile = [...state.discardPile, ...tradedInCards]
+  
+  return newState
+}
+
+/**
+ * Processes automatic Thing trade-ins for all players
+ * Removes complete Thing sets from collections and awards points
+ */
+export function processThingTradeins(state: GameState): GameState {
+  const newState = { ...state }
+  newState.players = state.players.map(player => {
+    const playerCopy = { ...player, collection: [...player.collection] }
+    
+    // Identify complete Thing sets
+    const completeSets = identifyThingSets(playerCopy.collection)
+    
+    if (completeSets.length === 0) {
+      return playerCopy
+    }
+    
+    // Calculate points for complete sets
+    // 1 Giant = 1 point, 2 Big = 1 point, 3 Medium = 1 point, 4 Tiny = 1 point
+    const pointsEarned = completeSets.length // Each complete set = 1 point
+    
+    // Remove traded-in cards from collection
+    const tradedInCardIds = new Set(
+      completeSets.flat().map(card => card.id)
+    )
+    
+    playerCopy.collection = playerCopy.collection.filter(
+      card => !tradedInCardIds.has(card.id)
+    )
+    
+    // Award points
+    playerCopy.points += pointsEarned
+    
+    return playerCopy
+  })
+  
+  // Add traded-in cards to discard pile
+  const tradedInCards = newState.players.flatMap(player => {
+    const originalPlayer = state.players.find(p => p.id === player.id)!
+    const originalCardIds = new Set(originalPlayer.collection.map(card => card.id))
+    const currentCardIds = new Set(player.collection.map(card => card.id))
+    
+    return originalPlayer.collection.filter(card => 
+      originalCardIds.has(card.id) && !currentCardIds.has(card.id)
+    )
+  })
+  
+  newState.discardPile = [...state.discardPile, ...tradedInCards]
+  
+  return newState
+}
+
+/**
+ * Handles the Gotcha trade-ins phase automatically
+ */
+export function handleGotchaTradeinsPhase(state: GameState): GameState {
+  if (state.currentPhase !== GamePhase.GOTCHA_TRADEINS) {
+    return state
+  }
+
+  // Process Gotcha trade-ins for all players
+  const newState = processGotchaTradeins(state)
+  
+  // Automatically advance to next phase after trade-ins
+  const { nextPhase, nextRound } = advanceToNextPhase(newState.currentPhase, newState.round)
+  
+  return {
+    ...newState,
+    currentPhase: nextPhase,
+    round: nextRound,
+    phaseInstructions: getPhaseInstructions(nextPhase)
+  }
+}
+
+/**
+ * Handles the Thing trade-ins phase automatically
+ */
+export function handleThingTradeinsPhase(state: GameState): GameState {
+  if (state.currentPhase !== GamePhase.THING_TRADEINS) {
+    return state
+  }
+
+  // Process Thing trade-ins for all players
+  const newState = processThingTradeins(state)
+  
+  // Automatically advance to next phase after trade-ins
+  const { nextPhase, nextRound } = advanceToNextPhase(newState.currentPhase, newState.round)
+  
+  return {
+    ...newState,
+    currentPhase: nextPhase,
+    round: nextRound,
+    phaseInstructions: getPhaseInstructions(nextPhase)
   }
 }
 

@@ -131,7 +131,7 @@ This implementation plan breaks down the trading card game into discrete, testab
     - **Validates: Requirements 7.1, 7.2, 7.3, 7.4, 8.1, 8.2, 8.3, 8.4**
 
 - [ ] 9. Implement offer selection and distribution
-  - [ ] 9.1 Create offer selection logic
+  - [x] 9.1 Create offer selection logic
     - Allow buyer to select exactly one offer
     - Transfer money bag to selected seller
     - Move selected offer to buyer's collection
@@ -148,13 +148,13 @@ This implementation plan breaks down the trading card game into discrete, testab
     - **Validates: Requirements 9.1, 9.2, 9.3, 9.4, 9.5**
 
 - [ ] 10. Implement trade-in mechanics
-  - [ ] 10.1 Create set identification logic
+  - [x] 10.1 Create set identification logic
     - Identify complete Gotcha sets in collections
     - Identify complete Thing sets in collections
     - Implement automatic trade-in system
     - _Requirements: 10.1, 10.2, 10.3_
 
-  - [ ] 10.2 Implement point calculation system
+  - [x] 10.2 Implement point calculation system
     - Award points for Thing sets (1 Giant=1pt, 2 Big=1pt, 3 Medium=1pt, 4 Tiny=1pt)
     - Update player point totals
     - _Requirements: 10.4, 10.5_

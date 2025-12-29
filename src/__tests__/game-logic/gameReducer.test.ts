@@ -1123,5 +1123,227 @@ describe('Game Reducer', () => {
         expect(gameState.discardPile).toEqual(originalDiscardPile)
       })
     })
+
+    describe('SELECT_OFFER action', () => {
+      let gameState: ReturnType<typeof createInitialGameState>
+
+      beforeEach(() => {
+        // Create a game state with 3 players in offer selection phase
+        gameState = gameReducer(initialState, { type: 'START_GAME', players: ['Alice', 'Bob', 'Charlie'] })
+        gameState = { ...gameState, currentPhase: GamePhase.OFFER_SELECTION, currentBuyerIndex: 0 }
+        
+        // Set up offers for sellers (Bob and Charlie)
+        const testCards = [
+          createThingCard('giant', 0),
+          createThingCard('big', 0),
+          createThingCard('medium', 0),
+          createThingCard('tiny', 0),
+          createThingCard('giant', 1),
+          createThingCard('big', 1)
+        ]
+        
+        // Bob's offer (player 1)
+        gameState.players[1].offer = [
+          { ...testCards[0], faceUp: true, position: 0 },
+          { ...testCards[1], faceUp: false, position: 1 },
+          { ...testCards[2], faceUp: true, position: 2 }
+        ]
+        
+        // Charlie's offer (player 2)
+        gameState.players[2].offer = [
+          { ...testCards[3], faceUp: false, position: 0 },
+          { ...testCards[4], faceUp: true, position: 1 },
+          { ...testCards[5], faceUp: false, position: 2 }
+        ]
+        
+        // Alice (buyer) has money bag
+        gameState.players[0].hasMoney = true
+        gameState.players[1].hasMoney = false
+        gameState.players[2].hasMoney = false
+      })
+
+      test('successfully selects offer and transfers money bag', () => {
+        const action = { type: 'SELECT_OFFER' as const, buyerId: 0, sellerId: 1 }
+        
+        const newState = gameReducer(gameState, action)
+        
+        // Money bag should transfer from buyer to selected seller
+        expect(newState.players[0].hasMoney).toBe(false) // Alice (buyer) loses money
+        expect(newState.players[1].hasMoney).toBe(true)  // Bob (selected seller) gets money
+        expect(newState.players[2].hasMoney).toBe(false) // Charlie (non-selected seller) no money
+        
+        // Current buyer index should update to selected seller
+        expect(newState.currentBuyerIndex).toBe(1)
+      })
+
+      test('moves selected offer to buyer collection', () => {
+        const action = { type: 'SELECT_OFFER' as const, buyerId: 0, sellerId: 1 }
+        
+        const newState = gameReducer(gameState, action)
+        
+        // Buyer should have selected offer in collection
+        expect(newState.players[0].collection).toHaveLength(3)
+        expect(newState.players[0].collection.map(card => card.id)).toEqual([
+          'giant-0', 'big-0', 'medium-0'
+        ])
+        
+        // Selected seller should have empty offer
+        expect(newState.players[1].offer).toHaveLength(0)
+      })
+
+      test('returns non-selected offers to sellers collections', () => {
+        const action = { type: 'SELECT_OFFER' as const, buyerId: 0, sellerId: 1 }
+        
+        const newState = gameReducer(gameState, action)
+        
+        // Non-selected seller (Charlie) should have offer returned to collection
+        expect(newState.players[2].collection).toHaveLength(3)
+        expect(newState.players[2].collection.map(card => card.id)).toEqual([
+          'tiny-0', 'giant-1', 'big-1'
+        ])
+        
+        // Non-selected seller should have empty offer
+        expect(newState.players[2].offer).toHaveLength(0)
+      })
+
+      test('clears all offer areas after selection', () => {
+        const action = { type: 'SELECT_OFFER' as const, buyerId: 0, sellerId: 2 }
+        
+        const newState = gameReducer(gameState, action)
+        
+        // All players should have empty offers
+        expect(newState.players[0].offer).toHaveLength(0) // Buyer (no offer anyway)
+        expect(newState.players[1].offer).toHaveLength(0) // Non-selected seller
+        expect(newState.players[2].offer).toHaveLength(0) // Selected seller
+      })
+
+      test('automatically advances to offer distribution phase', () => {
+        const action = { type: 'SELECT_OFFER' as const, buyerId: 0, sellerId: 1 }
+        
+        const newState = gameReducer(gameState, action)
+        
+        expect(newState.currentPhase).toBe(GamePhase.OFFER_DISTRIBUTION)
+        expect(newState.phaseInstructions).toBe('Offer distribution: Distributing cards and money bag...')
+      })
+
+      test('can select different sellers', () => {
+        // Select Charlie instead of Bob
+        const action = { type: 'SELECT_OFFER' as const, buyerId: 0, sellerId: 2 }
+        
+        const newState = gameReducer(gameState, action)
+        
+        // Money bag should go to Charlie
+        expect(newState.players[0].hasMoney).toBe(false) // Alice loses money
+        expect(newState.players[1].hasMoney).toBe(false) // Bob gets nothing
+        expect(newState.players[2].hasMoney).toBe(true)  // Charlie gets money
+        
+        // Buyer should get Charlie's offer
+        expect(newState.players[0].collection.map(card => card.id)).toEqual([
+          'tiny-0', 'giant-1', 'big-1'
+        ])
+        
+        // Bob's offer should return to his collection
+        expect(newState.players[1].collection.map(card => card.id)).toEqual([
+          'giant-0', 'big-0', 'medium-0'
+        ])
+        
+        // Current buyer should be Charlie
+        expect(newState.currentBuyerIndex).toBe(2)
+      })
+
+      test('throws error when not in offer selection phase', () => {
+        gameState.currentPhase = GamePhase.ACTION_PHASE
+        
+        const action = { type: 'SELECT_OFFER' as const, buyerId: 0, sellerId: 1 }
+        
+        expect(() => gameReducer(gameState, action)).toThrow('Action SELECT_OFFER is not allowed during phase action_phase')
+      })
+
+      test('throws error for invalid buyer ID', () => {
+        const invalidBuyerIds = [-1, 10]
+        
+        for (const buyerId of invalidBuyerIds) {
+          const action = { type: 'SELECT_OFFER' as const, buyerId, sellerId: 1 }
+          
+          expect(() => gameReducer(gameState, action)).toThrow(`Invalid buyer ID: ${buyerId}`)
+        }
+      })
+
+      test('throws error when non-buyer tries to select offer', () => {
+        const action = { type: 'SELECT_OFFER' as const, buyerId: 1, sellerId: 2 } // Bob tries to select
+        
+        expect(() => gameReducer(gameState, action)).toThrow('Only the current buyer can select offers')
+      })
+
+      test('throws error for invalid seller ID', () => {
+        const invalidSellerIds = [-1, 10]
+        
+        for (const sellerId of invalidSellerIds) {
+          const action = { type: 'SELECT_OFFER' as const, buyerId: 0, sellerId }
+          
+          expect(() => gameReducer(gameState, action)).toThrow(`Invalid seller ID: ${sellerId}`)
+        }
+      })
+
+      test('throws error when buyer tries to select their own offer', () => {
+        const action = { type: 'SELECT_OFFER' as const, buyerId: 0, sellerId: 0 }
+        
+        expect(() => gameReducer(gameState, action)).toThrow('Buyer cannot select their own offer (buyer has no offer)')
+      })
+
+      test('throws error when selected seller has no offer', () => {
+        // Remove Bob's offer
+        gameState.players[1].offer = []
+        
+        const action = { type: 'SELECT_OFFER' as const, buyerId: 0, sellerId: 1 }
+        
+        expect(() => gameReducer(gameState, action)).toThrow('Selected seller has no offer to select')
+      })
+
+      test('preserves card properties when moving to collections', () => {
+        const action = { type: 'SELECT_OFFER' as const, buyerId: 0, sellerId: 1 }
+        
+        const newState = gameReducer(gameState, action)
+        
+        // Check that card properties are preserved (no faceUp/position properties)
+        const buyerCards = newState.players[0].collection
+        expect(buyerCards[0]).toEqual({
+          id: 'giant-0',
+          type: 'thing',
+          subtype: 'giant',
+          name: 'Giant Thing',
+          setSize: 1
+        })
+        
+        // Check non-selected seller's returned cards
+        const charlieCards = newState.players[2].collection
+        expect(charlieCards[0]).toEqual({
+          id: 'tiny-0',
+          type: 'thing',
+          subtype: 'tiny',
+          name: 'Tiny Thing',
+          setSize: 4
+        })
+      })
+
+      test('does not mutate original state', () => {
+        const originalBuyerCollection = [...gameState.players[0].collection]
+        const originalBuyerMoney = gameState.players[0].hasMoney
+        const originalSellerOffer = [...gameState.players[1].offer]
+        const originalCurrentBuyer = gameState.currentBuyerIndex
+        const originalPhase = gameState.currentPhase
+        
+        const action = { type: 'SELECT_OFFER' as const, buyerId: 0, sellerId: 1 }
+        
+        gameReducer(gameState, action)
+        
+        // Original state should be unchanged
+        expect(gameState.players[0].collection).toEqual(originalBuyerCollection)
+        expect(gameState.players[0].hasMoney).toBe(originalBuyerMoney)
+        expect(gameState.players[1].offer).toEqual(originalSellerOffer)
+        expect(gameState.currentBuyerIndex).toBe(originalCurrentBuyer)
+        expect(gameState.currentPhase).toBe(originalPhase)
+      })
+    })
   })
 })

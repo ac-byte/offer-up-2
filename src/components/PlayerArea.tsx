@@ -12,7 +12,9 @@ interface PlayerAreaProps {
   onCardPlay: (card: Card) => void;
   onOfferPlace: (cards: Card[], faceUpIndex: number) => void;
   onCardFlip: (cardIndex: number) => void;
+  onOfferSelect: () => void;
   canFlipCards: boolean;
+  canSelectOffer: boolean;
 }
 
 interface HandProps {
@@ -75,7 +77,6 @@ const Hand: React.FC<HandProps> = ({ cards, isOwnHand, onCardDrag, onCardClick, 
 
 // OfferArea sub-component
 const OfferArea: React.FC<OfferAreaProps> = ({ offer, isOwnOffer, canFlipCards, onCardClick, onDrop, onStartOfferSelection }) => {
-  const [draggedCards, setDraggedCards] = React.useState<Card[]>([])
   const [isDragOver, setIsDragOver] = React.useState(false)
 
   const getCardDisplayState = (offerCard: OfferCard): CardDisplayState => {
@@ -227,7 +228,9 @@ export const PlayerArea: React.FC<PlayerAreaProps> = ({
   onCardPlay,
   onOfferPlace,
   onCardFlip,
-  canFlipCards
+  onOfferSelect,
+  canFlipCards,
+  canSelectOffer
 }) => {
   const isOwnPerspective = player.id === perspective;
   const [selectedCards, setSelectedCards] = React.useState<Card[]>([])
@@ -350,6 +353,16 @@ export const PlayerArea: React.FC<PlayerAreaProps> = ({
             onClick={() => handleStartOfferSelection()}
           >
             Make Offer
+          </button>
+        )}
+        
+        {/* Offer selection button for buyers */}
+        {canSelectOffer && (
+          <button 
+            className="player-area__select-offer-button"
+            onClick={onOfferSelect}
+          >
+            Select This Offer
           </button>
         )}
         
