@@ -22,6 +22,7 @@ describe('Trade-in Processing', () => {
     discardPile: [],
     selectedPerspective: 0,
     phaseInstructions: '',
+    autoFollowPerspective: true,
     winner: null,
     gameStarted: true
   })

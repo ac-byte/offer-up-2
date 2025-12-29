@@ -225,7 +225,7 @@ This implementation plan breaks down the trading card game into discrete, testab
     - Update card displays based on selected perspective
     - _Requirements: 15.2, 15.3, 15.4_
 
-  - [ ] 14.4 Implement automatic perspective following
+  - [x] 14.4 Implement automatic perspective following
     - Automatically update perspective when active player changes
     - Maintain automatic following across all phases and rotations
     - Allow manual override with temporary disable of auto-following

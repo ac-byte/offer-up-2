@@ -13,6 +13,11 @@ export const GameBoard: React.FC = () => {
     dispatch(action)
   }
 
+  const handleToggleAutoFollow = () => {
+    const action: GameAction = { type: 'TOGGLE_AUTO_FOLLOW' }
+    dispatch(action)
+  }
+
   const handleStartGame = () => {
     const players = ['Alice', 'Bob', 'Charlie', 'Diana'] // Example 4-player game
     const action: GameAction = { type: 'START_GAME', players }
@@ -222,7 +227,9 @@ export const GameBoard: React.FC = () => {
           <PerspectiveSelector
             players={gameState.players}
             selectedPerspective={gameState.selectedPerspective}
+            autoFollowPerspective={gameState.autoFollowPerspective}
             onPerspectiveChange={handlePerspectiveChange}
+            onToggleAutoFollow={handleToggleAutoFollow}
           />
         </div>
         

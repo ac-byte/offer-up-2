@@ -15,6 +15,7 @@ export function createInitialGameState(): GameState {
     discardPile: [],
     selectedPerspective: 0,
     phaseInstructions: 'Waiting for game to start...',
+    autoFollowPerspective: true,
     winner: null,
     gameStarted: false
   }
@@ -217,10 +218,17 @@ export function handleWinnerDeterminationPhase(state: GameState): GameState {
     // Set current player to first eligible player for the new phase
     const firstEligiblePlayer = getNextEligiblePlayer(-1, stateWithNewPhase, new Set())
     
-    return {
+    let finalState = {
       ...stateWithNewPhase,
       currentPlayerIndex: firstEligiblePlayer !== null ? firstEligiblePlayer : 0
     }
+    
+    // Apply automatic perspective following if enabled
+    if (firstEligiblePlayer !== null) {
+      finalState = updatePerspectiveForActivePlayer(finalState, firstEligiblePlayer)
+    }
+    
+    return finalState
   }
 }
 
@@ -316,10 +324,17 @@ export function handleDealPhase(state: GameState): GameState {
   // Set current player to first eligible player for the new phase
   const firstEligiblePlayer = getNextEligiblePlayer(-1, stateWithNewPhase, new Set())
   
-  return {
+  let finalState = {
     ...stateWithNewPhase,
     currentPlayerIndex: firstEligiblePlayer !== null ? firstEligiblePlayer : 0
   }
+  
+  // Apply automatic perspective following if enabled
+  if (firstEligiblePlayer !== null) {
+    finalState = updatePerspectiveForActivePlayer(finalState, firstEligiblePlayer)
+  }
+  
+  return finalState
 }
 
 /**
@@ -370,6 +385,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         discardPile: [],
         selectedPerspective: 0,
         phaseInstructions: getPhaseInstructions(GamePhase.DEAL),
+        autoFollowPerspective: true,
         winner: null,
         gameStarted: true
       }
@@ -377,10 +393,17 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       // Set current player to first eligible player for the deal phase
       const firstEligiblePlayer = getNextEligiblePlayer(-1, initialState, new Set())
       
-      return {
+      let finalState: GameState = {
         ...initialState,
         currentPlayerIndex: firstEligiblePlayer !== null ? firstEligiblePlayer : 0
       }
+      
+      // Apply automatic perspective following if enabled
+      if (firstEligiblePlayer !== null) {
+        finalState = updatePerspectiveForActivePlayer(finalState, firstEligiblePlayer)
+      }
+      
+      return finalState
     }
     
     case 'ADVANCE_PHASE': {
@@ -413,10 +436,17 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       // Set current player to first eligible player for the new phase
       const firstEligiblePlayer = getNextEligiblePlayer(-1, newState, new Set())
       
-      return {
+      let finalState = {
         ...newState,
         currentPlayerIndex: firstEligiblePlayer !== null ? firstEligiblePlayer : 0
       }
+      
+      // Apply automatic perspective following if enabled
+      if (firstEligiblePlayer !== null) {
+        finalState = updatePerspectiveForActivePlayer(finalState, firstEligiblePlayer)
+      }
+      
+      return finalState
     }
     
     case 'ADVANCE_PLAYER': {
@@ -438,8 +468,25 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       
       return {
         ...state,
-        selectedPerspective: playerId
+        selectedPerspective: playerId,
+        // Temporarily disable auto-follow when user manually changes perspective
+        autoFollowPerspective: false
       }
+    }
+    
+    case 'TOGGLE_AUTO_FOLLOW': {
+      const newAutoFollow = !state.autoFollowPerspective
+      let newState = {
+        ...state,
+        autoFollowPerspective: newAutoFollow
+      }
+      
+      // If enabling auto-follow, immediately update perspective to current active player
+      if (newAutoFollow) {
+        newState = updatePerspectiveForActivePlayer(newState, state.currentPlayerIndex)
+      }
+      
+      return newState
     }
     
     case 'PLACE_OFFER': {
@@ -522,10 +569,17 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         // Set current player to first eligible player for the new phase
         const firstEligiblePlayer = getNextEligiblePlayer(-1, stateWithNewPhase, new Set())
         
-        return {
+        let finalState = {
           ...stateWithNewPhase,
           currentPlayerIndex: firstEligiblePlayer !== null ? firstEligiblePlayer : 0
         }
+        
+        // Apply automatic perspective following if enabled
+        if (firstEligiblePlayer !== null) {
+          finalState = updatePerspectiveForActivePlayer(finalState, firstEligiblePlayer)
+        }
+        
+        return finalState
       } else {
         // Not all offers complete yet - advance to next eligible player
         return advanceToNextEligiblePlayer(newState)
@@ -604,10 +658,17 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       // Set current player to first eligible player for the new phase
       const firstEligiblePlayer = getNextEligiblePlayer(-1, stateWithNewPhase, new Set())
       
-      return {
+      let finalState = {
         ...stateWithNewPhase,
         currentPlayerIndex: firstEligiblePlayer !== null ? firstEligiblePlayer : 0
       }
+      
+      // Apply automatic perspective following if enabled
+      if (firstEligiblePlayer !== null) {
+        finalState = updatePerspectiveForActivePlayer(finalState, firstEligiblePlayer)
+      }
+      
+      return finalState
     }
     
     case 'PLAY_ACTION_CARD': {
@@ -752,10 +813,17 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       // Set current player to first eligible player for the new phase
       const firstEligiblePlayer = getNextEligiblePlayer(-1, stateWithNewPhase, new Set())
       
-      return {
+      let finalState = {
         ...stateWithNewPhase,
         currentPlayerIndex: firstEligiblePlayer !== null ? firstEligiblePlayer : 0
       }
+      
+      // Apply automatic perspective following if enabled
+      if (firstEligiblePlayer !== null) {
+        finalState = updatePerspectiveForActivePlayer(finalState, firstEligiblePlayer)
+      }
+      
+      return finalState
     }
     
     case 'DECLARE_DONE': {
@@ -903,10 +971,17 @@ export function handleGotchaTradeinsPhase(state: GameState): GameState {
   // Set current player to first eligible player for the new phase
   const firstEligiblePlayer = getNextEligiblePlayer(-1, stateWithNewPhase, new Set())
   
-  return {
+  let finalState = {
     ...stateWithNewPhase,
     currentPlayerIndex: firstEligiblePlayer !== null ? firstEligiblePlayer : 0
   }
+  
+  // Apply automatic perspective following if enabled
+  if (firstEligiblePlayer !== null) {
+    finalState = updatePerspectiveForActivePlayer(finalState, firstEligiblePlayer)
+  }
+  
+  return finalState
 }
 
 /**
@@ -934,10 +1009,17 @@ export function handleThingTradeinsPhase(state: GameState): GameState {
   // Set current player to first eligible player for the new phase
   const firstEligiblePlayer = getNextEligiblePlayer(-1, stateWithNewPhase, new Set())
   
-  return {
+  let finalState = {
     ...stateWithNewPhase,
     currentPlayerIndex: firstEligiblePlayer !== null ? firstEligiblePlayer : 0
   }
+  
+  // Apply automatic perspective following if enabled
+  if (firstEligiblePlayer !== null) {
+    finalState = updatePerspectiveForActivePlayer(finalState, firstEligiblePlayer)
+  }
+  
+  return finalState
 }
 
 /**
@@ -1279,10 +1361,15 @@ export function advanceToNextEligiblePlayer(state: GameState, visitedPlayers: Se
   
   if (nextPlayerIndex !== null) {
     // Found next eligible player
-    return {
+    let newState = {
       ...state,
       currentPlayerIndex: nextPlayerIndex
     }
+    
+    // Apply automatic perspective following if enabled
+    newState = updatePerspectiveForActivePlayer(newState, nextPlayerIndex)
+    
+    return newState
   } else {
     // No more eligible players - check if we should advance phase
     if (allEligiblePlayersProcessed(state, newVisitedPlayers)) {
@@ -1300,15 +1387,44 @@ export function advanceToNextEligiblePlayer(state: GameState, visitedPlayers: Se
       // Set current player to first eligible player for the new phase
       const firstEligiblePlayer = getNextEligiblePlayer(-1, stateWithNewPhase, new Set())
       
-      return {
+      let finalState = {
         ...stateWithNewPhase,
         currentPlayerIndex: firstEligiblePlayer !== null ? firstEligiblePlayer : 0
       }
+      
+      // Apply automatic perspective following if enabled
+      if (firstEligiblePlayer !== null) {
+        finalState = updatePerspectiveForActivePlayer(finalState, firstEligiblePlayer)
+      }
+      
+      return finalState
     } else {
       // This shouldn't happen, but return current state as fallback
       return state
     }
   }
+}
+
+/**
+ * Automatically updates perspective to follow the active player if auto-follow is enabled
+ * @param state Current game state
+ * @param newPlayerIndex New active player index
+ * @returns Updated state with perspective following active player if enabled
+ */
+export function updatePerspectiveForActivePlayer(state: GameState, newPlayerIndex: number): GameState {
+  if (!state.autoFollowPerspective) {
+    return state
+  }
+  
+  // Only update perspective if the active player actually changed
+  if (newPlayerIndex !== state.currentPlayerIndex && newPlayerIndex >= 0 && newPlayerIndex < state.players.length) {
+    return {
+      ...state,
+      selectedPerspective: newPlayerIndex
+    }
+  }
+  
+  return state
 }
 
 /**

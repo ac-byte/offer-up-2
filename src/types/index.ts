@@ -15,6 +15,7 @@ export interface GameState {
   // UI State
   selectedPerspective: number
   phaseInstructions: string
+  autoFollowPerspective: boolean
   
   // Game Status
   winner: number | null
@@ -68,6 +69,7 @@ export type GameAction =
   | { type: 'PLAY_ACTION_CARD'; playerId: number; cardId: string }
   | { type: 'SELECT_OFFER'; buyerId: number; sellerId: number }
   | { type: 'CHANGE_PERSPECTIVE'; playerId: number }
+  | { type: 'TOGGLE_AUTO_FOLLOW' }
   | { type: 'DECLARE_DONE'; playerId: number }
 
 // Card display states

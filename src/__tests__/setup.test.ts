@@ -31,6 +31,7 @@ describe('Project Setup', () => {
       discardPile: [],
       selectedPerspective: 0,
       phaseInstructions: 'Test phase',
+      autoFollowPerspective: true,
       winner: null,
       gameStarted: false
     };

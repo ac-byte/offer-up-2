@@ -335,7 +335,7 @@ describe('Player Rotation Logic', () => {
         player.collection = []
       })
       
-      const visitedPlayers = new Set()
+      const visitedPlayers = new Set<number>()
       expect(allEligiblePlayersProcessed(gameState, visitedPlayers)).toBe(true)
     })
   })

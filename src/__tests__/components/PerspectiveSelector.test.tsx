@@ -36,9 +36,11 @@ const mockPlayers: Player[] = [
 
 describe('PerspectiveSelector', () => {
   const mockOnPerspectiveChange = jest.fn()
+  const mockOnToggleAutoFollow = jest.fn()
 
   beforeEach(() => {
     mockOnPerspectiveChange.mockClear()
+    mockOnToggleAutoFollow.mockClear()
   })
 
   it('renders with all player options', () => {
@@ -46,7 +48,9 @@ describe('PerspectiveSelector', () => {
       <PerspectiveSelector
         players={mockPlayers}
         selectedPerspective={0}
+        autoFollowPerspective={true}
         onPerspectiveChange={mockOnPerspectiveChange}
+        onToggleAutoFollow={mockOnToggleAutoFollow}
       />
     )
 
@@ -69,7 +73,9 @@ describe('PerspectiveSelector', () => {
       <PerspectiveSelector
         players={mockPlayers}
         selectedPerspective={1}
+        autoFollowPerspective={true}
         onPerspectiveChange={mockOnPerspectiveChange}
+        onToggleAutoFollow={mockOnToggleAutoFollow}
       />
     )
 
@@ -83,7 +89,9 @@ describe('PerspectiveSelector', () => {
       <PerspectiveSelector
         players={mockPlayers}
         selectedPerspective={0}
+        autoFollowPerspective={true}
         onPerspectiveChange={mockOnPerspectiveChange}
+        onToggleAutoFollow={mockOnToggleAutoFollow}
       />
     )
 
@@ -94,6 +102,57 @@ describe('PerspectiveSelector', () => {
     expect(mockOnPerspectiveChange).toHaveBeenCalledTimes(1)
   })
 
+  it('displays auto-follow control with correct state', () => {
+    render(
+      <PerspectiveSelector
+        players={mockPlayers}
+        selectedPerspective={0}
+        autoFollowPerspective={true}
+        onPerspectiveChange={mockOnPerspectiveChange}
+        onToggleAutoFollow={mockOnToggleAutoFollow}
+      />
+    )
+
+    const checkbox = screen.getByRole('checkbox')
+    expect(checkbox).toBeInTheDocument()
+    expect(checkbox).toBeChecked()
+    expect(screen.getByText('🔄 Auto-follow active player')).toBeInTheDocument()
+  })
+
+  it('displays manual mode when auto-follow is disabled', () => {
+    render(
+      <PerspectiveSelector
+        players={mockPlayers}
+        selectedPerspective={0}
+        autoFollowPerspective={false}
+        onPerspectiveChange={mockOnPerspectiveChange}
+        onToggleAutoFollow={mockOnToggleAutoFollow}
+      />
+    )
+
+    const checkbox = screen.getByRole('checkbox')
+    expect(checkbox).toBeInTheDocument()
+    expect(checkbox).not.toBeChecked()
+    expect(screen.getByText('👤 Manual perspective')).toBeInTheDocument()
+  })
+
+  it('calls onToggleAutoFollow when checkbox is clicked', () => {
+    render(
+      <PerspectiveSelector
+        players={mockPlayers}
+        selectedPerspective={0}
+        autoFollowPerspective={true}
+        onPerspectiveChange={mockOnPerspectiveChange}
+        onToggleAutoFollow={mockOnToggleAutoFollow}
+      />
+    )
+
+    const checkbox = screen.getByRole('checkbox')
+    fireEvent.click(checkbox)
+
+    expect(mockOnToggleAutoFollow).toHaveBeenCalledTimes(1)
+  })
+
   it('maintains independence from current acting player', () => {
     // This test verifies that the perspective selector is independent
     // from game state like current player or buyer
@@ -101,7 +160,9 @@ describe('PerspectiveSelector', () => {
       <PerspectiveSelector
         players={mockPlayers}
         selectedPerspective={2}
+        autoFollowPerspective={false}
         onPerspectiveChange={mockOnPerspectiveChange}
+        onToggleAutoFollow={mockOnToggleAutoFollow}
       />
     )
 
@@ -117,7 +178,9 @@ describe('PerspectiveSelector', () => {
       <PerspectiveSelector
         players={[]}
         selectedPerspective={0}
+        autoFollowPerspective={true}
         onPerspectiveChange={mockOnPerspectiveChange}
+        onToggleAutoFollow={mockOnToggleAutoFollow}
       />
     )
 
@@ -131,7 +194,9 @@ describe('PerspectiveSelector', () => {
       <PerspectiveSelector
         players={mockPlayers}
         selectedPerspective={0}
+        autoFollowPerspective={false}
         onPerspectiveChange={mockOnPerspectiveChange}
+        onToggleAutoFollow={mockOnToggleAutoFollow}
       />
     )
 
@@ -145,7 +210,9 @@ describe('PerspectiveSelector', () => {
       <PerspectiveSelector
         players={mockPlayers}
         selectedPerspective={1}
+        autoFollowPerspective={false}
         onPerspectiveChange={mockOnPerspectiveChange}
+        onToggleAutoFollow={mockOnToggleAutoFollow}
       />
     )
 

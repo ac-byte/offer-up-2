@@ -51,7 +51,11 @@ describe('PlayerArea Component', () => {
     perspective: 0,
     phase: GamePhase.DEAL,
     onCardPlay: jest.fn(),
-    onOfferPlace: jest.fn()
+    onOfferPlace: jest.fn(),
+    onCardFlip: jest.fn(),
+    onOfferSelect: jest.fn(),
+    canFlipCards: false,
+    canSelectOffer: false
   };
 
   beforeEach(() => {
