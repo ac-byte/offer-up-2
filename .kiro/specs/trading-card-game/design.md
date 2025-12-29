@@ -1,0 +1,567 @@
+# Design Document: Trading Card Game
+
+## Overview
+
+This design document outlines the architecture for a React-based trading card game featuring a complex 10-phase round system with 3-6 players. The application will use modern React patterns including hooks, context, and reducer patterns to manage the sophisticated game state while providing an intuitive drag-and-drop interface for card interactions.
+
+The game implements a unique buyer-seller mechanic where players rotate through roles, create strategic offers with hidden information, and compete to collect card sets for points. The design emphasizes clean separation of concerns, testable game logic, and flexible UI components that can adapt to different player perspectives.
+
+## Architecture
+
+### High-Level Architecture
+
+```mermaid
+graph TB
+    A[App Component] --> B[Game Provider]
+    B --> C[Game Board]
+    C --> D[Player Areas]
+    C --> E[Phase Display]
+    C --> F[Perspective Selector]
+    
+    D --> G[Hand Component]
+    D --> H[Offer Area]
+    D --> I[Collection Area]
+    
+    B --> J[Game State Context]
+    J --> K[Game Reducer]
+    K --> L[Phase Handlers]
+    K --> M[Card Logic]
+    K --> N[Player Logic]
+```
+
+### Component Hierarchy
+
+- **App**: Root component with global providers
+- **GameProvider**: Context provider for game state management
+- **GameBoard**: Main game interface container
+  - **PhaseDisplay**: Shows current phase and instructions
+  - **PerspectiveSelector**: Dropdown for viewing different player perspectives
+  - **PlayerArea** (3-6 instances): Individual player game areas
+    - **Hand**: Player's current cards
+    - **OfferArea**: 3-card offer display
+    - **CollectionArea**: Accumulated cards and points
+  - **GameControls**: Phase advancement and action buttons
+
+### State Management Strategy
+
+The application will use React's `useReducer` hook combined with Context API for centralized state management. This approach provides:
+
+- **Predictable state updates** through reducer actions
+- **Complex state logic** handling for multi-phase gameplay
+- **Easy testing** of game logic through pure reducer functions
+- **Performance optimization** through selective context subscriptions
+
+### Future Client/Server Architecture Considerations
+
+The current design is structured to facilitate future migration to a client/server model with minimal changes:
+
+**Current Architecture Benefits for Client/Server Migration**:
+- **Pure reducer functions**: Game logic is already separated from UI, making it easy to move to server
+- **Action-based state updates**: Actions can be serialized and sent over network
+- **Immutable state patterns**: State snapshots can be efficiently synchronized
+- **Perspective-based rendering**: UI already handles viewing game from different player perspectives
+
+**Design Patterns Supporting Migration**:
+- **Centralized state management**: All game state in single reducer makes server state management straightforward
+- **Event-driven architecture**: Actions map directly to server events/messages
+- **Stateless UI components**: Components receive props and dispatch actions, easily adaptable to remote state
+- **Validation separation**: Game rule validation in reducer can be moved to server
+
+**Recommended Additions for Easier Migration**:
+1. **Action serialization**: Ensure all actions contain only serializable data
+2. **State synchronization hooks**: Design state updates to be atomic and conflict-free
+3. **Network abstraction layer**: Prepare action dispatching to work through network layer
+4. **Player authentication**: Add player ID tracking to all actions
+5. **Game session management**: Structure state to support multiple concurrent games
+
+The current React patterns (hooks, context, reducers) will support the transition well, as the UI layer can remain largely unchanged while the state management layer is adapted to communicate with a server instead of local reducers.
+
+## Components and Interfaces
+
+### Core Game State Interface
+
+```typescript
+interface GameState {
+  // Game Configuration
+  players: Player[]
+  currentBuyerIndex: number
+  currentPhase: GamePhase
+  currentPlayerIndex: number
+  round: number
+  
+  // Card Management
+  drawPile: Card[]
+  discardPile: Card[]
+  
+  // UI State
+  selectedPerspective: number
+  phaseInstructions: string
+  
+  // Game Status
+  winner: number | null
+  gameStarted: boolean
+}
+
+interface Player {
+  id: number
+  name: string
+  hand: Card[]
+  offer: OfferCard[]
+  collection: Card[]
+  points: number
+  hasMoney: boolean
+}
+
+interface Card {
+  id: string
+  type: 'thing' | 'gotcha' | 'action'
+  subtype: string
+  name: string
+  setSize: number
+  effect?: string
+}
+
+interface OfferCard extends Card {
+  faceUp: boolean
+  position: number // 0, 1, or 2
+}
+
+enum GamePhase {
+  BUYER_ASSIGNMENT = 'buyer_assignment',
+  DEAL = 'deal',
+  OFFER_PHASE = 'offer_phase',
+  BUYER_FLIP = 'buyer_flip',
+  ACTION_PHASE = 'action_phase',
+  OFFER_SELECTION = 'offer_selection',
+  OFFER_DISTRIBUTION = 'offer_distribution',
+  GOTCHA_TRADEINS = 'gotcha_tradeins',
+  THING_TRADEINS = 'thing_tradeins',
+  WINNER_DETERMINATION = 'winner_determination'
+}
+```
+
+### Game Actions Interface
+
+```typescript
+type GameAction = 
+  | { type: 'START_GAME'; players: string[] }
+  | { type: 'ADVANCE_PHASE' }
+  | { type: 'PLACE_OFFER'; playerId: number; cards: Card[]; faceUpIndex: number }
+  | { type: 'FLIP_CARD'; offerId: number; cardIndex: number }
+  | { type: 'PLAY_ACTION_CARD'; playerId: number; cardId: string }
+  | { type: 'SELECT_OFFER'; buyerId: number; sellerId: number }
+  | { type: 'CHANGE_PERSPECTIVE'; playerId: number }
+  | { type: 'DECLARE_DONE'; playerId: number }
+```
+
+### Card Component Interface
+
+```typescript
+interface CardProps {
+  card: Card
+  displayState: 'face_up' | 'face_down' | 'partial'
+  draggable?: boolean
+  onClick?: () => void
+  onDragStart?: (card: Card) => void
+  className?: string
+}
+```
+
+### Player Area Component Interface
+
+```typescript
+interface PlayerAreaProps {
+  player: Player
+  isCurrentPlayer: boolean
+  isBuyer: boolean
+  perspective: number
+  phase: GamePhase
+  onCardPlay: (card: Card) => void
+  onOfferPlace: (cards: Card[], faceUpIndex: number) => void
+}
+```
+
+## Data Models
+
+### Deck Composition
+
+The game uses a fixed deck of 120 cards:
+
+**Thing Cards (65 total)**:
+- Giant Thing: 4 cards (1 card = 1 point)
+- Big Thing: 16 cards (2 cards = 1 point)  
+- Medium Thing: 25 cards (3 cards = 1 point)
+- Tiny Thing: 20 cards (4 cards = 1 point)
+
+**Gotcha Cards (32 total)**:
+- Gotcha Once: 10 cards
+- Gotcha Twice: 10 cards  
+- Gotcha Bad: 12 cards
+
+**Action Cards (23 total)**:
+- Flip One: 5 cards
+- Add One: 6 cards
+- Remove One: 6 cards
+- Remove Two: 3 cards
+- Steal A Point: 3 cards
+
+### Card Display Logic
+
+Cards have three visual states based on game rules and player perspective:
+
+1. **Face Up**: Full card information visible
+   - All collection cards
+   - Face up offer cards
+   - Own hand cards (from own perspective)
+
+2. **Face Down**: Generic card back shown
+   - Other players' hand cards
+   - Face down offer cards (from other perspectives)
+
+3. **Partial**: Hybrid display showing card info but indicating hidden status
+   - Own face down offer cards (from own perspective)
+   - Shows card name/type but with visual indicator of face down status
+
+### Player Rotation Logic
+
+The game implements clockwise player rotation with automatic skipping:
+
+- **Standard rotation**: Buyer → Player to Buyer's right → ... → Player to Buyer's left
+- **Buyer-excluded phases**: Start with player to Buyer's right
+- **Auto-skip conditions**: Players with no valid actions are automatically skipped
+- **Action phase special case**: After any action card play, full rotation occurs for responses
+
+## Correctness Properties
+
+*A property is a characteristic or behavior that should hold true across all valid executions of a system—essentially, a formal statement about what the system should do. Properties serve as the bridge between human-readable specifications and machine-verifiable correctness guarantees.*
+
+Based on the prework analysis, the following properties have been identified as testable through property-based testing:
+
+### Deck and Game Initialization Properties
+
+**Property 1: Deck composition correctness**
+*For any* newly created deck, the total count should be exactly 65 Thing cards, 32 Gotcha cards, and 23 Action cards
+**Validates: Requirements 1.1**
+
+**Property 2: Thing card distribution**
+*For any* newly created deck, Thing cards should contain exactly 4 Giant, 16 Big, 25 Medium, and 20 Tiny cards
+**Validates: Requirements 1.2**
+
+**Property 3: Gotcha card distribution**
+*For any* newly created deck, Gotcha cards should contain exactly 10 Once, 10 Twice, and 12 Bad cards
+**Validates: Requirements 1.3**
+
+**Property 4: Action card distribution**
+*For any* newly created deck, Action cards should contain exactly 5 Flip One, 6 Add One, 6 Remove One, 3 Remove Two, and 3 Steal A Point cards
+**Validates: Requirements 1.4**
+
+**Property 5: Deck shuffling**
+*For any* two newly created and shuffled decks, they should have different card orders (with high probability)
+**Validates: Requirements 1.5**
+
+**Property 6: Player count validation**
+*For any* game initialization attempt, it should succeed only when player count is between 3 and 6 inclusive
+**Validates: Requirements 2.1**
+
+**Property 7: Random buyer selection**
+*For any* set of players across multiple game starts, each player should have a chance to be selected as the initial buyer
+**Validates: Requirements 2.2**
+
+**Property 8: Player area initialization**
+*For any* started game, each player should have an offer area, collection area, and empty hand
+**Validates: Requirements 2.3, 2.4**
+
+### Phase Management Properties
+
+**Property 9: Phase sequence correctness**
+*For any* game round, phases should execute in the exact order: Buyer assignment, Deal, Offer phase, Buyer-flip phase, Action phase, Offer selection, Offer distribution, Gotcha trade-ins, Thing trade-ins, Winner determination
+**Validates: Requirements 3.1**
+
+**Property 10: Phase transition automation**
+*For any* completed phase, the game should automatically advance to the next phase in sequence
+**Validates: Requirements 3.3**
+
+**Property 11: Phase action validation**
+*For any* player action attempt, it should be rejected if attempted outside the appropriate phase
+**Validates: Requirements 3.4**
+
+**Property 12: Game continuation until winner**
+*For any* game state without a clear winner, the game should continue to the next round
+**Validates: Requirements 3.5**
+
+### Deal Phase Properties
+
+**Property 13: Hand replenishment**
+*For any* deal phase execution, all players should end with exactly 5 cards in hand
+**Validates: Requirements 4.1**
+
+**Property 14: Sequential dealing**
+*For any* deal phase, cards should be dealt one at a time to each player in sequence
+**Validates: Requirements 4.2**
+
+**Property 15: Deck reshuffling**
+*For any* deal phase when draw pile is empty, the discard pile should become the new shuffled draw pile
+**Validates: Requirements 4.3**
+
+### Offer Phase Properties
+
+**Property 16: Offer card count**
+*For any* seller's offer, it should contain exactly 3 cards from their hand
+**Validates: Requirements 5.1**
+
+**Property 17: Offer face up/down distribution**
+*For any* seller's offer, it should have exactly 2 face down cards and 1 face up card
+**Validates: Requirements 5.2**
+
+**Property 18: Offer immutability**
+*For any* placed offer, attempts to modify it should be rejected
+**Validates: Requirements 5.3**
+
+**Property 19: Phase advancement condition**
+*For any* offer phase, advancement to buyer-flip should occur only when all sellers have completed offers
+**Validates: Requirements 5.5**
+
+### Buyer-Flip Phase Properties
+
+**Property 20: Buyer flip permissions**
+*For any* buyer-flip phase, only the buyer should be able to flip cards, and only one card total
+**Validates: Requirements 6.1, 6.3**
+
+**Property 21: Card flip state change**
+*For any* flipped card, its state should change from face down to face up
+**Validates: Requirements 6.2**
+
+**Property 22: Phase advancement after flip**
+*For any* card flip action, the phase should advance to Action phase
+**Validates: Requirements 6.5**
+
+### Action Phase Properties
+
+**Property 23: Action card play permissions**
+*For any* player with action cards in collection, they should be able to play them during action phase
+**Validates: Requirements 7.1**
+
+**Property 24: Multiple action card play**
+*For any* player with multiple action cards, they should be able to play multiple cards in sequence
+**Validates: Requirements 7.2**
+
+**Property 25: Action card restriction**
+*For any* player without action cards in collection, they should be unable to play action cards
+**Validates: Requirements 7.3**
+
+**Property 26: Immediate effect execution**
+*For any* played action card, its effects should be applied immediately
+**Validates: Requirements 7.4**
+
+**Property 27: Action phase response rounds**
+*For any* action card played, all other players should get a response opportunity in a full rotation
+**Validates: Requirements 8.1, 8.2**
+
+**Property 28: Automatic skipping in responses**
+*For any* response round, players without action cards should be automatically skipped
+**Validates: Requirements 8.3**
+
+**Property 29: Response round termination**
+*For any* action phase, response rounds should continue until a complete rotation occurs with no action cards played
+**Validates: Requirements 8.4**
+
+### Offer Selection and Distribution Properties
+
+**Property 30: Single offer selection**
+*For any* offer selection phase, the buyer should be able to select exactly one seller's offer
+**Validates: Requirements 9.1**
+
+**Property 31: Money bag transfer**
+*For any* offer selection, the money bag should transfer from buyer to the selected seller
+**Validates: Requirements 9.2**
+
+**Property 32: Selected offer distribution**
+*For any* selected offer, it should move to the buyer's collection
+**Validates: Requirements 9.3**
+
+**Property 33: Non-selected offer return**
+*For any* non-selected offers, they should return to their respective sellers' collections
+**Validates: Requirements 9.4**
+
+**Property 34: Offer area cleanup**
+*For any* offer distribution completion, all offer areas should be empty
+**Validates: Requirements 9.5**
+
+### Trade-in Properties
+
+**Property 35: Gotcha set identification**
+*For any* player collection, all complete Gotcha sets should be correctly identified
+**Validates: Requirements 10.1**
+
+**Property 36: Automatic Gotcha trade-ins**
+*For any* complete Gotcha sets in collections, they should be automatically traded in
+**Validates: Requirements 10.2**
+
+**Property 37: Thing set identification**
+*For any* player collection, all complete Thing sets should be correctly identified
+**Validates: Requirements 10.3**
+
+**Property 38: Thing set point calculation**
+*For any* complete Thing sets, points should be awarded correctly (1 Giant=1pt, 2 Big=1pt, 3 Medium=1pt, 4 Tiny=1pt)
+**Validates: Requirements 10.4**
+
+**Property 39: Point total updates**
+*For any* trade-in completion, player point totals should be updated correctly
+**Validates: Requirements 10.5**
+
+### Winner Determination Properties
+
+**Property 40: Win condition checking**
+*For any* winner determination phase, players with 5+ points should be identified
+**Validates: Requirements 11.1**
+
+**Property 41: Tie handling**
+*For any* scenario with tied players for most points, the game should continue to next round
+**Validates: Requirements 11.2**
+
+**Property 42: Winner declaration**
+*For any* scenario with one player having 5+ points and more than others, that player should be declared winner
+**Validates: Requirements 11.3**
+
+**Property 43: Game end state**
+*For any* declared winner, no further gameplay actions should be allowed
+**Validates: Requirements 11.5**
+
+### Player Rotation Properties
+
+**Property 44: Clockwise rotation order**
+*For any* multi-player phase, player turns should proceed clockwise starting from buyer
+**Validates: Requirements 13.1**
+
+**Property 45: Buyer-excluded rotation**
+*For any* phase where buyer doesn't act, rotation should start with player to buyer's right
+**Validates: Requirements 13.2**
+
+**Property 46: Rotation wraparound**
+*For any* rotation reaching the last player, it should continue with the first player
+**Validates: Requirements 13.3**
+
+**Property 47: Automatic player skipping**
+*For any* player with no valid actions in current phase, they should be automatically skipped
+**Validates: Requirements 14.1, 14.2, 14.3**
+
+**Property 48: Complete rotation coverage**
+*For any* phase requiring player actions, rotation should continue until all eligible players have had opportunity
+**Validates: Requirements 14.5**
+
+### Perspective and Display Properties
+
+**Property 49: Perspective independence**
+*For any* perspective change, the current acting player should remain unchanged
+**Validates: Requirements 15.2**
+
+**Property 50: Card display updates**
+*For any* perspective selection, all card displays should update according to that player's view
+**Validates: Requirements 15.3**
+
+**Property 51: Perspective switching availability**
+*For any* game phase, perspective switching should be allowed
+**Validates: Requirements 15.4**
+
+**Property 52: Card display states**
+*For any* card, it should be displayable in face up, face down, and partial states
+**Validates: Requirements 16.1**
+
+**Property 53: Own hand visibility**
+*For any* player viewing their own perspective, their hand cards should be face up
+**Validates: Requirements 16.2**
+
+**Property 54: Other hand privacy**
+*For any* player viewing other players' hands, those cards should be face down
+**Validates: Requirements 16.3**
+
+**Property 55: Collection visibility**
+*For any* perspective, all collection cards should be face up
+**Validates: Requirements 16.4**
+
+**Property 56: Offer card visibility**
+*For any* offer viewing, face down cards should be partial for owner's perspective and face down for others
+**Validates: Requirements 16.5**
+
+**Property 57: Partial card content**
+*For any* partial card display, it should show card name and description in the top half
+**Validates: Requirements 17.1**
+
+**Property 58: Partial display conditions**
+*For any* card display, partial state should be used only for player's own face down offer cards from their perspective
+**Validates: Requirements 17.3**
+
+## Error Handling
+
+The application will implement comprehensive error handling for:
+
+### Game State Errors
+- Invalid player counts (< 3 or > 6 players)
+- Attempts to perform actions in wrong phases
+- Invalid card plays or moves
+- Corrupted game state recovery
+
+### UI Interaction Errors
+- Drag and drop failures
+- Network connectivity issues (future multiplayer)
+- Browser compatibility problems
+- Invalid perspective selections
+
+### Card Logic Errors
+- Insufficient cards for dealing
+- Invalid offer compositions
+- Set identification failures
+- Point calculation errors
+
+### Error Recovery Strategies
+- **Graceful degradation**: Continue gameplay when possible
+- **State validation**: Verify game state consistency before critical operations
+- **User feedback**: Clear error messages for invalid actions
+- **Logging**: Comprehensive error logging for debugging
+
+## Testing Strategy
+
+The testing approach combines unit tests for specific scenarios with property-based tests for universal correctness guarantees.
+
+### Property-Based Testing
+- **Framework**: Use Jest with fast-check library for property-based testing
+- **Test configuration**: Minimum 100 iterations per property test
+- **Coverage**: All 58 correctness properties will be implemented as property tests
+- **Tagging**: Each test tagged with format: **Feature: trading-card-game, Property {number}: {property_text}**
+
+### Unit Testing
+- **Component testing**: React Testing Library for UI component behavior
+- **Game logic testing**: Specific scenarios and edge cases
+- **Integration testing**: Phase transitions and complex interactions
+- **Error condition testing**: Invalid inputs and edge cases
+
+### Test Organization
+```
+src/
+├── __tests__/
+│   ├── components/
+│   │   ├── Card.test.tsx
+│   │   ├── PlayerArea.test.tsx
+│   │   └── GameBoard.test.tsx
+│   ├── game-logic/
+│   │   ├── deck.test.ts
+│   │   ├── phases.test.ts
+│   │   └── player-rotation.test.ts
+│   └── properties/
+│       ├── deck-properties.test.ts
+│       ├── phase-properties.test.ts
+│       ├── offer-properties.test.ts
+│       └── display-properties.test.ts
+```
+
+### Testing Priorities
+1. **Core game logic**: Deck creation, phase management, card movement
+2. **Player interactions**: Offers, card plays, perspective switching
+3. **Edge cases**: Insufficient cards, tie scenarios, error conditions
+4. **UI behavior**: Card display states, drag and drop, responsive design
+
+The dual testing approach ensures both specific functionality works correctly (unit tests) and universal properties hold across all possible inputs (property tests), providing comprehensive coverage for this complex game system.
+
+<function_calls>
+<invoke name="prework">
+<parameter name="featureName">trading-card-game
