@@ -114,7 +114,7 @@ This implementation plan breaks down the trading card game into discrete, testab
     - Implement immediate effect execution
     - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5_
 
-  - [ ] 8.2 Implement action phase response rounds
+  - [x] 8.2 Implement action phase response rounds
     - Create full rotation system after each action card
     - Handle automatic skipping of players without action cards
     - Continue until no action cards played in full rotation

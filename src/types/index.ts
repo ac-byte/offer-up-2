@@ -12,6 +12,10 @@ export interface GameState {
   drawPile: Card[]
   discardPile: Card[]
   
+  // Action Phase Pass System
+  actionPhasePassesRemaining: number
+  actionPhasePlayersWithActionCards: number[]
+  
   // UI State
   selectedPerspective: number
   phaseInstructions: string

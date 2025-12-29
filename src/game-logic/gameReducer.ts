@@ -13,6 +13,8 @@ export function createInitialGameState(): GameState {
     round: 1,
     drawPile: [],
     discardPile: [],
+    actionPhasePassesRemaining: 0,
+    actionPhasePlayersWithActionCards: [],
     selectedPerspective: 0,
     phaseInstructions: 'Waiting for game to start...',
     autoFollowPerspective: true,
@@ -304,6 +306,29 @@ export function dealCards(state: GameState): GameState {
 }
 
 /**
+ * Handles the action phase advancement
+ */
+export function handleActionPhaseAdvancement(state: GameState): GameState {
+  if (state.currentPhase !== GamePhase.ACTION_PHASE) {
+    return state
+  }
+
+  // Initialize the pass system if not already initialized
+  let newState = state
+  if (state.actionPhasePassesRemaining === 0 && state.actionPhasePlayersWithActionCards.length === 0) {
+    newState = initializeActionPhasePassSystem(state)
+  }
+
+  // Check if action phase should end
+  if (shouldEndActionPhase(newState)) {
+    return endActionPhaseAndAdvance(newState)
+  }
+  
+  // Continue action phase - find next eligible player
+  return advanceToNextEligiblePlayerInActionPhase(newState)
+}
+
+/**
  * Handles the deal phase automatically
  */
 export function handleDealPhase(state: GameState): GameState {
@@ -387,6 +412,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         round: 1,
         drawPile,
         discardPile: [],
+        actionPhasePassesRemaining: 0,
+        actionPhasePlayersWithActionCards: [],
         selectedPerspective: 0,
         phaseInstructions: getPhaseInstructions(GamePhase.DEAL),
         autoFollowPerspective: true,
@@ -419,6 +446,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       // Handle automatic phases
       if (state.currentPhase === GamePhase.DEAL) {
         return handleDealPhase(state)
+      } else if (state.currentPhase === GamePhase.ACTION_PHASE) {
+        return handleActionPhaseAdvancement(state)
       } else if (state.currentPhase === GamePhase.GOTCHA_TRADEINS) {
         return handleGotchaTradeinsPhase(state)
       } else if (state.currentPhase === GamePhase.THING_TRADEINS) {
@@ -718,8 +747,16 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       // Execute the action card effect immediately
       const stateAfterEffect = executeActionCardEffect(newState, actionCard, playerId)
       
-      // Advance to next eligible player after playing action card
-      return advanceToNextEligiblePlayer(stateAfterEffect)
+      // Reset the pass counter since someone played an action card
+      const stateWithResetPasses = resetPassCounter(stateAfterEffect)
+      
+      // Check if action phase should end (no more players with action cards)
+      if (shouldEndActionPhase(stateWithResetPasses)) {
+        return endActionPhaseAndAdvance(stateWithResetPasses)
+      }
+      
+      // Advance to next eligible player for action phase
+      return advanceToNextEligiblePlayerInActionPhase(stateWithResetPasses)
     }
     
     case 'SELECT_OFFER': {
@@ -843,7 +880,12 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         throw new Error('Only the current player can declare done')
       }
       
-      // Advance to next eligible player with automatic skipping
+      // Handle action phase pass system
+      if (state.currentPhase === GamePhase.ACTION_PHASE) {
+        return handleActionPhasePlayerPass(state, playerId)
+      }
+      
+      // Advance to next eligible player with automatic skipping for other phases
       return advanceToNextEligiblePlayer(state)
     }
     
@@ -1347,6 +1389,226 @@ export function allEligiblePlayersProcessed(state: GameState, visitedPlayers: Se
   }
   
   return true
+}
+
+/**
+ * Gets all players who currently have action cards in their collection
+ * @param state Current game state
+ * @returns Array of player indices who have action cards
+ */
+export function getPlayersWithActionCards(state: GameState): number[] {
+  const { players, currentBuyerIndex } = state
+  const playersWithActionCards: number[] = []
+  
+  for (let i = 0; i < players.length; i++) {
+    const player = players[i]
+    const isBuyer = i === currentBuyerIndex
+    
+    if (playerHasValidActions(player, GamePhase.ACTION_PHASE, isBuyer)) {
+      playersWithActionCards.push(i)
+    }
+  }
+  
+  return playersWithActionCards
+}
+
+/**
+ * Initializes the pass system for action phase
+ * @param state Current game state
+ * @returns Updated state with pass system initialized
+ */
+export function initializeActionPhasePassSystem(state: GameState): GameState {
+  const playersWithActionCards = getPlayersWithActionCards(state)
+  
+  return {
+    ...state,
+    actionPhasePassesRemaining: playersWithActionCards.length,
+    actionPhasePlayersWithActionCards: playersWithActionCards
+  }
+}
+
+/**
+ * Resets the pass counter when someone plays an action card
+ * @param state Current game state
+ * @returns Updated state with reset pass counter
+ */
+export function resetPassCounter(state: GameState): GameState {
+  const playersWithActionCards = getPlayersWithActionCards(state)
+  
+  return {
+    ...state,
+    actionPhasePassesRemaining: playersWithActionCards.length,
+    actionPhasePlayersWithActionCards: playersWithActionCards
+  }
+}
+
+/**
+ * Decrements the pass counter when a player passes
+ * @param state Current game state
+ * @returns Updated state with decremented pass counter
+ */
+export function decrementPassCounter(state: GameState): GameState {
+  return {
+    ...state,
+    actionPhasePassesRemaining: Math.max(0, state.actionPhasePassesRemaining - 1)
+  }
+}
+
+/**
+ * Checks if the action phase should end based on pass system
+ * @param state Current game state
+ * @returns True if action phase should end
+ */
+export function shouldEndActionPhase(state: GameState): boolean {
+  // If no players have action cards, end the phase
+  const playersWithActionCards = getPlayersWithActionCards(state)
+  if (playersWithActionCards.length === 0) {
+    return true
+  }
+  
+  // If all players with action cards have passed, end the phase
+  if (state.actionPhasePassesRemaining <= 0) {
+    return true
+  }
+  
+  return false
+}
+
+/**
+ * Handles player passing during action phase (using pass system)
+ * @param state Current game state
+ * @param playerId Player who passed
+ * @returns Updated game state
+ */
+export function handleActionPhasePlayerPass(state: GameState, playerId: number): GameState {
+  // Validate that the player has action cards (only players with action cards can pass)
+  const player = state.players[playerId]
+  const isBuyer = playerId === state.currentBuyerIndex
+  
+  if (!playerHasValidActions(player, GamePhase.ACTION_PHASE, isBuyer)) {
+    // Player has no action cards, they should be automatically skipped
+    return advanceToNextEligiblePlayerInActionPhase(state)
+  }
+  
+  // Decrement the pass counter
+  const stateWithDecrementedPasses = decrementPassCounter(state)
+  
+  // Check if action phase should end
+  if (shouldEndActionPhase(stateWithDecrementedPasses)) {
+    return endActionPhaseAndAdvance(stateWithDecrementedPasses)
+  }
+  
+  // Advance to next eligible player in action phase
+  return advanceToNextEligiblePlayerInActionPhase(stateWithDecrementedPasses)
+}
+
+/**
+ * Advances to the next eligible player specifically for action phase with pass system logic
+ * @param state Current game state
+ * @returns Updated game state with next eligible player
+ */
+export function advanceToNextEligiblePlayerInActionPhase(state: GameState): GameState {
+  const { players, currentBuyerIndex, currentPlayerIndex } = state
+  const playerCount = players.length
+  
+  // Get rotation order for action phase (includes buyer)
+  const rotationOrder = getRotationOrder(currentBuyerIndex, playerCount, true)
+  
+  // Find current position in rotation
+  const currentPositionInRotation = rotationOrder.indexOf(currentPlayerIndex)
+  if (currentPositionInRotation === -1) {
+    // Current player not in rotation, start from beginning
+    return findNextEligiblePlayerInActionPhase(state, 0, rotationOrder)
+  }
+  
+  // Start checking from next position in rotation
+  const nextPosition = (currentPositionInRotation + 1) % rotationOrder.length
+  return findNextEligiblePlayerInActionPhase(state, nextPosition, rotationOrder)
+}
+
+/**
+ * Finds the next eligible player in action phase rotation
+ * @param state Current game state
+ * @param startPosition Position to start checking from
+ * @param rotationOrder Array of player indices in rotation order
+ * @returns Updated game state with next eligible player
+ */
+function findNextEligiblePlayerInActionPhase(
+  state: GameState, 
+  startPosition: number, 
+  rotationOrder: number[]
+): GameState {
+  const { players, currentBuyerIndex } = state
+  
+  // Check each player in rotation order starting from startPosition
+  for (let i = 0; i < rotationOrder.length; i++) {
+    const positionToCheck = (startPosition + i) % rotationOrder.length
+    const playerIndex = rotationOrder[positionToCheck]
+    
+    const player = players[playerIndex]
+    const isBuyer = playerIndex === currentBuyerIndex
+    
+    // Check if this player has valid actions (action cards)
+    if (playerHasValidActions(player, GamePhase.ACTION_PHASE, isBuyer)) {
+      let newState = {
+        ...state,
+        currentPlayerIndex: playerIndex
+      }
+      
+      // Apply automatic perspective following if enabled
+      newState = updatePerspectiveForActivePlayer(newState, playerIndex)
+      
+      return newState
+    }
+  }
+  
+  // No eligible players found - action phase should end
+  if (shouldEndActionPhase(state)) {
+    return endActionPhaseAndAdvance(state)
+  }
+  
+  // This shouldn't happen, but return current state as fallback
+  return state
+}
+
+/**
+ * Ends the action phase and advances to the next phase
+ * @param state Current game state
+ * @returns Updated game state with next phase
+ */
+function endActionPhaseAndAdvance(state: GameState): GameState {
+  // Clear action phase pass system state
+  const clearedState: GameState = {
+    ...state,
+    actionPhasePassesRemaining: 0,
+    actionPhasePlayersWithActionCards: []
+  }
+  
+  // Advance to next phase
+  const { nextPhase, nextRound } = advanceToNextPhase(clearedState.currentPhase, clearedState.round)
+  
+  // Create state with advanced phase
+  const stateWithNewPhase: GameState = {
+    ...clearedState,
+    currentPhase: nextPhase,
+    round: nextRound,
+    phaseInstructions: getPhaseInstructions(nextPhase)
+  }
+  
+  // Set current player to first eligible player for the new phase
+  const firstEligiblePlayer = getNextEligiblePlayer(-1, stateWithNewPhase, new Set())
+  
+  let finalState: GameState = {
+    ...stateWithNewPhase,
+    currentPlayerIndex: firstEligiblePlayer !== null ? firstEligiblePlayer : 0
+  }
+  
+  // Apply automatic perspective following if enabled
+  if (firstEligiblePlayer !== null) {
+    finalState = updatePerspectiveForActivePlayer(finalState, firstEligiblePlayer)
+  }
+  
+  return finalState
 }
 
 /**

@@ -1,0 +1,18 @@
+Fix action phase infinite loop by implementing pass system
+
+- Replace response round system with cleaner pass-based logic
+- Track actionPhasePassesRemaining and actionPhasePlayersWithActionCards
+- Reset pass counter when action cards are played
+- Decrement counter when players pass
+- End phase when no players have action cards OR passes remaining reaches 0
+- Update GameState interface to use new pass system fields
+- Rewrite action phase handlers (PLAY_ACTION_CARD, DECLARE_DONE)
+- Replace handleActionPhasePlayerDone with handleActionPhasePlayerPass
+- Remove all response round functions and logic
+- Update all 21 action phase tests to use new pass system
+- All 250 tests passing, TypeScript compilation successful
+
+Fixes the infinite loop bug where action phase would never end
+as long as any player had action cards. The new system properly
+tracks passes from eligible players and terminates when all
+have passed or no action cards remain.
