@@ -252,7 +252,7 @@ This implementation plan breaks down the trading card game into discrete, testab
     - _Requirements: 18.1, 19.1, 19.3_
 
 - [ ] 16. Implement drag and drop interactions
-  - [ ] 16.1 Add card dragging for offers
+  - [x] 16.1 Add card dragging for offers
     - Enable dragging cards from hand to offer area
     - Validate offer placement rules
     - Provide visual feedback during drag

@@ -2,7 +2,7 @@ import React from 'react'
 import { useGameContext } from '../contexts'
 import { PerspectiveSelector } from './PerspectiveSelector'
 import { PlayerArea } from './PlayerArea'
-import { GameAction, GamePhase } from '../types'
+import { GameAction, GamePhase, Card } from '../types'
 import './GameBoard.css'
 
 export const GameBoard: React.FC = () => {
@@ -27,6 +27,16 @@ export const GameBoard: React.FC = () => {
   const handleDealCards = () => {
     const action: GameAction = { type: 'DEAL_CARDS' }
     dispatch(action)
+  }
+
+  const handleOfferPlace = (playerId: number, cards: Card[], faceUpIndex: number) => {
+    const action: GameAction = { type: 'PLACE_OFFER', playerId, cards, faceUpIndex }
+    try {
+      dispatch(action)
+    } catch (error) {
+      console.error('Error placing offer:', error)
+      // In a real app, you'd show this error to the user
+    }
   }
 
   const formatPhaseName = (phase: GamePhase): string => {
@@ -168,7 +178,7 @@ export const GameBoard: React.FC = () => {
             perspective={gameState.selectedPerspective}
             phase={gameState.currentPhase}
             onCardPlay={() => {}} // Placeholder - will be implemented in future tasks
-            onOfferPlace={() => {}} // Placeholder - will be implemented in future tasks
+            onOfferPlace={(cards, faceUpIndex) => handleOfferPlace(player.id, cards, faceUpIndex)}
           />
         ))}
       </div>

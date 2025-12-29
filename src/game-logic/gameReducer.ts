@@ -295,10 +295,71 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       }
     }
     
-    // Placeholder implementations for phase-specific actions
     case 'PLACE_OFFER': {
-      // TODO: Implement in future tasks
-      return state
+      const { playerId, cards, faceUpIndex } = action
+      
+      // Validate player exists
+      if (playerId < 0 || playerId >= state.players.length) {
+        throw new Error(`Invalid player ID: ${playerId}`)
+      }
+      
+      // Validate player is not the buyer (only sellers can place offers)
+      if (playerId === state.currentBuyerIndex) {
+        throw new Error('Buyer cannot place offers')
+      }
+      
+      // Validate offer has exactly 3 cards
+      if (cards.length !== 3) {
+        throw new Error(`Offer must contain exactly 3 cards, got ${cards.length}`)
+      }
+      
+      // Validate face up index is valid (0, 1, or 2)
+      if (faceUpIndex < 0 || faceUpIndex >= 3) {
+        throw new Error(`Face up index must be 0, 1, or 2, got ${faceUpIndex}`)
+      }
+      
+      const player = state.players[playerId]
+      
+      // Validate player has no existing offer
+      if (player.offer.length > 0) {
+        throw new Error('Player already has an offer placed')
+      }
+      
+      // Validate all cards are in player's hand
+      const playerHandIds = new Set(player.hand.map(card => card.id))
+      for (const card of cards) {
+        if (!playerHandIds.has(card.id)) {
+          throw new Error(`Card ${card.name} is not in player's hand`)
+        }
+      }
+      
+      // Create new state with updated player
+      const newState = { ...state }
+      newState.players = state.players.map((p, index) => {
+        if (index !== playerId) {
+          return p
+        }
+        
+        // Remove cards from hand
+        const newHand = p.hand.filter(handCard => 
+          !cards.some(offerCard => offerCard.id === handCard.id)
+        )
+        
+        // Create offer cards with positions and face up/down state
+        const newOffer = cards.map((card, cardIndex) => ({
+          ...card,
+          faceUp: cardIndex === faceUpIndex,
+          position: cardIndex
+        }))
+        
+        return {
+          ...p,
+          hand: newHand,
+          offer: newOffer
+        }
+      })
+      
+      return newState
     }
     
     case 'FLIP_CARD': {

@@ -18,6 +18,7 @@ interface HandProps {
   isOwnHand: boolean;
   onCardDrag?: (card: Card) => void;
   onCardClick?: (card: Card) => void;
+  selectedCards?: Card[];
 }
 
 interface OfferAreaProps {
@@ -25,6 +26,7 @@ interface OfferAreaProps {
   isOwnOffer: boolean;
   onCardClick?: (card: OfferCard, index: number) => void;
   onDrop?: (cards: Card[], faceUpIndex: number) => void;
+  onStartOfferSelection?: (initialCard?: Card) => void;
 }
 
 interface CollectionAreaProps {
@@ -34,10 +36,14 @@ interface CollectionAreaProps {
 }
 
 // Hand sub-component
-const Hand: React.FC<HandProps> = ({ cards, isOwnHand, onCardDrag, onCardClick }) => {
+const Hand: React.FC<HandProps> = ({ cards, isOwnHand, onCardDrag, onCardClick, selectedCards = [] }) => {
   const getCardDisplayState = (card: Card): CardDisplayState => {
     return isOwnHand ? 'face_up' : 'face_down';
   };
+
+  const isCardSelected = (card: Card): boolean => {
+    return selectedCards.some(c => c.id === card.id)
+  }
 
   return (
     <div className="hand">
@@ -53,7 +59,7 @@ const Hand: React.FC<HandProps> = ({ cards, isOwnHand, onCardDrag, onCardClick }
             draggable={isOwnHand}
             onDragStart={onCardDrag}
             onClick={() => onCardClick?.(card)}
-            className="hand__card"
+            className={`hand__card ${isCardSelected(card) ? 'hand__card--selected' : ''}`}
           />
         ))}
         {cards.length === 0 && (
@@ -65,7 +71,10 @@ const Hand: React.FC<HandProps> = ({ cards, isOwnHand, onCardDrag, onCardClick }
 };
 
 // OfferArea sub-component
-const OfferArea: React.FC<OfferAreaProps> = ({ offer, isOwnOffer, onCardClick, onDrop }) => {
+const OfferArea: React.FC<OfferAreaProps> = ({ offer, isOwnOffer, onCardClick, onDrop, onStartOfferSelection }) => {
+  const [draggedCards, setDraggedCards] = React.useState<Card[]>([])
+  const [isDragOver, setIsDragOver] = React.useState(false)
+
   const getCardDisplayState = (offerCard: OfferCard): CardDisplayState => {
     if (offerCard.faceUp) {
       return 'face_up';
@@ -76,29 +85,48 @@ const OfferArea: React.FC<OfferAreaProps> = ({ offer, isOwnOffer, onCardClick, o
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault(); // Allow drop
+    setIsDragOver(true)
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    // Only set drag over to false if we're leaving the offer area itself
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setIsDragOver(false)
+    }
   };
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
+    setIsDragOver(false)
     
-    if (!isOwnOffer || !onDrop) return;
+    if (!isOwnOffer) return;
 
     try {
       const cardData = e.dataTransfer.getData('application/json');
       if (cardData) {
         const card = JSON.parse(cardData) as Card;
-        // For now, just place as first card face up (this will be enhanced in future tasks)
-        onDrop([card], 0);
+        
+        // Start the offer selection process with this card pre-selected
+        if (onStartOfferSelection) {
+          onStartOfferSelection(card);
+        }
       }
     } catch (error) {
       console.error('Error handling card drop:', error);
     }
   };
 
+  const offerAreaClasses = [
+    'offer-area',
+    isDragOver ? 'offer-area--drag-over' : '',
+    isOwnOffer ? 'offer-area--own' : ''
+  ].filter(Boolean).join(' ')
+
   return (
     <div 
-      className="offer-area"
+      className={offerAreaClasses}
       onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
       <div className="offer-area__header">
@@ -119,10 +147,19 @@ const OfferArea: React.FC<OfferAreaProps> = ({ offer, isOwnOffer, onCardClick, o
             ))
         ) : (
           <div className="offer-area__empty">
-            {isOwnOffer ? 'Drag 3 cards here to make an offer' : 'No offer placed'}
+            {isOwnOffer ? (
+              isDragOver ? 
+                'Drop card to start offer selection' : 
+                'Click "Make Offer" or drag a card here'
+            ) : 'No offer placed'}
           </div>
         )}
       </div>
+      {isDragOver && isOwnOffer && (
+        <div className="offer-area__drop-indicator">
+          Ready to place offer
+        </div>
+      )}
     </div>
   );
 };
@@ -186,6 +223,16 @@ export const PlayerArea: React.FC<PlayerAreaProps> = ({
   onOfferPlace
 }) => {
   const isOwnPerspective = player.id === perspective;
+  const [selectedCards, setSelectedCards] = React.useState<Card[]>([])
+  const [isSelectingOffer, setIsSelectingOffer] = React.useState(false)
+
+  // Reset selection when phase changes or when not in offer phase
+  React.useEffect(() => {
+    if (phase !== GamePhase.OFFER_PHASE || player.offer.length > 0) {
+      setSelectedCards([])
+      setIsSelectingOffer(false)
+    }
+  }, [phase, player.offer.length])
 
   const handleCardDrag = (card: Card) => {
     // Card drag started - this will be used for offer placement
@@ -193,7 +240,21 @@ export const PlayerArea: React.FC<PlayerAreaProps> = ({
   };
 
   const handleCardClick = (card: Card) => {
-    // Handle card clicks - for action cards during action phase
+    // Handle card selection for offers during offer phase
+    if (phase === GamePhase.OFFER_PHASE && isOwnPerspective && !isBuyer && player.offer.length === 0) {
+      if (isSelectingOffer) {
+        // Toggle card selection
+        const isSelected = selectedCards.some(c => c.id === card.id)
+        if (isSelected) {
+          setSelectedCards(prev => prev.filter(c => c.id !== card.id))
+        } else if (selectedCards.length < 3) {
+          setSelectedCards(prev => [...prev, card])
+        }
+      }
+      return
+    }
+
+    // Handle action card clicks during action phase
     if (phase === GamePhase.ACTION_PHASE && card.type === 'action') {
       onCardPlay(card);
     }
@@ -214,15 +275,46 @@ export const PlayerArea: React.FC<PlayerAreaProps> = ({
     }
   };
 
+  const handleStartOfferSelection = (initialCard?: Card) => {
+    if (phase === GamePhase.OFFER_PHASE && isOwnPerspective && !isBuyer && player.offer.length === 0) {
+      setIsSelectingOffer(true)
+      if (initialCard) {
+        setSelectedCards([initialCard])
+      } else {
+        setSelectedCards([])
+      }
+    }
+  }
+
+  const handleCancelOfferSelection = () => {
+    setIsSelectingOffer(false)
+    setSelectedCards([])
+  }
+
+  const handleConfirmOffer = (faceUpIndex: number) => {
+    if (selectedCards.length === 3) {
+      onOfferPlace(selectedCards, faceUpIndex)
+      setIsSelectingOffer(false)
+      setSelectedCards([])
+    }
+  }
+
   const getPlayerAreaClasses = () => {
     const classes = ['player-area'];
     
     if (isCurrentPlayer) classes.push('player-area--current');
     if (isBuyer) classes.push('player-area--buyer');
     if (isOwnPerspective) classes.push('player-area--own-perspective');
+    if (isSelectingOffer) classes.push('player-area--selecting-offer');
     
     return classes.join(' ');
   };
+
+  const canMakeOffer = phase === GamePhase.OFFER_PHASE && 
+                      isOwnPerspective && 
+                      !isBuyer && 
+                      player.offer.length === 0 &&
+                      player.hand.length >= 3
 
   return (
     <div className={getPlayerAreaClasses()}>
@@ -235,6 +327,46 @@ export const PlayerArea: React.FC<PlayerAreaProps> = ({
         <div className="player-area__stats">
           Points: {player.points} | Cards: {player.hand.length + player.collection.length}
         </div>
+        
+        {/* Offer selection controls */}
+        {canMakeOffer && !isSelectingOffer && (
+          <button 
+            className="player-area__offer-button"
+            onClick={() => handleStartOfferSelection()}
+          >
+            Make Offer
+          </button>
+        )}
+        
+        {isSelectingOffer && (
+          <div className="player-area__offer-controls">
+            <div className="offer-controls__info">
+              Select 3 cards ({selectedCards.length}/3)
+            </div>
+            <div className="offer-controls__buttons">
+              <button 
+                className="offer-controls__cancel"
+                onClick={handleCancelOfferSelection}
+              >
+                Cancel
+              </button>
+              {selectedCards.length === 3 && (
+                <div className="offer-controls__face-up-selection">
+                  <span>Choose face up card:</span>
+                  {selectedCards.map((card, index) => (
+                    <button
+                      key={card.id}
+                      className="offer-controls__face-up-button"
+                      onClick={() => handleConfirmOffer(index)}
+                    >
+                      {card.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="player-area__content">
@@ -244,6 +376,7 @@ export const PlayerArea: React.FC<PlayerAreaProps> = ({
             isOwnHand={isOwnPerspective}
             onCardDrag={handleCardDrag}
             onCardClick={handleCardClick}
+            selectedCards={isSelectingOffer ? selectedCards : []}
           />
         </div>
 
@@ -253,6 +386,7 @@ export const PlayerArea: React.FC<PlayerAreaProps> = ({
             isOwnOffer={isOwnPerspective}
             onCardClick={handleOfferCardClick}
             onDrop={handleOfferDrop}
+            onStartOfferSelection={handleStartOfferSelection}
           />
         </div>
 

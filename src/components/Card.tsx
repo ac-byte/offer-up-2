@@ -26,7 +26,16 @@ export const Card: React.FC<CardProps> = ({
     // Store card data for drop handling (check if dataTransfer exists for testing compatibility)
     if (e.dataTransfer) {
       e.dataTransfer.setData('application/json', JSON.stringify(card));
+      e.dataTransfer.effectAllowed = 'move';
     }
+    
+    // Add dragging class for visual feedback
+    e.currentTarget.classList.add('card--dragging');
+  };
+
+  const handleDragEnd = (e: React.DragEvent<HTMLDivElement>) => {
+    // Remove dragging class
+    e.currentTarget.classList.remove('card--dragging');
   };
 
   const handleClick = () => {
@@ -121,6 +130,7 @@ export const Card: React.FC<CardProps> = ({
       className={cardClasses}
       draggable={draggable}
       onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
       onClick={handleClick}
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
