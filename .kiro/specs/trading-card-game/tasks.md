@@ -39,7 +39,7 @@ This implementation plan breaks down the trading card game into discrete, testab
     - **Validates: Requirements 1.5**
 
 - [ ] 3. Implement game state management with reducer
-  - [ ] 3.1 Create game reducer with initial state
+  - [x] 3.1 Create game reducer with initial state
     - Implement useReducer-based state management
     - Handle game initialization actions
     - Support 3-6 player validation
@@ -51,7 +51,7 @@ This implementation plan breaks down the trading card game into discrete, testab
     - **Property 8: Player area initialization**
     - **Validates: Requirements 2.1, 2.2, 2.3, 2.4**
 
-  - [ ] 3.3 Implement phase management system
+  - [x] 3.3 Implement phase management system
     - Add phase transitions and validation
     - Implement 10-phase round system
     - Add phase-specific action validation
@@ -64,7 +64,7 @@ This implementation plan breaks down the trading card game into discrete, testab
     - **Property 12: Game continuation until winner**
     - **Validates: Requirements 3.1, 3.3, 3.4, 3.5**
 
-- [ ] 4. Checkpoint - Ensure core game logic tests pass
+- [x] 4. Checkpoint - Ensure core game logic tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 5. Implement deal phase mechanics
