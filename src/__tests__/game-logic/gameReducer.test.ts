@@ -10,7 +10,10 @@ import {
   shouldContinueGame,
   dealCards,
   handleDealPhase,
-  areAllOffersComplete
+  areAllOffersComplete,
+  getPlayersWithFiveOrMorePoints,
+  determineWinner,
+  handleWinnerDeterminationPhase
 } from '../../game-logic/gameReducer'
 import { GamePhase } from '../../types'
 import { createThingCard, createGotchaCard } from '../../game-logic/cards'
@@ -1344,6 +1347,261 @@ describe('Game Reducer', () => {
         expect(gameState.currentBuyerIndex).toBe(originalCurrentBuyer)
         expect(gameState.currentPhase).toBe(originalPhase)
       })
+    })
+  })
+
+  describe('getPlayersWithFiveOrMorePoints', () => {
+    test('returns empty array when no players have 5+ points', () => {
+      const players = [
+        createPlayer(0, 'Alice'),
+        createPlayer(1, 'Bob'),
+        createPlayer(2, 'Charlie')
+      ]
+      players[0].points = 3
+      players[1].points = 4
+      players[2].points = 2
+
+      const result = getPlayersWithFiveOrMorePoints(players)
+      expect(result).toEqual([])
+    })
+
+    test('returns players with exactly 5 points', () => {
+      const players = [
+        createPlayer(0, 'Alice'),
+        createPlayer(1, 'Bob'),
+        createPlayer(2, 'Charlie')
+      ]
+      players[0].points = 5
+      players[1].points = 3
+      players[2].points = 4
+
+      const result = getPlayersWithFiveOrMorePoints(players)
+      expect(result).toEqual([players[0]])
+    })
+
+    test('returns players with more than 5 points', () => {
+      const players = [
+        createPlayer(0, 'Alice'),
+        createPlayer(1, 'Bob'),
+        createPlayer(2, 'Charlie')
+      ]
+      players[0].points = 7
+      players[1].points = 3
+      players[2].points = 6
+
+      const result = getPlayersWithFiveOrMorePoints(players)
+      expect(result).toEqual([players[0], players[2]])
+    })
+
+    test('returns all players when all have 5+ points', () => {
+      const players = [
+        createPlayer(0, 'Alice'),
+        createPlayer(1, 'Bob'),
+        createPlayer(2, 'Charlie')
+      ]
+      players[0].points = 5
+      players[1].points = 6
+      players[2].points = 8
+
+      const result = getPlayersWithFiveOrMorePoints(players)
+      expect(result).toEqual(players)
+    })
+  })
+
+  describe('determineWinner', () => {
+    test('returns null when no players have 5+ points', () => {
+      const players = [
+        createPlayer(0, 'Alice'),
+        createPlayer(1, 'Bob'),
+        createPlayer(2, 'Charlie')
+      ]
+      players[0].points = 4
+      players[1].points = 3
+      players[2].points = 2
+
+      const result = determineWinner(players)
+      expect(result).toBeNull()
+    })
+
+    test('returns winner when one player has 5+ points and leads', () => {
+      const players = [
+        createPlayer(0, 'Alice'),
+        createPlayer(1, 'Bob'),
+        createPlayer(2, 'Charlie')
+      ]
+      players[0].points = 6
+      players[1].points = 3
+      players[2].points = 4
+
+      const result = determineWinner(players)
+      expect(result).toBe(0)
+    })
+
+    test('returns null when multiple players are tied for most points', () => {
+      const players = [
+        createPlayer(0, 'Alice'),
+        createPlayer(1, 'Bob'),
+        createPlayer(2, 'Charlie')
+      ]
+      players[0].points = 5
+      players[1].points = 5
+      players[2].points = 3
+
+      const result = determineWinner(players)
+      expect(result).toBeNull()
+    })
+
+    test('returns null when tied players both have 5+ points', () => {
+      const players = [
+        createPlayer(0, 'Alice'),
+        createPlayer(1, 'Bob'),
+        createPlayer(2, 'Charlie')
+      ]
+      players[0].points = 6
+      players[1].points = 6
+      players[2].points = 3
+
+      const result = determineWinner(players)
+      expect(result).toBeNull()
+    })
+
+    test('returns winner with highest points when multiple have 5+', () => {
+      const players = [
+        createPlayer(0, 'Alice'),
+        createPlayer(1, 'Bob'),
+        createPlayer(2, 'Charlie')
+      ]
+      players[0].points = 5
+      players[1].points = 7
+      players[2].points = 6
+
+      const result = determineWinner(players)
+      expect(result).toBe(1)
+    })
+
+    test('returns null when highest scorer has less than 5 points', () => {
+      const players = [
+        createPlayer(0, 'Alice'),
+        createPlayer(1, 'Bob'),
+        createPlayer(2, 'Charlie')
+      ]
+      players[0].points = 2
+      players[1].points = 4
+      players[2].points = 3
+
+      const result = determineWinner(players)
+      expect(result).toBeNull()
+    })
+  })
+
+  describe('handleWinnerDeterminationPhase', () => {
+    test('declares winner when one player has 5+ points and leads', () => {
+      const state = createInitialGameState()
+      state.currentPhase = GamePhase.WINNER_DETERMINATION
+      state.players = [
+        createPlayer(0, 'Alice'),
+        createPlayer(1, 'Bob'),
+        createPlayer(2, 'Charlie')
+      ]
+      state.players[0].points = 6
+      state.players[1].points = 3
+      state.players[2].points = 4
+
+      const result = handleWinnerDeterminationPhase(state)
+      
+      expect(result.winner).toBe(0)
+      expect(result.phaseInstructions).toBe('Game Over! Alice wins with 6 points!')
+    })
+
+    test('continues game when no clear winner', () => {
+      const state = createInitialGameState()
+      state.currentPhase = GamePhase.WINNER_DETERMINATION
+      state.round = 2
+      state.players = [
+        createPlayer(0, 'Alice'),
+        createPlayer(1, 'Bob'),
+        createPlayer(2, 'Charlie')
+      ]
+      state.players[0].points = 4
+      state.players[1].points = 3
+      state.players[2].points = 2
+
+      const result = handleWinnerDeterminationPhase(state)
+      
+      expect(result.winner).toBeNull()
+      expect(result.currentPhase).toBe(GamePhase.BUYER_ASSIGNMENT)
+      expect(result.round).toBe(3)
+    })
+
+    test('continues game when players are tied', () => {
+      const state = createInitialGameState()
+      state.currentPhase = GamePhase.WINNER_DETERMINATION
+      state.round = 3
+      state.players = [
+        createPlayer(0, 'Alice'),
+        createPlayer(1, 'Bob'),
+        createPlayer(2, 'Charlie')
+      ]
+      state.players[0].points = 5
+      state.players[1].points = 5
+      state.players[2].points = 3
+
+      const result = handleWinnerDeterminationPhase(state)
+      
+      expect(result.winner).toBeNull()
+      expect(result.currentPhase).toBe(GamePhase.BUYER_ASSIGNMENT)
+      expect(result.round).toBe(4)
+    })
+
+    test('does nothing when not in winner determination phase', () => {
+      const state = createInitialGameState()
+      state.currentPhase = GamePhase.DEAL
+      state.players = [
+        createPlayer(0, 'Alice'),
+        createPlayer(1, 'Bob')
+      ]
+      state.players[0].points = 6
+
+      const result = handleWinnerDeterminationPhase(state)
+      
+      expect(result).toBe(state)
+    })
+  })
+
+  describe('game over prevention', () => {
+    test('prevents actions after winner is declared', () => {
+      const state = createInitialGameState()
+      state.winner = 0
+      state.gameStarted = true
+      state.players = [createPlayer(0, 'Alice'), createPlayer(1, 'Bob')]
+
+      // Try to advance phase - should be prevented
+      const result = gameReducer(state, { type: 'ADVANCE_PHASE' })
+      expect(result).toBe(state)
+    })
+
+    test('allows perspective changes after winner is declared', () => {
+      const state = createInitialGameState()
+      state.winner = 0
+      state.gameStarted = true
+      state.players = [createPlayer(0, 'Alice'), createPlayer(1, 'Bob')]
+      state.selectedPerspective = 0
+
+      // Perspective changes should still work
+      const result = gameReducer(state, { type: 'CHANGE_PERSPECTIVE', playerId: 1 })
+      expect(result.selectedPerspective).toBe(1)
+    })
+
+    test('prevents game actions after winner is declared', () => {
+      const state = createInitialGameState()
+      state.winner = 0
+      state.gameStarted = true
+      state.currentPhase = GamePhase.DEAL
+      state.players = [createPlayer(0, 'Alice'), createPlayer(1, 'Bob')]
+
+      // Try to deal cards - should be prevented
+      const result = gameReducer(state, { type: 'DEAL_CARDS' })
+      expect(result).toBe(state)
     })
   })
 })

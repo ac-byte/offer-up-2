@@ -168,7 +168,7 @@ This implementation plan breaks down the trading card game into discrete, testab
     - **Validates: Requirements 10.1, 10.2, 10.3, 10.4, 10.5**
 
 - [ ] 11. Implement winner determination
-  - [ ] 11.1 Create win condition logic
+  - [x] 11.1 Create win condition logic
     - Check for players with 5+ points
     - Handle tie scenarios (continue game)
     - Declare winner when one player has 5+ points and leads
@@ -186,13 +186,13 @@ This implementation plan breaks down the trading card game into discrete, testab
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 13. Implement player rotation system
-  - [ ] 13.1 Create rotation logic
+  - [x] 13.1 Create rotation logic
     - Implement clockwise rotation starting from buyer
     - Handle buyer-excluded phases (start with player to buyer's right)
     - Add rotation wraparound
     - _Requirements: 13.1, 13.2, 13.3_
 
-  - [ ] 13.2 Implement automatic player skipping
+  - [x] 13.2 Implement automatic player skipping
     - Skip players with no valid actions
     - Skip buyer in phases where they don't act
     - Continue rotation until all eligible players have opportunity

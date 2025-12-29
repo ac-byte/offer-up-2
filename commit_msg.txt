@@ -1,0 +1,8 @@
+Implement automatic player skipping functionality
+
+- Add playerHasValidActions to determine valid actions per phase
+- Add getNextEligiblePlayer with automatic skipping logic  
+- Add advanceToNextEligiblePlayer for seamless rotation
+- Update game reducer to integrate automatic skipping
+- Add comprehensive tests for all skipping scenarios
+- Satisfies requirements 14.1, 14.2, 14.3, 14.5

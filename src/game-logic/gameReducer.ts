@@ -80,6 +80,10 @@ export function validatePhaseAction(phase: GamePhase, action: GameAction): boole
       // Phase advancement is always allowed (controlled by game logic)
       return true
     
+    case 'ADVANCE_PLAYER':
+      // Player advancement is always allowed (controlled by game logic)
+      return true
+    
     case 'DEAL_CARDS':
       // Can only deal cards during deal phase
       return phase === GamePhase.DEAL
@@ -139,6 +143,85 @@ export function advanceToNextPhase(currentPhase: GamePhase, currentRound: number
 export function shouldContinueGame(state: GameState): boolean {
   // Game continues if no winner is declared
   return state.winner === null
+}
+
+/**
+ * Checks for players with 5 or more points
+ */
+export function getPlayersWithFiveOrMorePoints(players: Player[]): Player[] {
+  return players.filter(player => player.points >= 5)
+}
+
+/**
+ * Determines if there's a clear winner (one player with 5+ points and more than any other)
+ */
+export function determineWinner(players: Player[]): number | null {
+  const playersWithFiveOrMore = getPlayersWithFiveOrMorePoints(players)
+  
+  // No players with 5+ points - no winner yet
+  if (playersWithFiveOrMore.length === 0) {
+    return null
+  }
+  
+  // Find the maximum points among all players
+  const maxPoints = Math.max(...players.map(player => player.points))
+  
+  // Find all players with the maximum points
+  const playersWithMaxPoints = players.filter(player => player.points === maxPoints)
+  
+  // If there's a tie for the most points, continue the game
+  if (playersWithMaxPoints.length > 1) {
+    return null
+  }
+  
+  // If exactly one player has the most points and they have 5+, they win
+  const potentialWinner = playersWithMaxPoints[0]
+  if (potentialWinner.points >= 5) {
+    return potentialWinner.id
+  }
+  
+  // No clear winner yet
+  return null
+}
+
+/**
+ * Handles the winner determination phase
+ */
+export function handleWinnerDeterminationPhase(state: GameState): GameState {
+  if (state.currentPhase !== GamePhase.WINNER_DETERMINATION) {
+    return state
+  }
+
+  // Check for winner
+  const winnerId = determineWinner(state.players)
+  
+  if (winnerId !== null) {
+    // Winner found - declare winner and end game
+    return {
+      ...state,
+      winner: winnerId,
+      phaseInstructions: `Game Over! ${state.players.find(p => p.id === winnerId)?.name} wins with ${state.players.find(p => p.id === winnerId)?.points} points!`
+    }
+  } else {
+    // No winner yet - continue to next round
+    const { nextPhase, nextRound } = advanceToNextPhase(state.currentPhase, state.round)
+    
+    // Create state with advanced phase
+    const stateWithNewPhase = {
+      ...state,
+      currentPhase: nextPhase,
+      round: nextRound,
+      phaseInstructions: getPhaseInstructions(nextPhase)
+    }
+    
+    // Set current player to first eligible player for the new phase
+    const firstEligiblePlayer = getNextEligiblePlayer(-1, stateWithNewPhase, new Set())
+    
+    return {
+      ...stateWithNewPhase,
+      currentPlayerIndex: firstEligiblePlayer !== null ? firstEligiblePlayer : 0
+    }
+  }
 }
 
 /**
@@ -222,11 +305,20 @@ export function handleDealPhase(state: GameState): GameState {
   // Automatically advance to next phase after dealing
   const { nextPhase, nextRound } = advanceToNextPhase(newState.currentPhase, newState.round)
   
-  return {
+  // Create state with advanced phase
+  const stateWithNewPhase = {
     ...newState,
     currentPhase: nextPhase,
     round: nextRound,
     phaseInstructions: getPhaseInstructions(nextPhase)
+  }
+  
+  // Set current player to first eligible player for the new phase
+  const firstEligiblePlayer = getNextEligiblePlayer(-1, stateWithNewPhase, new Set())
+  
+  return {
+    ...stateWithNewPhase,
+    currentPlayerIndex: firstEligiblePlayer !== null ? firstEligiblePlayer : 0
   }
 }
 
@@ -234,6 +326,12 @@ export function handleDealPhase(state: GameState): GameState {
  * Game reducer function
  */
 export function gameReducer(state: GameState, action: GameAction): GameState {
+  // Prevent any actions if game is over (winner declared)
+  if (state.winner !== null && action.type !== 'CHANGE_PERSPECTIVE') {
+    // Only allow perspective changes after game ends
+    return state
+  }
+
   // Validate phase-specific actions
   if (!validatePhaseAction(state.currentPhase, action)) {
     throw new Error(`Action ${action.type} is not allowed during phase ${state.currentPhase}`)
@@ -260,7 +358,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       // Create shuffled deck
       const drawPile = createShuffledDeck()
       
-      return {
+      // Create initial state
+      const initialState = {
         ...state,
         players,
         currentBuyerIndex: buyerIndex,
@@ -273,6 +372,14 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         phaseInstructions: getPhaseInstructions(GamePhase.DEAL),
         winner: null,
         gameStarted: true
+      }
+      
+      // Set current player to first eligible player for the deal phase
+      const firstEligiblePlayer = getNextEligiblePlayer(-1, initialState, new Set())
+      
+      return {
+        ...initialState,
+        currentPlayerIndex: firstEligiblePlayer !== null ? firstEligiblePlayer : 0
       }
     }
     
@@ -289,16 +396,32 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         return handleGotchaTradeinsPhase(state)
       } else if (state.currentPhase === GamePhase.THING_TRADEINS) {
         return handleThingTradeinsPhase(state)
+      } else if (state.currentPhase === GamePhase.WINNER_DETERMINATION) {
+        return handleWinnerDeterminationPhase(state)
       }
       
       const { nextPhase, nextRound } = advanceToNextPhase(state.currentPhase, state.round)
       
-      return {
+      // Create new state with advanced phase
+      const newState = {
         ...state,
         currentPhase: nextPhase,
         round: nextRound,
         phaseInstructions: getPhaseInstructions(nextPhase)
       }
+      
+      // Set current player to first eligible player for the new phase
+      const firstEligiblePlayer = getNextEligiblePlayer(-1, newState, new Set())
+      
+      return {
+        ...newState,
+        currentPlayerIndex: firstEligiblePlayer !== null ? firstEligiblePlayer : 0
+      }
+    }
+    
+    case 'ADVANCE_PLAYER': {
+      // Advance to next eligible player with automatic skipping
+      return advanceToNextEligiblePlayer(state)
     }
     
     case 'DEAL_CARDS': {
@@ -387,12 +510,26 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       if (areAllOffersComplete(newState)) {
         // Automatically advance to buyer-flip phase
         const { nextPhase, nextRound } = advanceToNextPhase(newState.currentPhase, newState.round)
-        newState.currentPhase = nextPhase
-        newState.round = nextRound
-        newState.phaseInstructions = getPhaseInstructions(nextPhase)
+        
+        // Create state with advanced phase
+        const stateWithNewPhase = {
+          ...newState,
+          currentPhase: nextPhase,
+          round: nextRound,
+          phaseInstructions: getPhaseInstructions(nextPhase)
+        }
+        
+        // Set current player to first eligible player for the new phase
+        const firstEligiblePlayer = getNextEligiblePlayer(-1, stateWithNewPhase, new Set())
+        
+        return {
+          ...stateWithNewPhase,
+          currentPlayerIndex: firstEligiblePlayer !== null ? firstEligiblePlayer : 0
+        }
+      } else {
+        // Not all offers complete yet - advance to next eligible player
+        return advanceToNextEligiblePlayer(newState)
       }
-      
-      return newState
     }
     
     case 'FLIP_CARD': {
@@ -455,11 +592,22 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       
       // Automatically advance to action phase after flip
       const { nextPhase, nextRound } = advanceToNextPhase(newState.currentPhase, newState.round)
-      newState.currentPhase = nextPhase
-      newState.round = nextRound
-      newState.phaseInstructions = getPhaseInstructions(nextPhase)
       
-      return newState
+      // Create state with advanced phase
+      const stateWithNewPhase = {
+        ...newState,
+        currentPhase: nextPhase,
+        round: nextRound,
+        phaseInstructions: getPhaseInstructions(nextPhase)
+      }
+      
+      // Set current player to first eligible player for the new phase
+      const firstEligiblePlayer = getNextEligiblePlayer(-1, stateWithNewPhase, new Set())
+      
+      return {
+        ...stateWithNewPhase,
+        currentPlayerIndex: firstEligiblePlayer !== null ? firstEligiblePlayer : 0
+      }
     }
     
     case 'PLAY_ACTION_CARD': {
@@ -505,7 +653,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       // Execute the action card effect immediately
       const stateAfterEffect = executeActionCardEffect(newState, actionCard, playerId)
       
-      return stateAfterEffect
+      // Advance to next eligible player after playing action card
+      return advanceToNextEligiblePlayer(stateAfterEffect)
     }
     
     case 'SELECT_OFFER': {
@@ -591,16 +740,39 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       
       // Automatically advance to offer distribution phase
       const { nextPhase, nextRound } = advanceToNextPhase(newState.currentPhase, newState.round)
-      newState.currentPhase = nextPhase
-      newState.round = nextRound
-      newState.phaseInstructions = getPhaseInstructions(nextPhase)
       
-      return newState
+      // Create state with advanced phase
+      const stateWithNewPhase = {
+        ...newState,
+        currentPhase: nextPhase,
+        round: nextRound,
+        phaseInstructions: getPhaseInstructions(nextPhase)
+      }
+      
+      // Set current player to first eligible player for the new phase
+      const firstEligiblePlayer = getNextEligiblePlayer(-1, stateWithNewPhase, new Set())
+      
+      return {
+        ...stateWithNewPhase,
+        currentPlayerIndex: firstEligiblePlayer !== null ? firstEligiblePlayer : 0
+      }
     }
     
     case 'DECLARE_DONE': {
-      // TODO: Implement in future tasks
-      return state
+      const { playerId } = action
+      
+      // Validate player exists
+      if (playerId < 0 || playerId >= state.players.length) {
+        throw new Error(`Invalid player ID: ${playerId}`)
+      }
+      
+      // Validate that it's the current player's turn
+      if (playerId !== state.currentPlayerIndex) {
+        throw new Error('Only the current player can declare done')
+      }
+      
+      // Advance to next eligible player with automatic skipping
+      return advanceToNextEligiblePlayer(state)
     }
     
     default:
@@ -720,11 +892,20 @@ export function handleGotchaTradeinsPhase(state: GameState): GameState {
   // Automatically advance to next phase after trade-ins
   const { nextPhase, nextRound } = advanceToNextPhase(newState.currentPhase, newState.round)
   
-  return {
+  // Create state with advanced phase
+  const stateWithNewPhase = {
     ...newState,
     currentPhase: nextPhase,
     round: nextRound,
     phaseInstructions: getPhaseInstructions(nextPhase)
+  }
+  
+  // Set current player to first eligible player for the new phase
+  const firstEligiblePlayer = getNextEligiblePlayer(-1, stateWithNewPhase, new Set())
+  
+  return {
+    ...stateWithNewPhase,
+    currentPlayerIndex: firstEligiblePlayer !== null ? firstEligiblePlayer : 0
   }
 }
 
@@ -742,11 +923,20 @@ export function handleThingTradeinsPhase(state: GameState): GameState {
   // Automatically advance to next phase after trade-ins
   const { nextPhase, nextRound } = advanceToNextPhase(newState.currentPhase, newState.round)
   
-  return {
+  // Create state with advanced phase
+  const stateWithNewPhase = {
     ...newState,
     currentPhase: nextPhase,
     round: nextRound,
     phaseInstructions: getPhaseInstructions(nextPhase)
+  }
+  
+  // Set current player to first eligible player for the new phase
+  const firstEligiblePlayer = getNextEligiblePlayer(-1, stateWithNewPhase, new Set())
+  
+  return {
+    ...stateWithNewPhase,
+    currentPlayerIndex: firstEligiblePlayer !== null ? firstEligiblePlayer : 0
   }
 }
 
@@ -827,6 +1017,297 @@ function executeActionCardEffect(state: GameState, actionCard: Card, playerId: n
     default:
       // Unknown action card subtype - no effect
       return state
+  }
+}
+
+/**
+ * Gets the next player index in clockwise rotation
+ * @param currentIndex Current player index
+ * @param playerCount Total number of players
+ * @returns Next player index (with wraparound)
+ */
+export function getNextPlayerIndex(currentIndex: number, playerCount: number): number {
+  return (currentIndex + 1) % playerCount
+}
+
+/**
+ * Gets the player to the right of the buyer (next in clockwise order)
+ * @param buyerIndex Current buyer index
+ * @param playerCount Total number of players
+ * @returns Index of player to buyer's right
+ */
+export function getPlayerToRightOfBuyer(buyerIndex: number, playerCount: number): number {
+  return getNextPlayerIndex(buyerIndex, playerCount)
+}
+
+/**
+ * Gets the starting player index for a rotation based on phase type
+ * @param buyerIndex Current buyer index
+ * @param playerCount Total number of players
+ * @param buyerIncluded Whether the buyer participates in this phase
+ * @returns Starting player index for rotation
+ */
+export function getRotationStartIndex(buyerIndex: number, playerCount: number, buyerIncluded: boolean): number {
+  if (buyerIncluded) {
+    // Standard rotation: start with buyer
+    return buyerIndex
+  } else {
+    // Buyer-excluded phases: start with player to buyer's right
+    return getPlayerToRightOfBuyer(buyerIndex, playerCount)
+  }
+}
+
+/**
+ * Gets the full rotation order for a phase
+ * @param buyerIndex Current buyer index
+ * @param playerCount Total number of players
+ * @param buyerIncluded Whether the buyer participates in this phase
+ * @returns Array of player indices in rotation order
+ */
+export function getRotationOrder(buyerIndex: number, playerCount: number, buyerIncluded: boolean): number[] {
+  const startIndex = getRotationStartIndex(buyerIndex, playerCount, buyerIncluded)
+  const rotationOrder: number[] = []
+  
+  let currentIndex = startIndex
+  const playersToInclude = buyerIncluded ? playerCount : playerCount - 1
+  
+  for (let i = 0; i < playersToInclude; i++) {
+    // Skip buyer if not included
+    if (!buyerIncluded && currentIndex === buyerIndex) {
+      currentIndex = getNextPlayerIndex(currentIndex, playerCount)
+      i-- // Don't count this iteration
+      continue
+    }
+    
+    rotationOrder.push(currentIndex)
+    currentIndex = getNextPlayerIndex(currentIndex, playerCount)
+  }
+  
+  return rotationOrder
+}
+
+/**
+ * Determines if the buyer should be included in the rotation for a given phase
+ * @param phase Current game phase
+ * @returns True if buyer participates in this phase
+ */
+export function isBuyerIncludedInPhase(phase: GamePhase): boolean {
+  switch (phase) {
+    case GamePhase.BUYER_ASSIGNMENT:
+    case GamePhase.DEAL:
+    case GamePhase.BUYER_FLIP:
+    case GamePhase.OFFER_SELECTION:
+    case GamePhase.OFFER_DISTRIBUTION:
+    case GamePhase.GOTCHA_TRADEINS:
+    case GamePhase.THING_TRADEINS:
+    case GamePhase.WINNER_DETERMINATION:
+      // These phases don't involve player rotation or buyer participates
+      return true
+    
+    case GamePhase.OFFER_PHASE:
+      // Buyer doesn't place offers, only sellers do
+      return false
+    
+    case GamePhase.ACTION_PHASE:
+      // All players including buyer can play action cards
+      return true
+    
+    default:
+      return true
+  }
+}
+
+/**
+ * Determines if a player has valid actions in the current phase
+ * @param player The player to check
+ * @param phase Current game phase
+ * @param isBuyer Whether this player is the current buyer
+ * @returns True if player has valid actions in this phase
+ */
+export function playerHasValidActions(player: Player, phase: GamePhase, isBuyer: boolean): boolean {
+  switch (phase) {
+    case GamePhase.OFFER_PHASE:
+      // Only sellers (non-buyers) can place offers, and only if they haven't already
+      return !isBuyer && player.offer.length === 0 && player.hand.length >= 3
+    
+    case GamePhase.ACTION_PHASE:
+      // Players can act if they have action cards in their collection
+      return player.collection.some(card => card.type === 'action')
+    
+    case GamePhase.BUYER_FLIP:
+      // Only buyer can flip cards
+      return isBuyer
+    
+    case GamePhase.OFFER_SELECTION:
+      // Only buyer can select offers
+      return isBuyer
+    
+    case GamePhase.BUYER_ASSIGNMENT:
+    case GamePhase.DEAL:
+    case GamePhase.OFFER_DISTRIBUTION:
+    case GamePhase.GOTCHA_TRADEINS:
+    case GamePhase.THING_TRADEINS:
+    case GamePhase.WINNER_DETERMINATION:
+      // These phases are automatic or don't require player actions
+      return false
+    
+    default:
+      return false
+  }
+}
+
+/**
+ * Gets the next eligible player in rotation, automatically skipping players with no valid actions
+ * @param currentPlayerIndex Current player index (-1 to start from beginning of rotation)
+ * @param state Current game state
+ * @param visitedPlayers Set of player indices already visited in this rotation
+ * @returns Next eligible player index, or null if no eligible players remain
+ */
+export function getNextEligiblePlayer(
+  currentPlayerIndex: number, 
+  state: GameState, 
+  visitedPlayers: Set<number> = new Set()
+): number | null {
+  const { players, currentBuyerIndex, currentPhase } = state
+  const playerCount = players.length
+  
+  // Get the rotation order for this phase
+  const buyerIncluded = isBuyerIncludedInPhase(currentPhase)
+  const rotationOrder = getRotationOrder(currentBuyerIndex, playerCount, buyerIncluded)
+  
+  if (rotationOrder.length === 0) {
+    return null
+  }
+  
+  // If starting from beginning (-1), start from first position
+  if (currentPlayerIndex === -1) {
+    return getNextEligiblePlayerFromRotation(rotationOrder, 0, state, visitedPlayers)
+  }
+  
+  // Find current position in rotation order
+  const currentPositionInRotation = rotationOrder.indexOf(currentPlayerIndex)
+  if (currentPositionInRotation === -1) {
+    // Current player not in rotation for this phase, start from beginning
+    return getNextEligiblePlayerFromRotation(rotationOrder, 0, state, visitedPlayers)
+  }
+  
+  // Start checking from next position in rotation
+  const nextPosition = (currentPositionInRotation + 1) % rotationOrder.length
+  return getNextEligiblePlayerFromRotation(rotationOrder, nextPosition, state, visitedPlayers)
+}
+
+/**
+ * Helper function to find next eligible player from rotation order
+ * @param rotationOrder Array of player indices in rotation order
+ * @param startPosition Position to start checking from
+ * @param state Current game state
+ * @param visitedPlayers Set of player indices already visited
+ * @returns Next eligible player index, or null if none found
+ */
+function getNextEligiblePlayerFromRotation(
+  rotationOrder: number[], 
+  startPosition: number, 
+  state: GameState, 
+  visitedPlayers: Set<number>
+): number | null {
+  const { players, currentBuyerIndex, currentPhase } = state
+  
+  // Check each player in rotation order starting from startPosition
+  for (let i = 0; i < rotationOrder.length; i++) {
+    const positionToCheck = (startPosition + i) % rotationOrder.length
+    const playerIndex = rotationOrder[positionToCheck]
+    
+    // Skip if we've already visited this player in this rotation
+    if (visitedPlayers.has(playerIndex)) {
+      continue
+    }
+    
+    const player = players[playerIndex]
+    const isBuyer = playerIndex === currentBuyerIndex
+    
+    // Check if this player has valid actions
+    if (playerHasValidActions(player, currentPhase, isBuyer)) {
+      return playerIndex
+    }
+  }
+  
+  // No eligible players found
+  return null
+}
+
+/**
+ * Checks if all eligible players have had their opportunity in the current phase
+ * @param state Current game state
+ * @param visitedPlayers Set of player indices that have been visited/skipped
+ * @returns True if all eligible players have been processed
+ */
+export function allEligiblePlayersProcessed(state: GameState, visitedPlayers: Set<number>): boolean {
+  const { players, currentBuyerIndex, currentPhase } = state
+  const playerCount = players.length
+  
+  // Get the rotation order for this phase
+  const buyerIncluded = isBuyerIncludedInPhase(currentPhase)
+  const rotationOrder = getRotationOrder(currentBuyerIndex, playerCount, buyerIncluded)
+  
+  // Check if all players in rotation have been visited or have no valid actions
+  for (const playerIndex of rotationOrder) {
+    const player = players[playerIndex]
+    const isBuyer = playerIndex === currentBuyerIndex
+    
+    // If player has valid actions but hasn't been visited, not all are processed
+    if (playerHasValidActions(player, currentPhase, isBuyer) && !visitedPlayers.has(playerIndex)) {
+      return false
+    }
+  }
+  
+  return true
+}
+
+/**
+ * Automatically advances the current player to the next eligible player
+ * @param state Current game state
+ * @param visitedPlayers Set of player indices already processed in this phase
+ * @returns Updated game state with next eligible player, or phase advancement if all done
+ */
+export function advanceToNextEligiblePlayer(state: GameState, visitedPlayers: Set<number> = new Set()): GameState {
+  // Mark current player as visited
+  const newVisitedPlayers = new Set(visitedPlayers)
+  newVisitedPlayers.add(state.currentPlayerIndex)
+  
+  // Find next eligible player
+  const nextPlayerIndex = getNextEligiblePlayer(state.currentPlayerIndex, state, newVisitedPlayers)
+  
+  if (nextPlayerIndex !== null) {
+    // Found next eligible player
+    return {
+      ...state,
+      currentPlayerIndex: nextPlayerIndex
+    }
+  } else {
+    // No more eligible players - check if we should advance phase
+    if (allEligiblePlayersProcessed(state, newVisitedPlayers)) {
+      // All eligible players have been processed - advance phase
+      const { nextPhase, nextRound } = advanceToNextPhase(state.currentPhase, state.round)
+      
+      // Create state with advanced phase
+      const stateWithNewPhase = {
+        ...state,
+        currentPhase: nextPhase,
+        round: nextRound,
+        phaseInstructions: getPhaseInstructions(nextPhase)
+      }
+      
+      // Set current player to first eligible player for the new phase
+      const firstEligiblePlayer = getNextEligiblePlayer(-1, stateWithNewPhase, new Set())
+      
+      return {
+        ...stateWithNewPhase,
+        currentPlayerIndex: firstEligiblePlayer !== null ? firstEligiblePlayer : 0
+      }
+    } else {
+      // This shouldn't happen, but return current state as fallback
+      return state
+    }
   }
 }
 
