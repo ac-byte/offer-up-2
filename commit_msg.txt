@@ -1,8 +1,4 @@
-Implement automatic player skipping functionality
+Clean up temporary commit message file
 
-- Add playerHasValidActions to determine valid actions per phase
-- Add getNextEligiblePlayer with automatic skipping logic  
-- Add advanceToNextEligiblePlayer for seamless rotation
-- Update game reducer to integrate automatic skipping
-- Add comprehensive tests for all skipping scenarios
-- Satisfies requirements 14.1, 14.2, 14.3, 14.5
+- Remove commit_msg.txt that was left behind from previous commit
+- Maintain clean repository state
