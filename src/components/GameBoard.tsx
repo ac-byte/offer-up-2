@@ -1,12 +1,12 @@
-import React, { useReducer } from 'react'
-import { gameReducer, createInitialGameState } from '../game-logic/gameReducer'
+import React from 'react'
+import { useGameContext } from '../contexts'
 import { PerspectiveSelector } from './PerspectiveSelector'
 import { PlayerArea } from './PlayerArea'
-import { GameAction } from '../types'
+import { GameAction, GamePhase } from '../types'
 import './GameBoard.css'
 
 export const GameBoard: React.FC = () => {
-  const [gameState, dispatch] = useReducer(gameReducer, createInitialGameState())
+  const { gameState, dispatch } = useGameContext()
 
   const handlePerspectiveChange = (playerId: number) => {
     const action: GameAction = { type: 'CHANGE_PERSPECTIVE', playerId }
@@ -19,17 +19,87 @@ export const GameBoard: React.FC = () => {
     dispatch(action)
   }
 
+  const handleAdvancePhase = () => {
+    const action: GameAction = { type: 'ADVANCE_PHASE' }
+    dispatch(action)
+  }
+
   const handleDealCards = () => {
     const action: GameAction = { type: 'DEAL_CARDS' }
     dispatch(action)
+  }
+
+  const formatPhaseName = (phase: GamePhase): string => {
+    return phase.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+  }
+
+  const getCurrentBuyer = () => {
+    return gameState.players[gameState.currentBuyerIndex]
+  }
+
+  const getCurrentPlayer = () => {
+    return gameState.players[gameState.currentPlayerIndex]
+  }
+
+  const getGameStatus = () => {
+    if (gameState.winner !== null) {
+      const winner = gameState.players[gameState.winner]
+      return `🏆 ${winner.name} wins with ${winner.points} points!`
+    }
+    
+    const buyer = getCurrentBuyer()
+    const currentPlayer = getCurrentPlayer()
+    
+    return `💰 Buyer: ${buyer?.name} | 🎯 Current Player: ${currentPlayer?.name}`
+  }
+
+  const getPhaseActions = () => {
+    switch (gameState.currentPhase) {
+      case GamePhase.DEAL:
+        return (
+          <button onClick={handleDealCards} className="action-button primary">
+            Deal Cards
+          </button>
+        )
+      
+      case GamePhase.BUYER_ASSIGNMENT:
+      case GamePhase.OFFER_DISTRIBUTION:
+      case GamePhase.GOTCHA_TRADEINS:
+      case GamePhase.THING_TRADEINS:
+      case GamePhase.WINNER_DETERMINATION:
+        return (
+          <button onClick={handleAdvancePhase} className="action-button">
+            Continue to Next Phase
+          </button>
+        )
+      
+      default:
+        return (
+          <div className="phase-waiting">
+            <span>Waiting for player actions...</span>
+            <button onClick={handleAdvancePhase} className="action-button secondary">
+              Skip Phase (Debug)
+            </button>
+          </div>
+        )
+    }
   }
 
   if (!gameState.gameStarted) {
     return (
       <div className="game-board">
         <div className="game-setup">
-          <h2>Trading Card Game</h2>
-          <p>Ready to start a new game?</p>
+          <h1>Trading Card Game</h1>
+          <p>A strategic card game for 3-6 players featuring buying, selling, and set collection mechanics.</p>
+          <div className="setup-info">
+            <h3>Game Features:</h3>
+            <ul>
+              <li>10-phase round system with buyer-seller mechanics</li>
+              <li>Strategic offers with hidden information</li>
+              <li>Action cards for dynamic gameplay</li>
+              <li>Set collection and point scoring</li>
+            </ul>
+          </div>
           <button onClick={handleStartGame} className="start-button">
             Start Game (4 Players)
           </button>
@@ -40,23 +110,54 @@ export const GameBoard: React.FC = () => {
 
   return (
     <div className="game-board">
+      {/* Game Header with Title and Status */}
       <div className="game-header">
-        <h2>Trading Card Game - Round {gameState.round}</h2>
-        <div className="game-controls">
-          <PerspectiveSelector
-            players={gameState.players}
-            selectedPerspective={gameState.selectedPerspective}
-            onPerspectiveChange={handlePerspectiveChange}
-          />
-          <div className="phase-info">
-            <strong>Phase:</strong> {gameState.currentPhase.replace('_', ' ').toUpperCase()}
+        <div className="game-title">
+          <h1>Trading Card Game</h1>
+          <div className="round-info">Round {gameState.round}</div>
+        </div>
+        <div className="game-status">
+          {getGameStatus()}
+        </div>
+      </div>
+
+      {/* Phase Display and Instructions */}
+      <div className="phase-display">
+        <div className="phase-info">
+          <div className="phase-name">
+            <strong>Current Phase:</strong> {formatPhaseName(gameState.currentPhase)}
           </div>
           <div className="phase-instructions">
             {gameState.phaseInstructions}
           </div>
         </div>
+        <div className="phase-progress">
+          <div className="phase-indicator">
+            Phase {Object.values(GamePhase).indexOf(gameState.currentPhase) + 1} of 10
+          </div>
+        </div>
       </div>
 
+      {/* Game Controls */}
+      <div className="game-controls">
+        <div className="control-section">
+          <label>View Perspective:</label>
+          <PerspectiveSelector
+            players={gameState.players}
+            selectedPerspective={gameState.selectedPerspective}
+            onPerspectiveChange={handlePerspectiveChange}
+          />
+        </div>
+        
+        <div className="control-section">
+          <div className="deck-info">
+            <span>Draw Pile: {gameState.drawPile.length} cards</span>
+            <span>Discard Pile: {gameState.discardPile.length} cards</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Player Areas */}
       <div className="player-areas">
         {gameState.players.map((player, index) => (
           <PlayerArea
@@ -66,19 +167,40 @@ export const GameBoard: React.FC = () => {
             isBuyer={index === gameState.currentBuyerIndex}
             perspective={gameState.selectedPerspective}
             phase={gameState.currentPhase}
-            onCardPlay={() => {}} // Placeholder
-            onOfferPlace={() => {}} // Placeholder
+            onCardPlay={() => {}} // Placeholder - will be implemented in future tasks
+            onOfferPlace={() => {}} // Placeholder - will be implemented in future tasks
           />
         ))}
       </div>
 
+      {/* Game Actions */}
       <div className="game-actions">
-        {gameState.currentPhase === 'deal' && (
-          <button onClick={handleDealCards} className="action-button">
-            Deal Cards
-          </button>
-        )}
+        <div className="actions-header">
+          <h3>Game Actions</h3>
+        </div>
+        <div className="actions-content">
+          {getPhaseActions()}
+        </div>
       </div>
+
+      {/* Game Footer with Additional Info */}
+      {gameState.winner === null && (
+        <div className="game-footer">
+          <div className="game-stats">
+            <div className="stat-item">
+              <strong>Players:</strong> {gameState.players.length}
+            </div>
+            <div className="stat-item">
+              <strong>Cards in Play:</strong> {gameState.players.reduce((total, player) => 
+                total + player.hand.length + player.collection.length + player.offer.length, 0
+              )}
+            </div>
+            <div className="stat-item">
+              <strong>Highest Score:</strong> {Math.max(...gameState.players.map(p => p.points), 0)} points
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

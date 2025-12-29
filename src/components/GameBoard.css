@@ -1,107 +1,359 @@
 .game-board {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 20px;
   font-family: Arial, sans-serif;
+  background-color: #f5f5f5;
+  min-height: 100vh;
 }
 
+/* Game Setup Styles */
 .game-setup {
   text-align: center;
   padding: 40px;
-  background-color: #f8f9fa;
-  border-radius: 8px;
+  background-color: #ffffff;
+  border-radius: 12px;
   border: 1px solid #dee2e6;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  max-width: 600px;
+  margin: 40px auto;
 }
 
-.game-setup h2 {
+.game-setup h1 {
   color: #333;
   margin-bottom: 16px;
+  font-size: 2.5rem;
+}
+
+.game-setup p {
+  color: #666;
+  margin-bottom: 24px;
+  font-size: 1.1rem;
+}
+
+.setup-info {
+  text-align: left;
+  margin: 24px 0;
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+}
+
+.setup-info h3 {
+  color: #333;
+  margin-bottom: 12px;
+}
+
+.setup-info ul {
+  color: #555;
+  line-height: 1.6;
 }
 
 .start-button {
   background-color: #007bff;
   color: white;
   border: none;
-  padding: 12px 24px;
-  border-radius: 6px;
-  font-size: 16px;
+  padding: 16px 32px;
+  border-radius: 8px;
+  font-size: 18px;
+  font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.2s;
+  box-shadow: 0 2px 4px rgba(0, 123, 255, 0.3);
 }
 
 .start-button:hover {
   background-color: #0056b3;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 123, 255, 0.4);
 }
 
+/* Game Header Styles */
 .game-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 20px;
-  padding: 16px;
+  padding: 20px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #dee2e6;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.game-title h1 {
+  margin: 0;
+  color: #333;
+  font-size: 1.8rem;
+}
+
+.round-info {
+  color: #666;
+  font-size: 1rem;
+  margin-top: 4px;
+}
+
+.game-status {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+  padding: 8px 16px;
   background-color: #f8f9fa;
-  border-radius: 8px;
+  border-radius: 6px;
   border: 1px solid #dee2e6;
 }
 
-.game-header h2 {
-  margin: 0 0 16px 0;
-  color: #333;
-}
-
-.game-controls {
+/* Phase Display Styles */
+.phase-display {
   display: flex;
-  flex-wrap: wrap;
+  justify-content: space-between;
   align-items: center;
-  gap: 20px;
+  margin-bottom: 20px;
+  padding: 16px 20px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #dee2e6;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .phase-info {
-  font-size: 14px;
-  color: #666;
+  flex: 1;
+}
+
+.phase-name {
+  font-size: 1.2rem;
+  color: #333;
+  margin-bottom: 8px;
 }
 
 .phase-instructions {
-  font-size: 14px;
-  color: #333;
+  font-size: 1rem;
+  color: #666;
   font-style: italic;
 }
 
+.phase-progress {
+  text-align: right;
+}
+
+.phase-indicator {
+  font-size: 0.9rem;
+  color: #666;
+  background-color: #f8f9fa;
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 1px solid #dee2e6;
+}
+
+/* Game Controls Styles */
+.game-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 16px 20px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #dee2e6;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.control-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.control-section label {
+  font-weight: 600;
+  color: #333;
+}
+
+.deck-info {
+  display: flex;
+  gap: 20px;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.deck-info span {
+  padding: 4px 8px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  border: 1px solid #dee2e6;
+}
+
+/* Player Areas Styles */
 .player-areas {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 20px;
   margin: 20px 0;
 }
 
+/* Game Actions Styles */
 .game-actions {
-  text-align: center;
-  margin-top: 20px;
-  padding: 16px;
-  background-color: #f8f9fa;
-  border-radius: 8px;
+  margin: 20px 0;
+  padding: 20px;
+  background-color: #ffffff;
+  border-radius: 12px;
   border: 1px solid #dee2e6;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.actions-header h3 {
+  margin: 0 0 16px 0;
+  color: #333;
+  font-size: 1.3rem;
+}
+
+.actions-content {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
 .action-button {
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 120px;
+}
+
+.action-button.primary {
   background-color: #28a745;
   color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 6px;
-  font-size: 14px;
-  cursor: pointer;
-  transition: background-color 0.2s;
+  box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3);
 }
 
-.action-button:hover {
+.action-button.primary:hover {
   background-color: #218838;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(40, 167, 69, 0.4);
 }
 
+.action-button.secondary {
+  background-color: #6c757d;
+  color: white;
+  box-shadow: 0 2px 4px rgba(108, 117, 125, 0.3);
+}
+
+.action-button.secondary:hover {
+  background-color: #5a6268;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(108, 117, 125, 0.4);
+}
+
+.action-button:not(.primary):not(.secondary) {
+  background-color: #007bff;
+  color: white;
+  box-shadow: 0 2px 4px rgba(0, 123, 255, 0.3);
+}
+
+.action-button:not(.primary):not(.secondary):hover {
+  background-color: #0056b3;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 123, 255, 0.4);
+}
+
+.phase-waiting {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  color: #666;
+}
+
+/* Game Footer Styles */
+.game-footer {
+  margin-top: 20px;
+  padding: 16px 20px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #dee2e6;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.game-stats {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.stat-item {
+  text-align: center;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.stat-item strong {
+  color: #333;
+}
+
+/* Responsive Design */
 @media (max-width: 768px) {
+  .game-board {
+    padding: 10px;
+  }
+  
+  .game-header {
+    flex-direction: column;
+    gap: 16px;
+    text-align: center;
+  }
+  
+  .phase-display {
+    flex-direction: column;
+    gap: 12px;
+    text-align: center;
+  }
+  
   .game-controls {
     flex-direction: column;
-    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .control-section {
+    justify-content: center;
+  }
+  
+  .deck-info {
+    justify-content: center;
   }
   
   .player-areas {
     grid-template-columns: 1fr;
+  }
+  
+  .game-stats {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .actions-content {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 480px) {
+  .game-setup {
+    margin: 20px auto;
+    padding: 20px;
+  }
+  
+  .game-setup h1 {
+    font-size: 2rem;
+  }
+  
+  .setup-info {
+    text-align: center;
   }
 }
