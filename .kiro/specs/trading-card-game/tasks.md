@@ -18,23 +18,23 @@ This implementation plan breaks down the trading card game into discrete, testab
   - **Validates: Requirements 1.1**
 
 - [ ] 2. Implement deck creation and card logic
-  - [ ] 2.1 Create card factory functions for Thing, Gotcha, and Action cards
+  - [x] 2.1 Create card factory functions for Thing, Gotcha, and Action cards
     - Implement functions to create cards with correct properties
     - Include card type, subtype, name, setSize, and visual properties
     - _Requirements: 1.2, 1.3, 1.4, 12.1, 12.2, 12.3, 12.4, 12.5_
 
-  - [ ]* 2.2 Write property tests for card creation
+  - [x]* 2.2 Write property tests for card creation
     - **Property 2: Thing card distribution**
     - **Property 3: Gotcha card distribution** 
     - **Property 4: Action card distribution**
     - **Validates: Requirements 1.2, 1.3, 1.4**
 
-  - [ ] 2.3 Implement deck creation and shuffling
+  - [x] 2.3 Implement deck creation and shuffling
     - Create complete 120-card deck with correct composition
     - Implement Fisher-Yates shuffle algorithm
     - _Requirements: 1.1, 1.5_
 
-  - [ ]* 2.4 Write property tests for deck operations
+  - [x]* 2.4 Write property tests for deck operations
     - **Property 5: Deck shuffling**
     - **Validates: Requirements 1.5**
 
