@@ -93,6 +93,10 @@ export function validatePhaseAction(phase: GamePhase, action: GameAction): boole
       // Perspective changes are always allowed
       return true
     
+    case 'TOGGLE_AUTO_FOLLOW':
+      // Auto-follow toggle is always allowed
+      return true
+    
     case 'PLACE_OFFER':
       // Can only place offers during offer phase
       return phase === GamePhase.OFFER_PHASE
@@ -1416,8 +1420,8 @@ export function updatePerspectiveForActivePlayer(state: GameState, newPlayerInde
     return state
   }
   
-  // Only update perspective if the active player actually changed
-  if (newPlayerIndex !== state.currentPlayerIndex && newPlayerIndex >= 0 && newPlayerIndex < state.players.length) {
+  // Only update perspective if the new player index is valid and different from current perspective
+  if (newPlayerIndex >= 0 && newPlayerIndex < state.players.length && newPlayerIndex !== state.selectedPerspective) {
     return {
       ...state,
       selectedPerspective: newPlayerIndex
