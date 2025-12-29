@@ -142,6 +142,21 @@ export function shouldContinueGame(state: GameState): boolean {
 }
 
 /**
+ * Checks if all sellers have completed their offers during offer phase
+ */
+export function areAllOffersComplete(state: GameState): boolean {
+  if (state.currentPhase !== GamePhase.OFFER_PHASE) {
+    return false
+  }
+  
+  // Get all sellers (players who are not the buyer)
+  const sellers = state.players.filter((_, index) => index !== state.currentBuyerIndex)
+  
+  // Check if all sellers have placed offers (offer array has 3 cards)
+  return sellers.every(seller => seller.offer.length === 3)
+}
+
+/**
  * Deals cards to bring all players' hands to exactly 5 cards
  * Implements sequential dealing (one card per player at a time)
  * Handles draw pile exhaustion by reshuffling discard pile
@@ -359,12 +374,83 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         }
       })
       
+      // Check if all sellers have now completed their offers
+      if (areAllOffersComplete(newState)) {
+        // Automatically advance to buyer-flip phase
+        const { nextPhase, nextRound } = advanceToNextPhase(newState.currentPhase, newState.round)
+        newState.currentPhase = nextPhase
+        newState.round = nextRound
+        newState.phaseInstructions = getPhaseInstructions(nextPhase)
+      }
+      
       return newState
     }
     
     case 'FLIP_CARD': {
-      // TODO: Implement in future tasks
-      return state
+      const { offerId, cardIndex } = action
+      
+      // Validate that current phase is buyer-flip
+      if (state.currentPhase !== GamePhase.BUYER_FLIP) {
+        throw new Error('Card flipping is only allowed during buyer-flip phase')
+      }
+      
+      // Validate offerId (player index)
+      if (offerId < 0 || offerId >= state.players.length) {
+        throw new Error(`Invalid offer ID: ${offerId}`)
+      }
+      
+      // Validate that the player is not the buyer (buyers don't have offers)
+      if (offerId === state.currentBuyerIndex) {
+        throw new Error('Cannot flip cards from buyer\'s offer (buyer has no offer)')
+      }
+      
+      const targetPlayer = state.players[offerId]
+      
+      // Validate that the player has an offer
+      if (targetPlayer.offer.length === 0) {
+        throw new Error('Player has no offer to flip cards from')
+      }
+      
+      // Validate cardIndex
+      if (cardIndex < 0 || cardIndex >= targetPlayer.offer.length) {
+        throw new Error(`Invalid card index: ${cardIndex}`)
+      }
+      
+      const targetCard = targetPlayer.offer[cardIndex]
+      
+      // Validate that the card is face down (can only flip face down cards)
+      if (targetCard.faceUp) {
+        throw new Error('Cannot flip a card that is already face up')
+      }
+      
+      // Create new state with the flipped card
+      const newState = { ...state }
+      newState.players = state.players.map((player, playerIndex) => {
+        if (playerIndex !== offerId) {
+          return player
+        }
+        
+        // Update the specific card to be face up
+        const newOffer = player.offer.map((card, index) => {
+          if (index === cardIndex) {
+            return { ...card, faceUp: true }
+          }
+          return card
+        })
+        
+        return {
+          ...player,
+          offer: newOffer
+        }
+      })
+      
+      // Automatically advance to action phase after flip
+      const { nextPhase, nextRound } = advanceToNextPhase(newState.currentPhase, newState.round)
+      newState.currentPhase = nextPhase
+      newState.round = nextRound
+      newState.phaseInstructions = getPhaseInstructions(nextPhase)
+      
+      return newState
     }
     
     case 'PLAY_ACTION_CARD': {

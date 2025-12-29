@@ -81,7 +81,7 @@ This implementation plan breaks down the trading card game into discrete, testab
     - **Validates: Requirements 4.1, 4.2, 4.3**
 
 - [ ] 6. Implement offer phase mechanics
-  - [ ] 6.1 Create offer placement logic
+  - [x] 6.1 Create offer placement logic
     - Validate 3-card offers with 2 face down, 1 face up
     - Prevent offer modification once placed
     - Track offer completion for phase advancement
@@ -95,7 +95,7 @@ This implementation plan breaks down the trading card game into discrete, testab
     - **Validates: Requirements 5.1, 5.2, 5.3, 5.5**
 
 - [ ] 7. Implement buyer-flip phase mechanics
-  - [ ] 7.1 Create card flipping logic
+  - [x] 7.1 Create card flipping logic
     - Allow only buyer to flip one face down card
     - Change card state from face down to face up
     - Advance phase after flip

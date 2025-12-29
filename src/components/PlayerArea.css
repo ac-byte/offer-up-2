@@ -257,6 +257,17 @@
   order: 3;
 }
 
+.offer-area__card--flippable {
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.offer-area__card--flippable:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(255, 193, 7, 0.4);
+  border: 2px solid #ffc107 !important;
+}
+
 .offer-area__empty {
   color: #999;
   font-style: italic;

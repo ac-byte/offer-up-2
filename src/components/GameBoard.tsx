@@ -39,6 +39,16 @@ export const GameBoard: React.FC = () => {
     }
   }
 
+  const handleCardFlip = (offerId: number, cardIndex: number) => {
+    const action: GameAction = { type: 'FLIP_CARD', offerId, cardIndex }
+    try {
+      dispatch(action)
+    } catch (error) {
+      console.error('Error flipping card:', error)
+      // In a real app, you'd show this error to the user
+    }
+  }
+
   const formatPhaseName = (phase: GamePhase): string => {
     return phase.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
   }
@@ -179,6 +189,8 @@ export const GameBoard: React.FC = () => {
             phase={gameState.currentPhase}
             onCardPlay={() => {}} // Placeholder - will be implemented in future tasks
             onOfferPlace={(cards, faceUpIndex) => handleOfferPlace(player.id, cards, faceUpIndex)}
+            onCardFlip={(cardIndex) => handleCardFlip(index, cardIndex)} // index is the player index (offerId)
+            canFlipCards={gameState.currentPhase === GamePhase.BUYER_FLIP && gameState.selectedPerspective === gameState.currentBuyerIndex}
           />
         ))}
       </div>

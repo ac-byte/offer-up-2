@@ -140,7 +140,7 @@ describe('PlayerArea Component', () => {
     );
     
     expect(screen.getByText('No cards in hand')).toBeInTheDocument();
-    expect(screen.getByText('Drag 3 cards here to make an offer')).toBeInTheDocument(); // Own perspective shows drag instruction
+    expect(screen.getByText('Click "Make Offer" or drag a card here')).toBeInTheDocument(); // Own perspective shows drag instruction
     expect(screen.getByText('No cards in collection')).toBeInTheDocument();
   });
 
@@ -192,6 +192,6 @@ describe('PlayerArea Component', () => {
     );
     
     // Should show drag instruction for own offer area
-    expect(screen.getByText('Drag 3 cards here to make an offer')).toBeInTheDocument();
+    expect(screen.getByText('Click "Make Offer" or drag a card here')).toBeInTheDocument();
   });
 });

@@ -9,7 +9,8 @@ import {
   advanceToNextPhase,
   shouldContinueGame,
   dealCards,
-  handleDealPhase
+  handleDealPhase,
+  areAllOffersComplete
 } from '../../game-logic/gameReducer'
 import { GamePhase } from '../../types'
 import { createThingCard, createGotchaCard } from '../../game-logic/cards'
@@ -590,6 +591,336 @@ describe('Game Reducer', () => {
         const unknownAction = { type: 'UNKNOWN_ACTION' as any }
         
         expect(() => gameReducer(initialState, unknownAction)).toThrow('Action UNKNOWN_ACTION is not allowed during phase buyer_assignment')
+      })
+    })
+
+    describe('PLACE_OFFER action', () => {
+      let gameState: ReturnType<typeof createInitialGameState>
+
+      beforeEach(() => {
+        // Create a game state with 3 players in offer phase
+        gameState = gameReducer(initialState, { type: 'START_GAME', players: ['Alice', 'Bob', 'Charlie'] })
+        gameState = { ...gameState, currentPhase: GamePhase.OFFER_PHASE, currentBuyerIndex: 0 }
+        
+        // Give players some cards to make offers with
+        const testCards = [
+          createThingCard('giant', 0),
+          createThingCard('big', 0),
+          createThingCard('medium', 0),
+          createThingCard('tiny', 0),
+          createThingCard('giant', 1),
+          createThingCard('big', 1)
+        ]
+        
+        gameState.players[1].hand = testCards.slice(0, 3) // Bob gets 3 cards
+        gameState.players[2].hand = testCards.slice(3, 6) // Charlie gets 3 cards
+      })
+
+      test('successfully places offer with valid parameters', () => {
+        const cards = gameState.players[1].hand // Bob's cards
+        const action = { type: 'PLACE_OFFER' as const, playerId: 1, cards, faceUpIndex: 1 }
+        
+        const newState = gameReducer(gameState, action)
+        
+        // Bob should have offer placed
+        expect(newState.players[1].offer).toHaveLength(3)
+        expect(newState.players[1].offer[0].faceUp).toBe(false) // position 0 is face down
+        expect(newState.players[1].offer[1].faceUp).toBe(true)  // position 1 is face up
+        expect(newState.players[1].offer[2].faceUp).toBe(false) // position 2 is face down
+        
+        // Bob's hand should be empty
+        expect(newState.players[1].hand).toHaveLength(0)
+        
+        // Phase should still be offer phase (not all sellers have offers yet)
+        expect(newState.currentPhase).toBe(GamePhase.OFFER_PHASE)
+      })
+
+      test('automatically advances phase when all sellers complete offers', () => {
+        // Place Bob's offer first
+        const bobCards = gameState.players[1].hand
+        let newState = gameReducer(gameState, { 
+          type: 'PLACE_OFFER', 
+          playerId: 1, 
+          cards: bobCards, 
+          faceUpIndex: 0 
+        })
+        
+        // Phase should still be offer phase
+        expect(newState.currentPhase).toBe(GamePhase.OFFER_PHASE)
+        
+        // Place Charlie's offer (last seller)
+        const charlieCards = newState.players[2].hand
+        newState = gameReducer(newState, { 
+          type: 'PLACE_OFFER', 
+          playerId: 2, 
+          cards: charlieCards, 
+          faceUpIndex: 2 
+        })
+        
+        // Phase should now advance to buyer-flip phase
+        expect(newState.currentPhase).toBe(GamePhase.BUYER_FLIP)
+        expect(newState.phaseInstructions).toBe('Buyer-flip phase: Buyer flips one face-down card...')
+      })
+
+      test('throws error when buyer tries to place offer', () => {
+        const buyerCards = [createThingCard('giant', 0), createThingCard('big', 0), createThingCard('medium', 0)]
+        gameState.players[0].hand = buyerCards // Give buyer some cards
+        
+        const action = { type: 'PLACE_OFFER' as const, playerId: 0, cards: buyerCards, faceUpIndex: 0 }
+        
+        expect(() => gameReducer(gameState, action)).toThrow('Buyer cannot place offers')
+      })
+
+      test('throws error when player already has offer', () => {
+        const cards = gameState.players[1].hand
+        
+        // Place first offer
+        let newState = gameReducer(gameState, { 
+          type: 'PLACE_OFFER', 
+          playerId: 1, 
+          cards, 
+          faceUpIndex: 0 
+        })
+        
+        // Try to place another offer
+        const moreCards = [createThingCard('tiny', 1), createThingCard('tiny', 2), createThingCard('tiny', 3)]
+        newState.players[1].hand = moreCards // Give Bob more cards
+        
+        expect(() => gameReducer(newState, { 
+          type: 'PLACE_OFFER', 
+          playerId: 1, 
+          cards: moreCards, 
+          faceUpIndex: 0 
+        })).toThrow('Player already has an offer placed')
+      })
+
+      test('throws error for invalid card count', () => {
+        const twoCards = gameState.players[1].hand.slice(0, 2)
+        const fourCards = [...gameState.players[1].hand, createThingCard('tiny', 1)]
+        
+        expect(() => gameReducer(gameState, { 
+          type: 'PLACE_OFFER', 
+          playerId: 1, 
+          cards: twoCards, 
+          faceUpIndex: 0 
+        })).toThrow('Offer must contain exactly 3 cards, got 2')
+        
+        expect(() => gameReducer(gameState, { 
+          type: 'PLACE_OFFER', 
+          playerId: 1, 
+          cards: fourCards, 
+          faceUpIndex: 0 
+        })).toThrow('Offer must contain exactly 3 cards, got 4')
+      })
+
+      test('throws error for invalid face up index', () => {
+        const cards = gameState.players[1].hand
+        
+        expect(() => gameReducer(gameState, { 
+          type: 'PLACE_OFFER', 
+          playerId: 1, 
+          cards, 
+          faceUpIndex: -1 
+        })).toThrow('Face up index must be 0, 1, or 2, got -1')
+        
+        expect(() => gameReducer(gameState, { 
+          type: 'PLACE_OFFER', 
+          playerId: 1, 
+          cards, 
+          faceUpIndex: 3 
+        })).toThrow('Face up index must be 0, 1, or 2, got 3')
+      })
+
+      test('throws error when cards are not in player hand', () => {
+        const invalidCards = [
+          createThingCard('giant', 99), // Not in hand
+          createThingCard('big', 99),   // Not in hand
+          createThingCard('medium', 99) // Not in hand
+        ]
+        
+        expect(() => gameReducer(gameState, { 
+          type: 'PLACE_OFFER', 
+          playerId: 1, 
+          cards: invalidCards, 
+          faceUpIndex: 0 
+        })).toThrow('Card Giant Thing is not in player\'s hand')
+      })
+
+      test('throws error for invalid player ID', () => {
+        const cards = [createThingCard('giant', 0), createThingCard('big', 0), createThingCard('medium', 0)]
+        
+        expect(() => gameReducer(gameState, { 
+          type: 'PLACE_OFFER', 
+          playerId: -1, 
+          cards, 
+          faceUpIndex: 0 
+        })).toThrow('Invalid player ID: -1')
+        
+        expect(() => gameReducer(gameState, { 
+          type: 'PLACE_OFFER', 
+          playerId: 10, 
+          cards, 
+          faceUpIndex: 0 
+        })).toThrow('Invalid player ID: 10')
+      })
+
+      test('creates offer cards with correct positions and face states', () => {
+        const cards = gameState.players[1].hand
+        const action = { type: 'PLACE_OFFER' as const, playerId: 1, cards, faceUpIndex: 2 }
+        
+        const newState = gameReducer(gameState, action)
+        const offer = newState.players[1].offer
+        
+        // Check positions
+        expect(offer[0].position).toBe(0)
+        expect(offer[1].position).toBe(1)
+        expect(offer[2].position).toBe(2)
+        
+        // Check face up/down states
+        expect(offer[0].faceUp).toBe(false)
+        expect(offer[1].faceUp).toBe(false)
+        expect(offer[2].faceUp).toBe(true) // faceUpIndex was 2
+        
+        // Check that offer cards have the same properties as original cards
+        expect(offer[0].id).toBe(cards[0].id)
+        expect(offer[1].id).toBe(cards[1].id)
+        expect(offer[2].id).toBe(cards[2].id)
+      })
+    })
+
+    describe('FLIP_CARD action', () => {
+      let gameState: ReturnType<typeof createInitialGameState>
+
+      beforeEach(() => {
+        // Create a game state with 3 players in buyer-flip phase
+        gameState = gameReducer(initialState, { type: 'START_GAME', players: ['Alice', 'Bob', 'Charlie'] })
+        gameState = { ...gameState, currentPhase: GamePhase.BUYER_FLIP, currentBuyerIndex: 0 }
+        
+        // Set up offers for sellers (Bob and Charlie)
+        const testCards = [
+          createThingCard('giant', 0),
+          createThingCard('big', 0),
+          createThingCard('medium', 0),
+          createThingCard('tiny', 0),
+          createThingCard('giant', 1),
+          createThingCard('big', 1)
+        ]
+        
+        // Bob's offer (player 1) - positions 0 and 2 are face down, position 1 is face up
+        gameState.players[1].offer = [
+          { ...testCards[0], faceUp: false, position: 0 },
+          { ...testCards[1], faceUp: true, position: 1 },
+          { ...testCards[2], faceUp: false, position: 2 }
+        ]
+        
+        // Charlie's offer (player 2) - positions 0 and 1 are face down, position 2 is face up
+        gameState.players[2].offer = [
+          { ...testCards[3], faceUp: false, position: 0 },
+          { ...testCards[4], faceUp: false, position: 1 },
+          { ...testCards[5], faceUp: true, position: 2 }
+        ]
+      })
+
+      test('successfully flips face down card to face up', () => {
+        const action = { type: 'FLIP_CARD' as const, offerId: 1, cardIndex: 0 }
+        
+        const newState = gameReducer(gameState, action)
+        
+        // Card should now be face up
+        expect(newState.players[1].offer[0].faceUp).toBe(true)
+        
+        // Other cards should remain unchanged
+        expect(newState.players[1].offer[1].faceUp).toBe(true) // Was already face up
+        expect(newState.players[1].offer[2].faceUp).toBe(false) // Should remain face down
+        
+        // Other player's offers should be unchanged
+        expect(newState.players[2].offer[0].faceUp).toBe(false)
+        expect(newState.players[2].offer[1].faceUp).toBe(false)
+        expect(newState.players[2].offer[2].faceUp).toBe(true)
+      })
+
+      test('automatically advances to action phase after flip', () => {
+        const action = { type: 'FLIP_CARD' as const, offerId: 1, cardIndex: 2 }
+        
+        const newState = gameReducer(gameState, action)
+        
+        expect(newState.currentPhase).toBe(GamePhase.ACTION_PHASE)
+        expect(newState.phaseInstructions).toBe('Action phase: Players may play action cards...')
+      })
+
+      test('can flip card from different player offers', () => {
+        // Flip card from Charlie's offer (player 2)
+        const action = { type: 'FLIP_CARD' as const, offerId: 2, cardIndex: 1 }
+        
+        const newState = gameReducer(gameState, action)
+        
+        // Charlie's card should be flipped
+        expect(newState.players[2].offer[1].faceUp).toBe(true)
+        
+        // Bob's offer should be unchanged
+        expect(newState.players[1].offer[0].faceUp).toBe(false)
+        expect(newState.players[1].offer[1].faceUp).toBe(true)
+        expect(newState.players[1].offer[2].faceUp).toBe(false)
+      })
+
+      test('throws error when not in buyer-flip phase', () => {
+        gameState.currentPhase = GamePhase.OFFER_PHASE
+        
+        const action = { type: 'FLIP_CARD' as const, offerId: 1, cardIndex: 0 }
+        
+        expect(() => gameReducer(gameState, action)).toThrow('Action FLIP_CARD is not allowed during phase offer_phase')
+      })
+
+      test('throws error for invalid offer ID', () => {
+        const invalidOfferIds = [-1, 10]
+        
+        for (const offerId of invalidOfferIds) {
+          const action = { type: 'FLIP_CARD' as const, offerId, cardIndex: 0 }
+          
+          expect(() => gameReducer(gameState, action)).toThrow(`Invalid offer ID: ${offerId}`)
+        }
+      })
+
+      test('throws error when trying to flip buyer offer', () => {
+        const action = { type: 'FLIP_CARD' as const, offerId: 0, cardIndex: 0 } // offerId 0 is the buyer
+        
+        expect(() => gameReducer(gameState, action)).toThrow('Cannot flip cards from buyer\'s offer (buyer has no offer)')
+      })
+
+      test('throws error when player has no offer', () => {
+        // Remove Bob's offer
+        gameState.players[1].offer = []
+        
+        const action = { type: 'FLIP_CARD' as const, offerId: 1, cardIndex: 0 }
+        
+        expect(() => gameReducer(gameState, action)).toThrow('Player has no offer to flip cards from')
+      })
+
+      test('throws error for invalid card index', () => {
+        const invalidCardIndices = [-1, 3, 10]
+        
+        for (const cardIndex of invalidCardIndices) {
+          const action = { type: 'FLIP_CARD' as const, offerId: 1, cardIndex }
+          
+          expect(() => gameReducer(gameState, action)).toThrow(`Invalid card index: ${cardIndex}`)
+        }
+      })
+
+      test('throws error when trying to flip already face up card', () => {
+        const action = { type: 'FLIP_CARD' as const, offerId: 1, cardIndex: 1 } // Position 1 is already face up
+        
+        expect(() => gameReducer(gameState, action)).toThrow('Cannot flip a card that is already face up')
+      })
+
+      test('does not mutate original state', () => {
+        const originalOffer = [...gameState.players[1].offer]
+        const action = { type: 'FLIP_CARD' as const, offerId: 1, cardIndex: 0 }
+        
+        gameReducer(gameState, action)
+        
+        // Original state should be unchanged
+        expect(gameState.players[1].offer[0].faceUp).toBe(originalOffer[0].faceUp)
+        expect(gameState.currentPhase).toBe(GamePhase.BUYER_FLIP)
       })
     })
   })

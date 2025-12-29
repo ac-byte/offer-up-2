@@ -11,6 +11,8 @@ interface PlayerAreaProps {
   phase: GamePhase;
   onCardPlay: (card: Card) => void;
   onOfferPlace: (cards: Card[], faceUpIndex: number) => void;
+  onCardFlip: (cardIndex: number) => void;
+  canFlipCards: boolean;
 }
 
 interface HandProps {
@@ -24,6 +26,7 @@ interface HandProps {
 interface OfferAreaProps {
   offer: OfferCard[];
   isOwnOffer: boolean;
+  canFlipCards: boolean;
   onCardClick?: (card: OfferCard, index: number) => void;
   onDrop?: (cards: Card[], faceUpIndex: number) => void;
   onStartOfferSelection?: (initialCard?: Card) => void;
@@ -71,7 +74,7 @@ const Hand: React.FC<HandProps> = ({ cards, isOwnHand, onCardDrag, onCardClick, 
 };
 
 // OfferArea sub-component
-const OfferArea: React.FC<OfferAreaProps> = ({ offer, isOwnOffer, onCardClick, onDrop, onStartOfferSelection }) => {
+const OfferArea: React.FC<OfferAreaProps> = ({ offer, isOwnOffer, canFlipCards, onCardClick, onDrop, onStartOfferSelection }) => {
   const [draggedCards, setDraggedCards] = React.useState<Card[]>([])
   const [isDragOver, setIsDragOver] = React.useState(false)
 
@@ -142,7 +145,9 @@ const OfferArea: React.FC<OfferAreaProps> = ({ offer, isOwnOffer, onCardClick, o
                 card={offerCard}
                 displayState={getCardDisplayState(offerCard)}
                 onClick={() => onCardClick?.(offerCard, index)}
-                className={`offer-area__card offer-area__card--position-${offerCard.position}`}
+                className={`offer-area__card offer-area__card--position-${offerCard.position} ${
+                  canFlipCards && !offerCard.faceUp ? 'offer-area__card--flippable' : ''
+                }`}
               />
             ))
         ) : (
@@ -220,7 +225,9 @@ export const PlayerArea: React.FC<PlayerAreaProps> = ({
   perspective,
   phase,
   onCardPlay,
-  onOfferPlace
+  onOfferPlace,
+  onCardFlip,
+  canFlipCards
 }) => {
   const isOwnPerspective = player.id === perspective;
   const [selectedCards, setSelectedCards] = React.useState<Card[]>([])
@@ -262,9 +269,10 @@ export const PlayerArea: React.FC<PlayerAreaProps> = ({
 
   const handleOfferCardClick = (offerCard: OfferCard, index: number) => {
     // Handle offer card clicks - for buyer flipping during buyer-flip phase
-    if (phase === GamePhase.BUYER_FLIP && isBuyer && !offerCard.faceUp) {
+    // The buyer can flip cards from any seller's offer
+    if (canFlipCards && !offerCard.faceUp) {
       console.log('Buyer attempting to flip card:', offerCard.name);
-      // This will be implemented in future tasks
+      onCardFlip(index);
     }
   };
 
@@ -384,6 +392,7 @@ export const PlayerArea: React.FC<PlayerAreaProps> = ({
           <OfferArea
             offer={player.offer}
             isOwnOffer={isOwnPerspective}
+            canFlipCards={canFlipCards}
             onCardClick={handleOfferCardClick}
             onDrop={handleOfferDrop}
             onStartOfferSelection={handleStartOfferSelection}
