@@ -137,12 +137,85 @@ A digital trading card game implemented as a React application featuring a fixed
 #### Acceptance Criteria
 
 1. WHEN Gotcha trade-ins begin, THE Game_System SHALL identify all complete Gotcha sets in each player's collection
-2. THE Game_System SHALL automatically trade in all complete Gotcha sets and apply their effects
+2. THE Game_System SHALL discard complete Gotcha sets before applying their effects
 3. WHEN Thing trade-ins begin, THE Game_System SHALL identify all complete Thing sets in each player's collection
 4. THE Game_System SHALL automatically trade in complete Thing sets for points (1 Giant=1pt, 2 Big=1pt, 3 Medium=1pt, 4 Tiny=1pt)
 5. THE Game_System SHALL update each player's point total after trade-ins
 
-### Requirement 11: Winner Determination
+### Requirement 21: Gotcha Once Card Effects
+
+**User Story:** As a buyer, I want to benefit from other players' Gotcha Once sets, so that I can strategically acquire or remove cards from their collections.
+
+#### Acceptance Criteria
+
+1. WHEN a player trades in a set of 2 Gotcha Once cards, THE Game_System SHALL allow the buyer to select one card from that player's collection
+2. THE Game_System SHALL allow the buyer to choose either to steal the selected card or discard it
+3. WHEN the buyer chooses to steal, THE Game_System SHALL move the selected card to the buyer's collection
+4. WHEN the buyer chooses to discard, THE Game_System SHALL move the selected card to the discard pile
+5. WHEN the player has fewer cards than required, THE Game_System SHALL require the buyer to select all remaining cards in the collection
+
+### Requirement 22: Gotcha Twice Card Effects
+
+**User Story:** As a buyer, I want enhanced benefits from Gotcha Twice sets, so that I can make more significant strategic impacts on other players' collections.
+
+#### Acceptance Criteria
+
+1. WHEN a player trades in a set of 2 Gotcha Twice cards, THE Game_System SHALL allow the buyer to select two cards from that player's collection
+2. THE Game_System SHALL allow the buyer to choose independently for each card whether to steal it or discard it
+3. THE Game_System SHALL allow the buyer to steal both cards, discard both cards, or split the decision
+4. WHEN the buyer chooses to steal a card, THE Game_System SHALL move that card to the buyer's collection
+5. WHEN the buyer chooses to discard a card, THE Game_System SHALL move that card to the discard pile
+
+### Requirement 23: Gotcha Bad Card Effects
+
+**User Story:** As a player, I want Gotcha Bad sets to create meaningful point penalties, so that there are strategic consequences for accumulating these cards.
+
+#### Acceptance Criteria
+
+1. WHEN a player trades in a set of 3 Gotcha Bad cards, THE Game_System SHALL reduce that player's points by one if they have at least one point
+2. WHEN the player has no points, THE Game_System SHALL apply no penalty
+3. WHEN the affected player is not the buyer and loses a point, THE Game_System SHALL award that point to the buyer
+4. WHEN the affected player is the buyer and loses a point, THE Game_System SHALL discard that point without awarding it to anyone
+5. THE Game_System SHALL process point transfers immediately when Gotcha Bad effects are applied
+
+### Requirement 24: Gotcha Effects on Buyer's Own Sets
+
+**User Story:** As a buyer, I want consistent rules when I trade in my own Gotcha sets, so that the game mechanics are fair and predictable.
+
+#### Acceptance Criteria
+
+1. WHEN the buyer trades in their own Gotcha Once or Gotcha Twice set, THE Game_System SHALL still allow the buyer to select cards from their own collection
+2. THE Game_System SHALL require all selected cards to be discarded when the buyer affects their own collection
+3. THE Game_System SHALL prevent the buyer from stealing cards from their own collection
+4. THE Game_System SHALL apply the same card selection requirements regardless of whether the buyer is affecting their own or another player's collection
+5. THE Game_System SHALL ensure Gotcha sets cannot select themselves since they are discarded before effects are applied
+
+### Requirement 25: Buyer Role Continuity
+
+**User Story:** As a player, I want clear understanding of when buyer role changes occur, so that I know who has buyer privileges throughout each round.
+
+#### Acceptance Criteria
+
+1. WHEN the offer selection phase occurs, THE Game_System SHALL transfer the money bag token to the selected seller
+2. THE Game_System SHALL maintain the current buyer's role and privileges for the remainder of the current round
+3. WHEN the buyer assignment phase begins in the next round, THE Game_System SHALL transfer the buyer role to the player holding the money bag
+4. THE Game_System SHALL ensure the money bag token serves only as an indicator of who will become the buyer in the next round
+5. THE Game_System SHALL apply all buyer-specific mechanics (Gotcha effects, card flipping, offer selection) using the current round's buyer until the next buyer assignment phase
+
+### Requirement 26: Iterative Gotcha Trade-in Processing
+
+**User Story:** As a player, I want all Gotcha sets to be completely processed before moving to Thing trade-ins, so that new sets formed by Gotcha effects are properly handled.
+
+#### Acceptance Criteria
+
+1. WHEN Gotcha trade-ins begin, THE Game_System SHALL identify and process all complete Gotcha sets across all players
+2. WHEN Gotcha effects result in cards being moved to player collections, THE Game_System SHALL check for newly formed Gotcha sets
+3. THE Game_System SHALL continue processing Gotcha sets iteratively until no complete Gotcha sets remain in any player's collection
+4. THE Game_System SHALL advance to Thing trade-ins only after confirming no complete Gotcha sets exist in any collection
+5. THE Game_System SHALL ensure each iteration processes all available Gotcha sets before checking for new ones
+6. THE Game_System SHALL process Gotcha sets in the following order within each iteration: Gotcha Bad first, then Gotcha Twice, then Gotcha Once
+
+### Requirement 27: Winner Determination
 
 **User Story:** As a player, I want the game to end when someone reaches 5 points with a clear winner, so that games conclude definitively.
 
@@ -154,7 +227,7 @@ A digital trading card game implemented as a React application featuring a fixed
 4. THE Game_System SHALL display the winner clearly and end the game
 5. THE Game_System SHALL prevent further gameplay after a winner is declared
 
-### Requirement 12: Card Visual Design
+### Requirement 28: Card Visual Design
 
 **User Story:** As a player, I want cards to have distinct visual designs based on their type, so that I can quickly identify different card types during gameplay.
 
@@ -166,7 +239,7 @@ A digital trading card game implemented as a React application featuring a fixed
 4. THE Game_System SHALL display set requirements and "This card has an effect" text on Gotcha cards below the name
 5. THE Game_System SHALL display Action cards with black writing, card name at top, and "This card has an effect" text below
 
-### Requirement 13: Player Rotation System
+### Requirement 29: Player Rotation System
 
 **User Story:** As a player, I want turns to proceed in an organized rotation, so that gameplay flows smoothly and predictably.
 
@@ -178,7 +251,7 @@ A digital trading card game implemented as a React application featuring a fixed
 4. THE Game_System SHALL clearly indicate which player is currently acting in the rotation
 5. THE Game_System SHALL design the rotation system to allow future refactoring for simultaneous player actions
 
-### Requirement 14: Automatic Player Skipping
+### Requirement 30: Automatic Player Skipping
 
 **User Story:** As a player, I want the game to automatically skip players who cannot act, so that gameplay maintains good pacing without unnecessary waiting.
 
@@ -190,7 +263,7 @@ A digital trading card game implemented as a React application featuring a fixed
 4. THE Game_System SHALL provide visual indication when a player is automatically skipped
 5. THE Game_System SHALL continue rotation until all players who can act have had their opportunity
 
-### Requirement 15: Player Perspective Selection
+### Requirement 31: Player Perspective Selection
 
 **User Story:** As a player, I want to view the game from different player perspectives, so that I can see the game state as any player would see it.
 
@@ -202,7 +275,7 @@ A digital trading card game implemented as a React application featuring a fixed
 4. THE Game_System SHALL allow switching perspectives at any time during gameplay
 5. THE Game_System SHALL clearly indicate which player's perspective is currently being shown
 
-### Requirement 16: Card Display States
+### Requirement 32: Card Display States
 
 **User Story:** As a player, I want cards to display appropriately based on game rules and perspective, so that I can see the information I should have access to.
 
@@ -214,7 +287,7 @@ A digital trading card game implemented as a React application featuring a fixed
 4. THE Game_System SHALL show all cards in all collections as face up for all perspectives
 5. WHEN viewing offers, THE Game_System SHALL show face down cards as partial for the offer owner's perspective and face down for others
 
-### Requirement 17: Partial Card Display
+### Requirement 33: Partial Card Display
 
 **User Story:** As a player, I want to see my own face down offer cards in a special partial state, so that I can remember what I offered while knowing which cards are hidden from others.
 
@@ -226,7 +299,7 @@ A digital trading card game implemented as a React application featuring a fixed
 4. THE Game_System SHALL maintain visual distinction between partial cards and fully face up cards
 5. THE Game_System SHALL ensure partial cards clearly indicate their face down status to other players
 
-### Requirement 18: Future Client/Server Architecture Support
+### Requirement 34: Future Client/Server Architecture Support
 
 **User Story:** As a developer, I want the game architecture to support future migration to a client/server model, so that multiple players can join games running on a server with minimal code changes.
 
@@ -238,7 +311,7 @@ A digital trading card game implemented as a React application featuring a fixed
 4. THE Game_System SHALL design state updates to be atomic and conflict-free for network synchronization
 5. THE Game_System SHALL implement perspective-based rendering that supports fixed client perspectives
 
-### Requirement 19: React Implementation
+### Requirement 35: React Implementation
 
 **User Story:** As a developer, I want the game built with React best practices, so that the codebase is maintainable and performant.
 
@@ -250,7 +323,7 @@ A digital trading card game implemented as a React application featuring a fixed
 4. THE Game_System SHALL handle user interactions through proper event handling
 5. THE Game_System SHALL maintain responsive design for different screen sizes
 
-### Requirement 20: Automatic Perspective Following
+### Requirement 36: Automatic Perspective Following
 
 **User Story:** As a player, I want the perspective to automatically follow the active player, so that I can easily track whose turn it is and see the game from their viewpoint.
 

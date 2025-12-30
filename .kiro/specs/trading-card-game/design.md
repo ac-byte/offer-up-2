@@ -422,91 +422,169 @@ Based on the prework analysis, the following properties have been identified as 
 *For any* trade-in completion, player point totals should be updated correctly
 **Validates: Requirements 10.5**
 
+### Gotcha Card Effect Properties
+
+**Property 42: Gotcha Once card selection**
+*For any* player trading in a set of 2 Gotcha Once cards, the buyer should be able to select exactly one card from that player's collection
+**Validates: Requirements 21.1**
+
+**Property 43: Gotcha Once steal or discard choice**
+*For any* Gotcha Once effect, the buyer should be able to choose independently whether to steal the selected card or discard it
+**Validates: Requirements 21.2, 21.3, 21.4**
+
+**Property 44: Gotcha Once insufficient cards handling**
+*For any* Gotcha Once effect when the player has fewer cards than required, the buyer should be required to select all remaining cards in the collection
+**Validates: Requirements 21.5**
+
+**Property 45: Gotcha Twice card selection**
+*For any* player trading in a set of 2 Gotcha Twice cards, the buyer should be able to select exactly two cards from that player's collection
+**Validates: Requirements 22.1**
+
+**Property 46: Gotcha Twice independent choices**
+*For any* Gotcha Twice effect, the buyer should be able to choose independently for each card whether to steal it or discard it
+**Validates: Requirements 22.2, 22.3, 22.4, 22.5**
+
+**Property 47: Gotcha Bad point penalty**
+*For any* player trading in a set of 3 Gotcha Bad cards, that player should lose one point if they have at least one point
+**Validates: Requirements 23.1, 23.2**
+
+**Property 48: Gotcha Bad point transfer**
+*For any* Gotcha Bad effect where the affected player is not the buyer and loses a point, the buyer should receive that point
+**Validates: Requirements 23.3**
+
+**Property 49: Gotcha Bad buyer self-effect**
+*For any* Gotcha Bad effect where the affected player is the buyer, the lost point should be discarded without awarding it to anyone
+**Validates: Requirements 23.4**
+
+**Property 50: Gotcha Bad immediate processing**
+*For any* Gotcha Bad effect, point transfers should be processed immediately when effects are applied
+**Validates: Requirements 23.5**
+
+**Property 51: Buyer own collection discard requirement**
+*For any* Gotcha Once or Gotcha Twice effect where the buyer affects their own collection, all selected cards should be discarded
+**Validates: Requirements 24.2**
+
+**Property 52: Buyer self-steal prevention**
+*For any* Gotcha effect where the buyer affects their own collection, the buyer should be prevented from stealing cards from their own collection
+**Validates: Requirements 24.3**
+
+**Property 53: Gotcha set self-selection prevention**
+*For any* Gotcha effect, the Gotcha sets cannot select themselves since they are discarded before effects are applied
+**Validates: Requirements 24.5**
+
+**Property 54: Money bag token transfer timing**
+*For any* offer selection phase, the money bag token should transfer to the selected seller while the buyer role remains unchanged for the current round
+**Validates: Requirements 25.1, 25.2**
+
+**Property 55: Buyer role transition timing**
+*For any* buyer assignment phase, the buyer role should transfer to the player holding the money bag from the previous round
+**Validates: Requirements 25.3**
+
+**Property 56: Buyer privilege continuity**
+*For any* round, all buyer-specific mechanics should use the current round's buyer until the next buyer assignment phase
+**Validates: Requirements 25.5**
+
+**Property 57: Iterative Gotcha processing**
+*For any* Gotcha trade-in phase, the system should continue processing Gotcha sets until no complete Gotcha sets remain in any player's collection
+**Validates: Requirements 26.1, 26.2, 26.3**
+
+**Property 58: Gotcha completion verification**
+*For any* transition from Gotcha trade-ins to Thing trade-ins, no complete Gotcha sets should exist in any player's collection
+**Validates: Requirements 26.4**
+
+**Property 59: Gotcha iteration completeness**
+*For any* Gotcha processing iteration, all available Gotcha sets should be processed before checking for newly formed sets
+**Validates: Requirements 26.5**
+
+**Property 60: Gotcha processing order**
+*For any* Gotcha processing iteration, Gotcha sets should be processed in the order: Gotcha Bad first, then Gotcha Twice, then Gotcha Once
+**Validates: Requirements 26.6**
+
 ### Winner Determination Properties
 
-**Property 42: Win condition checking**
+**Property 61: Win condition checking**
 *For any* winner determination phase, players with 5+ points should be identified
-**Validates: Requirements 11.1**
+**Validates: Requirements 27.1**
 
-**Property 43: Tie handling**
+**Property 61: Tie handling**
 *For any* scenario with tied players for most points, the game should continue to next round
-**Validates: Requirements 11.2**
+**Validates: Requirements 27.2**
 
-**Property 44: Winner declaration**
+**Property 62: Winner declaration**
 *For any* scenario with one player having 5+ points and more than others, that player should be declared winner
-**Validates: Requirements 11.3**
+**Validates: Requirements 27.3**
 
-**Property 45: Game end state**
+**Property 63: Game end state**
 *For any* declared winner, no further gameplay actions should be allowed
-**Validates: Requirements 11.5**
+**Validates: Requirements 27.5**
 
 ### Player Rotation Properties
 
-**Property 46: Clockwise rotation order**
+**Property 65: Clockwise rotation order**
 *For any* multi-player phase, player turns should proceed clockwise starting from buyer
-**Validates: Requirements 13.1**
+**Validates: Requirements 29.1**
 
-**Property 47: Buyer-excluded rotation**
+**Property 66: Buyer-excluded rotation**
 *For any* phase where buyer doesn't act, rotation should start with player to buyer's right
-**Validates: Requirements 13.2**
+**Validates: Requirements 29.2**
 
-**Property 48: Rotation wraparound**
+**Property 67: Rotation wraparound**
 *For any* rotation reaching the last player, it should continue with the first player
-**Validates: Requirements 13.3**
+**Validates: Requirements 29.3**
 
-**Property 49: Automatic player skipping**
+**Property 68: Automatic player skipping**
 *For any* player with no valid actions in current phase, they should be automatically skipped
-**Validates: Requirements 14.1, 14.2, 14.3**
+**Validates: Requirements 30.1, 30.2, 30.3**
 
-**Property 50: Complete rotation coverage**
+**Property 69: Complete rotation coverage**
 *For any* phase requiring player actions, rotation should continue until all eligible players have had opportunity
-**Validates: Requirements 14.5**
+**Validates: Requirements 30.5**
 
 ### Perspective and Display Properties
 
-**Property 51: Perspective independence**
+**Property 70: Perspective independence**
 *For any* perspective change, the current acting player should remain unchanged
-**Validates: Requirements 15.2**
+**Validates: Requirements 31.2**
 
-**Property 52: Card display updates**
+**Property 71: Card display updates**
 *For any* perspective selection, all card displays should update according to that player's view
-**Validates: Requirements 15.3**
+**Validates: Requirements 31.3**
 
-**Property 53: Perspective switching availability**
+**Property 72: Perspective switching availability**
 *For any* game phase, perspective switching should be allowed
-**Validates: Requirements 15.4**
+**Validates: Requirements 31.4**
 
-**Property 54: Card display states**
+**Property 73: Card display states**
 *For any* card, it should be displayable in face up, face down, and partial states
-**Validates: Requirements 16.1**
+**Validates: Requirements 32.1**
 
-**Property 55: Own hand visibility**
+**Property 74: Own hand visibility**
 *For any* player viewing their own perspective, their hand cards should be face up
-**Validates: Requirements 16.2**
+**Validates: Requirements 32.2**
 
-**Property 56: Other hand privacy**
+**Property 75: Other hand privacy**
 *For any* player viewing other players' hands, those cards should be face down
-**Validates: Requirements 16.3**
+**Validates: Requirements 32.3**
 
-**Property 57: Collection visibility**
+**Property 76: Collection visibility**
 *For any* perspective, all collection cards should be face up
-**Validates: Requirements 16.4**
+**Validates: Requirements 32.4**
 
-**Property 58: Offer card visibility**
+**Property 77: Offer card visibility**
 *For any* offer viewing, face down cards should be partial for owner's perspective and face down for others
-**Validates: Requirements 16.5**
+**Validates: Requirements 32.5**
 
-**Property 59: Partial card content**
+**Property 78: Partial card content**
 *For any* partial card display, it should show card name and description in the top half
-**Validates: Requirements 17.1**
+**Validates: Requirements 33.1**
 
-**Property 60: Partial display conditions**
+**Property 79: Partial display conditions**
 *For any* card display, partial state should be used only for player's own face down offer cards from their perspective
-**Validates: Requirements 17.3**
+**Validates: Requirements 33.3**
 
-**Property 61: Automatic perspective following**
+**Property 80: Automatic perspective following**
 *For any* active player change, the selected perspective should automatically update to match the new active player
-**Validates: Requirements 20.1, 20.2**
+**Validates: Requirements 36.1, 36.2**
 
 ## Error Handling
 
@@ -543,7 +621,7 @@ The testing approach combines unit tests for specific scenarios with property-ba
 ### Property-Based Testing
 - **Framework**: Use Jest with fast-check library for property-based testing
 - **Test configuration**: Minimum 100 iterations per property test
-- **Coverage**: All 61 correctness properties will be implemented as property tests
+- **Coverage**: All 80 correctness properties will be implemented as property tests
 - **Tagging**: Each test tagged with format: **Feature: trading-card-game, Property {number}: {property_text}**
 
 ### Unit Testing

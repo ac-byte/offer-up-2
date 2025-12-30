@@ -11,7 +11,7 @@ This implementation plan breaks down the trading card game into discrete, testab
   - Define core TypeScript interfaces (GameState, Player, Card, GameAction)
   - Set up Jest with fast-check for property-based testing
   - Configure project structure for components, game logic, and tests
-  - _Requirements: 18.1, 19.1_
+  - _Requirements: 33.1, 34.1_
 
 - [x]* 1.1 Write property tests for type definitions
   - **Property 1: Deck composition correctness**
@@ -170,6 +170,38 @@ This implementation plan breaks down the trading card game into discrete, testab
     - **Property 41: Point total updates**
     - **Validates: Requirements 10.1, 10.2, 10.3, 10.4, 10.5**
 
+- [ ] 10.4 Implement Gotcha card effect behaviors
+  - Create Gotcha Once effect logic (buyer selects 1 card to steal/discard)
+  - Create Gotcha Twice effect logic (buyer selects 2 cards independently)
+  - Create Gotcha Bad effect logic (point loss and transfer mechanics)
+  - Handle buyer affecting own collection (must discard, can't steal)
+  - Implement buyer role continuity (money bag vs actual buyer role)
+  - Implement iterative Gotcha processing (continue until no sets remain)
+  - Implement Gotcha processing order (Bad, Twice, Once)
+  - _Requirements: 21.1, 21.2, 21.3, 21.4, 21.5, 22.1, 22.2, 22.3, 22.4, 22.5, 23.1, 23.2, 23.3, 23.4, 23.5, 24.1, 24.2, 24.3, 24.4, 24.5, 25.1, 25.2, 25.3, 25.4, 25.5, 26.1, 26.2, 26.3, 26.4, 26.5, 26.6_
+
+- [ ]* 10.5 Write property tests for Gotcha card effects
+  - **Property 42: Gotcha Once card selection**
+  - **Property 43: Gotcha Once steal or discard choice**
+  - **Property 44: Gotcha Once insufficient cards handling**
+  - **Property 45: Gotcha Twice card selection**
+  - **Property 46: Gotcha Twice independent choices**
+  - **Property 47: Gotcha Bad point penalty**
+  - **Property 48: Gotcha Bad point transfer**
+  - **Property 49: Gotcha Bad buyer self-effect**
+  - **Property 50: Gotcha Bad immediate processing**
+  - **Property 51: Buyer own collection discard requirement**
+  - **Property 52: Buyer self-steal prevention**
+  - **Property 53: Gotcha set self-selection prevention**
+  - **Property 54: Money bag token transfer timing**
+  - **Property 55: Buyer role transition timing**
+  - **Property 56: Buyer privilege continuity**
+  - **Property 57: Iterative Gotcha processing**
+  - **Property 58: Gotcha completion verification**
+  - **Property 59: Gotcha iteration completeness**
+  - **Property 60: Gotcha processing order**
+  - **Validates: Requirements 21.1, 21.2, 21.3, 21.4, 21.5, 22.1, 22.2, 22.3, 22.4, 22.5, 23.1, 23.2, 23.3, 23.4, 23.5, 24.1, 24.2, 24.3, 24.4, 24.5, 25.1, 25.2, 25.3, 25.4, 25.5, 26.1, 26.2, 26.3, 26.4, 26.5, 26.6**
+
 - [ ] 11. Implement winner determination
   - [x] 11.1 Create win condition logic
     - Check for players with 5+ points
@@ -179,11 +211,11 @@ This implementation plan breaks down the trading card game into discrete, testab
     - _Requirements: 11.1, 11.2, 11.3, 11.5_
 
   - [ ]* 11.2 Write property tests for winner determination
-    - **Property 42: Win condition checking**
-    - **Property 43: Tie handling**
-    - **Property 44: Winner declaration**
-    - **Property 45: Game end state**
-    - **Validates: Requirements 11.1, 11.2, 11.3, 11.5**
+    - **Property 61: Win condition checking**
+    - **Property 62: Tie handling**
+    - **Property 63: Winner declaration**
+    - **Property 64: Game end state**
+    - **Validates: Requirements 27.1, 27.2, 27.3, 27.5**
 
 - [ ] 12. Checkpoint - Ensure all game logic tests pass
   - Ensure all tests pass, ask the user if questions arise.
@@ -193,28 +225,28 @@ This implementation plan breaks down the trading card game into discrete, testab
     - Implement clockwise rotation starting from buyer
     - Handle buyer-excluded phases (start with player to buyer's right)
     - Add rotation wraparound
-    - _Requirements: 13.1, 13.2, 13.3_
+    - _Requirements: 29.1, 29.2, 29.3_
 
   - [x] 13.2 Implement automatic player skipping
     - Skip players with no valid actions
     - Skip buyer in phases where they don't act
     - Continue rotation until all eligible players have opportunity
-    - _Requirements: 14.1, 14.2, 14.3, 14.5_
+    - _Requirements: 30.1, 30.2, 30.3, 30.5_
 
   - [ ]* 13.3 Write property tests for player rotation
-    - **Property 46: Clockwise rotation order**
-    - **Property 47: Buyer-excluded rotation**
-    - **Property 48: Rotation wraparound**
-    - **Property 49: Automatic player skipping**
-    - **Property 50: Complete rotation coverage**
-    - **Validates: Requirements 13.1, 13.2, 13.3, 14.1, 14.2, 14.3, 14.5**
+    - **Property 65: Clockwise rotation order**
+    - **Property 66: Buyer-excluded rotation**
+    - **Property 67: Rotation wraparound**
+    - **Property 68: Automatic player skipping**
+    - **Property 69: Complete rotation coverage**
+    - **Validates: Requirements 29.1, 29.2, 29.3, 30.1, 30.2, 30.3, 30.5**
 
 - [ ] 14. Create React UI components
   - [x] 14.1 Create Card component
     - Implement three display states (face up, face down, partial)
     - Add card type styling (blue Thing, red Gotcha, black Action)
     - Include drag and drop functionality
-    - _Requirements: 12.1, 12.2, 12.3, 12.4, 12.5, 16.1_
+    - _Requirements: 28.1, 28.2, 28.3, 28.4, 28.5, 32.1_
 
   - [x] 14.2 Create PlayerArea component
     - Implement Hand, OfferArea, and CollectionArea sub-components
@@ -226,7 +258,7 @@ This implementation plan breaks down the trading card game into discrete, testab
     - Add dropdown for choosing player perspective
     - Maintain independence from current acting player
     - Update card displays based on selected perspective
-    - _Requirements: 15.2, 15.3, 15.4_
+    - _Requirements: 31.2, 31.3, 31.4_
 
   - [x] 14.4 Implement automatic perspective following
     - Automatically update perspective when active player changes
@@ -236,18 +268,18 @@ This implementation plan breaks down the trading card game into discrete, testab
     - _Requirements: 20.1, 20.2, 20.3, 20.4, 20.5_
 
   - [ ]* 14.5 Write property tests for display logic
-    - **Property 51: Perspective independence**
-    - **Property 52: Card display updates**
-    - **Property 53: Perspective switching availability**
-    - **Property 54: Card display states**
-    - **Property 55: Own hand visibility**
-    - **Property 56: Other hand privacy**
-    - **Property 57: Collection visibility**
-    - **Property 58: Offer card visibility**
-    - **Property 59: Partial card content**
-    - **Property 60: Partial display conditions**
-    - **Property 61: Automatic perspective following**
-    - **Validates: Requirements 15.2, 15.3, 15.4, 16.1, 16.2, 16.3, 16.4, 16.5, 17.1, 17.3, 20.1, 20.2**
+    - **Property 70: Perspective independence**
+    - **Property 71: Card display updates**
+    - **Property 72: Perspective switching availability**
+    - **Property 73: Card display states**
+    - **Property 74: Own hand visibility**
+    - **Property 75: Other hand privacy**
+    - **Property 76: Collection visibility**
+    - **Property 77: Offer card visibility**
+    - **Property 78: Partial card content**
+    - **Property 79: Partial display conditions**
+    - **Property 80: Automatic perspective following**
+    - **Validates: Requirements 31.2, 31.3, 31.4, 32.1, 32.2, 32.3, 32.4, 32.5, 33.1, 33.3, 36.1, 36.2**
 
 - [ ] 15. Create GameBoard main component
   - [x] 15.1 Implement main game interface
@@ -260,7 +292,7 @@ This implementation plan breaks down the trading card game into discrete, testab
     - Wrap game with state management context
     - Connect UI components to game reducer
     - Handle action dispatching
-    - _Requirements: 18.1, 19.1, 19.3_
+    - _Requirements: 34.1, 35.1, 35.3_
 
 - [ ] 16. Implement drag and drop interactions
   - [x] 16.1 Add card dragging for offers
@@ -279,13 +311,13 @@ This implementation plan breaks down the trading card game into discrete, testab
     - Create mobile-friendly card layouts
     - Add responsive player area arrangements
     - Ensure usability across screen sizes
-    - _Requirements: 19.5_
+    - _Requirements: 35.5_
 
   - [ ] 17.2 Add visual polish
     - Implement card animations and transitions
     - Add hover effects and visual feedback
     - Style phase indicators and game status
-    - _Requirements: 19.4_
+    - _Requirements: 35.4_
 
 - [ ]* 18. Write integration tests
   - Test complete game flows from start to finish
@@ -298,7 +330,7 @@ This implementation plan breaks down the trading card game into discrete, testab
     - Wire together all game phases and UI components
     - Ensure proper state flow and action handling
     - Test complete gameplay scenarios
-    - _Requirements: 18.1, 19.1, 19.2, 19.3_
+    - _Requirements: 34.1, 35.1, 35.2, 35.3_
 
   - [ ] 19.2 Add error handling and validation
     - Implement comprehensive error boundaries
