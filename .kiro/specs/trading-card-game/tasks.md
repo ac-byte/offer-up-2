@@ -170,7 +170,7 @@ This implementation plan breaks down the trading card game into discrete, testab
     - **Property 41: Point total updates**
     - **Validates: Requirements 10.1, 10.2, 10.3, 10.4, 10.5**
 
-- [ ] 10.4 Implement buyer role continuity
+- [x] 10.4 Implement buyer role continuity
   - Handle buyer role continuity (money bag vs actual buyer role)
   - Implement money bag token transfer timing
   - Ensure buyer privileges remain with current buyer throughout round

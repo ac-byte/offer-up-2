@@ -4,6 +4,7 @@ export interface GameState {
   // Game Configuration
   players: Player[]
   currentBuyerIndex: number
+  nextBuyerIndex: number // Player who will become buyer in next round (money bag holder)
   currentPhase: GamePhase
   currentPlayerIndex: number
   round: number

@@ -8,6 +8,7 @@ export function createInitialGameState(): GameState {
   return {
     players: [],
     currentBuyerIndex: 0,
+    nextBuyerIndex: 0,
     currentPhase: GamePhase.BUYER_ASSIGNMENT,
     currentPlayerIndex: 0,
     round: 1,
@@ -329,6 +330,48 @@ export function handleActionPhaseAdvancement(state: GameState): GameState {
 }
 
 /**
+ * Handles the buyer assignment phase automatically
+ * Transfers buyer role to the player holding the money bag
+ */
+export function handleBuyerAssignmentPhase(state: GameState): GameState {
+  if (state.currentPhase !== GamePhase.BUYER_ASSIGNMENT) {
+    return state
+  }
+
+  // Transfer buyer role to the player holding the money bag (nextBuyerIndex)
+  const newState = {
+    ...state,
+    currentBuyerIndex: state.nextBuyerIndex
+  }
+  
+  // Automatically advance to next phase after buyer assignment
+  const { nextPhase, nextRound } = advanceToNextPhase(newState.currentPhase, newState.round)
+  
+  // Create state with advanced phase
+  const stateWithNewPhase = {
+    ...newState,
+    currentPhase: nextPhase,
+    round: nextRound,
+    phaseInstructions: getPhaseInstructions(nextPhase)
+  }
+  
+  // Set current player to first eligible player for the new phase
+  const firstEligiblePlayer = getNextEligiblePlayer(-1, stateWithNewPhase, new Set())
+  
+  let finalState = {
+    ...stateWithNewPhase,
+    currentPlayerIndex: firstEligiblePlayer !== null ? firstEligiblePlayer : 0
+  }
+  
+  // Apply automatic perspective following if enabled
+  if (firstEligiblePlayer !== null) {
+    finalState = updatePerspectiveForActivePlayer(finalState, firstEligiblePlayer)
+  }
+  
+  return finalState
+}
+
+/**
  * Handles the deal phase automatically
  */
 export function handleDealPhase(state: GameState): GameState {
@@ -407,6 +450,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         ...state,
         players,
         currentBuyerIndex: buyerIndex,
+        nextBuyerIndex: buyerIndex, // Initially same as current buyer
         currentPhase: GamePhase.DEAL,
         currentPlayerIndex: 0,
         round: 1,
@@ -444,7 +488,9 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       }
       
       // Handle automatic phases
-      if (state.currentPhase === GamePhase.DEAL) {
+      if (state.currentPhase === GamePhase.BUYER_ASSIGNMENT) {
+        return handleBuyerAssignmentPhase(state)
+      } else if (state.currentPhase === GamePhase.DEAL) {
         return handleDealPhase(state)
       } else if (state.currentPhase === GamePhase.ACTION_PHASE) {
         return handleActionPhaseAdvancement(state)
@@ -837,8 +883,9 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         }
       })
       
-      // Update current buyer index to the selected seller
-      newState.currentBuyerIndex = sellerId
+      // Update next buyer index to the selected seller (money bag holder)
+      // But keep current buyer index unchanged for this round
+      newState.nextBuyerIndex = sellerId
       
       // Automatically advance to offer distribution phase
       const { nextPhase, nextRound } = advanceToNextPhase(newState.currentPhase, newState.round)
@@ -1699,7 +1746,7 @@ export function updatePerspectiveForActivePlayer(state: GameState, newPlayerInde
 function getPhaseInstructions(phase: GamePhase): string {
   switch (phase) {
     case GamePhase.BUYER_ASSIGNMENT:
-      return 'Buyer assignment: Determining who has the money bag...'
+      return 'Buyer assignment: Transferring buyer role to money bag holder...'
     case GamePhase.DEAL:
       return 'Deal phase: Dealing cards to all players...'
     case GamePhase.OFFER_PHASE:

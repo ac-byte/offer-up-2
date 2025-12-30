@@ -1175,8 +1175,11 @@ describe('Game Reducer', () => {
         expect(newState.players[1].hasMoney).toBe(true)  // Bob (selected seller) gets money
         expect(newState.players[2].hasMoney).toBe(false) // Charlie (non-selected seller) no money
         
-        // Current buyer index should update to selected seller
-        expect(newState.currentBuyerIndex).toBe(1)
+        // Current buyer index should remain unchanged (buyer role continuity)
+        expect(newState.currentBuyerIndex).toBe(0)
+        
+        // Next buyer index should be set to selected seller (money bag holder)
+        expect(newState.nextBuyerIndex).toBe(1)
       })
 
       test('moves selected offer to buyer collection', () => {
@@ -1250,8 +1253,11 @@ describe('Game Reducer', () => {
           'giant-0', 'big-0', 'medium-0'
         ])
         
-        // Current buyer should be Charlie
-        expect(newState.currentBuyerIndex).toBe(2)
+        // Current buyer should remain unchanged (buyer role continuity)
+        expect(newState.currentBuyerIndex).toBe(0)
+        
+        // Next buyer should be Charlie (money bag holder)
+        expect(newState.nextBuyerIndex).toBe(2)
       })
 
       test('throws error when not in offer selection phase', () => {
@@ -1346,6 +1352,78 @@ describe('Game Reducer', () => {
         expect(gameState.players[1].offer).toEqual(originalSellerOffer)
         expect(gameState.currentBuyerIndex).toBe(originalCurrentBuyer)
         expect(gameState.currentPhase).toBe(originalPhase)
+      })
+    })
+  })
+
+  describe('Buyer Role Continuity', () => {
+    describe('SELECT_OFFER action', () => {
+      test('transfers money bag but maintains buyer role until next round', () => {
+        // Create a game state with 3 players in offer selection phase
+        let gameState = gameReducer(createInitialGameState(), { type: 'START_GAME', players: ['Alice', 'Bob', 'Charlie'] })
+        gameState = { ...gameState, currentPhase: GamePhase.OFFER_SELECTION, currentBuyerIndex: 0 }
+        
+        // Ensure Alice (buyer) has the money bag initially
+        gameState.players[0].hasMoney = true
+        gameState.players[1].hasMoney = false
+        gameState.players[2].hasMoney = false
+        
+        // Set up offers for sellers (Bob and Charlie)
+        gameState.players[1].offer = [
+          { id: 'giant-0', type: 'thing' as const, subtype: 'Giant', name: 'Giant Thing', setSize: 1, faceUp: true, position: 0 },
+          { id: 'big-0', type: 'thing' as const, subtype: 'Big', name: 'Big Thing', setSize: 2, faceUp: false, position: 1 },
+          { id: 'medium-0', type: 'thing' as const, subtype: 'Medium', name: 'Medium Thing', setSize: 3, faceUp: false, position: 2 }
+        ]
+        
+        gameState.players[2].offer = [
+          { id: 'tiny-0', type: 'thing' as const, subtype: 'Tiny', name: 'Tiny Thing', setSize: 4, faceUp: false, position: 0 },
+          { id: 'giant-1', type: 'thing' as const, subtype: 'Giant', name: 'Giant Thing', setSize: 1, faceUp: true, position: 1 },
+          { id: 'big-1', type: 'thing' as const, subtype: 'Big', name: 'Big Thing', setSize: 2, faceUp: false, position: 2 }
+        ]
+        
+        // Alice (buyer) selects Bob's offer
+        const action = { type: 'SELECT_OFFER' as const, buyerId: 0, sellerId: 1 }
+        
+        const newState = gameReducer(gameState, action)
+        
+        // Money bag should transfer from Alice to Bob
+        expect(newState.players[0].hasMoney).toBe(false) // Alice loses money bag
+        expect(newState.players[1].hasMoney).toBe(true)  // Bob gets money bag
+        expect(newState.players[2].hasMoney).toBe(false) // Charlie has no money bag
+        
+        // Current buyer should remain Alice (buyer role continuity)
+        expect(newState.currentBuyerIndex).toBe(0)
+        
+        // Next buyer should be Bob (money bag holder)
+        expect(newState.nextBuyerIndex).toBe(1)
+      })
+    })
+
+    describe('BUYER_ASSIGNMENT phase', () => {
+      test('transfers buyer role to money bag holder', () => {
+        // Create a state where Bob has the money bag but Alice is still the buyer
+        let gameState = gameReducer(createInitialGameState(), { type: 'START_GAME', players: ['Alice', 'Bob', 'Charlie'] })
+        gameState = { 
+          ...gameState, 
+          currentPhase: GamePhase.BUYER_ASSIGNMENT,
+          currentBuyerIndex: 0, // Alice is current buyer
+          nextBuyerIndex: 1     // Bob will be next buyer (has money bag)
+        }
+        
+        // Set money bag correctly
+        gameState.players[0].hasMoney = false // Alice doesn't have money bag
+        gameState.players[1].hasMoney = true  // Bob has money bag
+        gameState.players[2].hasMoney = false // Charlie doesn't have money bag
+        
+        // Advance through buyer assignment phase
+        const newState = gameReducer(gameState, { type: 'ADVANCE_PHASE' })
+        
+        // Buyer role should transfer to Bob (money bag holder)
+        expect(newState.currentBuyerIndex).toBe(1)
+        expect(newState.nextBuyerIndex).toBe(1) // Should remain the same
+        
+        // Phase should advance to DEAL
+        expect(newState.currentPhase).toBe(GamePhase.DEAL)
       })
     })
   })
