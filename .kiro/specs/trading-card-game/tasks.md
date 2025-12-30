@@ -170,28 +170,39 @@ This implementation plan breaks down the trading card game into discrete, testab
     - **Property 41: Point total updates**
     - **Validates: Requirements 10.1, 10.2, 10.3, 10.4, 10.5**
 
-- [ ] 10.4 Implement Gotcha Bad effects and processing order
+- [ ] 10.4 Implement buyer role continuity
+  - Handle buyer role continuity (money bag vs actual buyer role)
+  - Implement money bag token transfer timing
+  - Ensure buyer privileges remain with current buyer throughout round
+  - _Requirements: 25.1, 25.2, 25.3, 25.4, 25.5_
+
+- [ ]* 10.4.1 Write property tests for buyer role continuity
+  - **Property 54: Money bag token transfer timing**
+  - **Property 55: Buyer role transition timing**
+  - **Property 56: Buyer privilege continuity**
+  - **Validates: Requirements 25.1, 25.3, 25.5**
+
+- [ ] 10.5 Implement Gotcha Bad effects and processing order
   - Implement Gotcha processing order (Bad first, then Twice, then Once)
   - Create Gotcha Bad effect logic (point loss and transfer mechanics)
-  - Handle buyer role continuity (money bag vs actual buyer role)
-  - _Requirements: 23.1, 23.2, 23.3, 23.4, 23.5, 25.1, 25.2, 25.3, 25.4, 25.5, 26.6_
+  - Handle point transfers between players and buyer
+  - _Requirements: 23.1, 23.2, 23.3, 23.4, 23.5, 26.6_
 
-- [ ]* 10.4.1 Write property tests for Gotcha Bad effects
+- [ ]* 10.5.1 Write property tests for Gotcha Bad effects
   - **Property 47: Gotcha Bad point penalty**
   - **Property 48: Gotcha Bad point transfer**
   - **Property 49: Gotcha Bad buyer self-effect**
   - **Property 50: Gotcha Bad immediate processing**
-  - **Property 56: Buyer privilege continuity**
   - **Property 60: Gotcha processing order**
-  - **Validates: Requirements 23.1, 23.2, 23.3, 23.4, 23.5, 25.5, 26.6**
+  - **Validates: Requirements 23.1, 23.2, 23.3, 23.4, 23.5, 26.6**
 
-- [ ] 10.5 Implement Gotcha Once effects
+- [ ] 10.6 Implement Gotcha Once effects
   - Create Gotcha Once effect logic (buyer selects 1 card to steal/discard)
   - Handle buyer affecting own collection (must discard, can't steal)
   - Implement card selection UI for buyer choices
   - _Requirements: 21.1, 21.2, 21.3, 21.4, 21.5, 24.1, 24.2, 24.3, 24.4, 24.5_
 
-- [ ]* 10.5.1 Write property tests for Gotcha Once effects
+- [ ]* 10.6.1 Write property tests for Gotcha Once effects
   - **Property 42: Gotcha Once card selection**
   - **Property 43: Gotcha Once steal or discard choice**
   - **Property 44: Gotcha Once insufficient cards handling**
@@ -200,30 +211,28 @@ This implementation plan breaks down the trading card game into discrete, testab
   - **Property 53: Gotcha set self-selection prevention**
   - **Validates: Requirements 21.1, 21.2, 21.3, 21.4, 21.5, 24.2, 24.3, 24.5**
 
-- [ ] 10.6 Implement Gotcha Twice effects
+- [ ] 10.7 Implement Gotcha Twice effects
   - Create Gotcha Twice effect logic (buyer selects 2 cards independently)
   - Reuse Gotcha Once selection logic for each card
   - Handle independent steal/discard choices for each card
   - _Requirements: 22.1, 22.2, 22.3, 22.4, 22.5_
 
-- [ ]* 10.6.1 Write property tests for Gotcha Twice effects
+- [ ]* 10.7.1 Write property tests for Gotcha Twice effects
   - **Property 45: Gotcha Twice card selection**
   - **Property 46: Gotcha Twice independent choices**
   - **Validates: Requirements 22.1, 22.2, 22.3, 22.4, 22.5**
 
-- [ ] 10.7 Implement iterative Gotcha processing mechanics
+- [ ] 10.8 Implement iterative Gotcha processing mechanics
   - Implement iterative Gotcha processing (continue until no sets remain)
   - Add checks for newly formed Gotcha sets after each round of effects
   - Ensure completion verification before advancing to Thing trade-ins
   - _Requirements: 26.1, 26.2, 26.3, 26.4, 26.5_
 
-- [ ]* 10.7.1 Write property tests for iterative processing
-  - **Property 54: Money bag token transfer timing**
-  - **Property 55: Buyer role transition timing**
+- [ ]* 10.8.1 Write property tests for iterative processing
   - **Property 57: Iterative Gotcha processing**
   - **Property 58: Gotcha completion verification**
   - **Property 59: Gotcha iteration completeness**
-  - **Validates: Requirements 25.1, 25.3, 26.1, 26.2, 26.3, 26.4, 26.5**
+  - **Validates: Requirements 26.1, 26.2, 26.3, 26.4, 26.5**
 
 - [ ] 11. Implement winner determination
   - [x] 11.1 Create win condition logic
