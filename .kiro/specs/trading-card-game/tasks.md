@@ -182,7 +182,7 @@ This implementation plan breaks down the trading card game into discrete, testab
   - **Property 56: Buyer privilege continuity**
   - **Validates: Requirements 25.1, 25.3, 25.5**
 
-- [ ] 10.5 Implement Gotcha Bad effects and processing order
+- [x] 10.5 Implement Gotcha Bad effects and processing order
   - Implement Gotcha processing order (Bad first, then Twice, then Once)
   - Create Gotcha Bad effect logic (point loss and transfer mechanics)
   - Handle point transfers between players and buyer

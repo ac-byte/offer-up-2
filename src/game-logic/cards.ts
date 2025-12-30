@@ -125,6 +125,48 @@ export function identifyGotchaSets(collection: Card[]): Card[][] {
 }
 
 /**
+ * Identifies complete Gotcha sets by subtype in the correct processing order
+ * Returns sets grouped by subtype in order: Bad, Twice, Once
+ */
+export function identifyGotchaSetsInOrder(collection: Card[]): { [subtype: string]: Card[][] } {
+  const gotchaCards = collection.filter(card => card.type === 'gotcha')
+  const setsBySubtype: { [subtype: string]: Card[][] } = {
+    bad: [],
+    twice: [],
+    once: []
+  }
+  
+  // Group cards by subtype
+  const cardsBySubtype: { [key: string]: Card[] } = {}
+  for (const card of gotchaCards) {
+    if (!cardsBySubtype[card.subtype]) {
+      cardsBySubtype[card.subtype] = []
+    }
+    cardsBySubtype[card.subtype].push(card)
+  }
+  
+  // Process each subtype and identify complete sets
+  for (const subtype of ['bad', 'twice', 'once']) {
+    const cards = cardsBySubtype[subtype] || []
+    if (cards.length === 0) continue
+    
+    const setSize = cards[0]?.setSize || 0
+    const completeSets: Card[][] = []
+    
+    // Create complete sets from available cards
+    const cardsCopy = [...cards]
+    while (cardsCopy.length >= setSize) {
+      const set = cardsCopy.splice(0, setSize)
+      completeSets.push(set)
+    }
+    
+    setsBySubtype[subtype] = completeSets
+  }
+  
+  return setsBySubtype
+}
+
+/**
  * Identifies complete Thing sets in a player's collection
  * Returns an array of complete sets, where each set is an array of cards
  */

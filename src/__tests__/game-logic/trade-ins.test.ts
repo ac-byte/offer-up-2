@@ -1,4 +1,4 @@
-import { processGotchaTradeins, processThingTradeins } from '../../game-logic/gameReducer'
+import { processGotchaTradeins, processThingTradeins, applyGotchaBadEffect } from '../../game-logic/gameReducer'
 import { GameState, GamePhase, Player, Card } from '../../types'
 
 describe('Trade-in Processing', () => {
@@ -247,6 +247,150 @@ describe('Trade-in Processing', () => {
 
       // Should add 1 point to existing 3 points
       expect(newState.players[0].points).toBe(4)
+    })
+  })
+
+  describe('Gotcha Bad Effects', () => {
+    it('applies Gotcha Bad point penalty when player has points', () => {
+      const player1Collection: Card[] = [
+        { id: 'gotcha-bad-1', type: 'gotcha', subtype: 'bad', name: 'Gotcha Bad', setSize: 3, effect: 'This card has an effect' },
+        { id: 'gotcha-bad-2', type: 'gotcha', subtype: 'bad', name: 'Gotcha Bad', setSize: 3, effect: 'This card has an effect' },
+        { id: 'gotcha-bad-3', type: 'gotcha', subtype: 'bad', name: 'Gotcha Bad', setSize: 3, effect: 'This card has an effect' }
+      ]
+
+      const player1 = createMockPlayer(0, player1Collection)
+      player1.points = 2 // Player has 2 points
+      const player2 = createMockPlayer(1, [])
+      player2.points = 1 // Buyer has 1 point
+      
+      const state = createMockGameState([player1, player2])
+      state.currentBuyerIndex = 1 // Player 2 is the buyer
+
+      const newState = processGotchaTradeins(state)
+
+      // Player 1 should lose 1 point (2 -> 1)
+      expect(newState.players[0].points).toBe(1)
+      // Buyer (Player 2) should gain 1 point (1 -> 2)
+      expect(newState.players[1].points).toBe(2)
+      // Gotcha Bad set should be removed from collection
+      expect(newState.players[0].collection).toHaveLength(0)
+      // Cards should be in discard pile
+      expect(newState.discardPile).toHaveLength(3)
+    })
+
+    it('does not apply penalty when player has no points', () => {
+      const player1Collection: Card[] = [
+        { id: 'gotcha-bad-1', type: 'gotcha', subtype: 'bad', name: 'Gotcha Bad', setSize: 3, effect: 'This card has an effect' },
+        { id: 'gotcha-bad-2', type: 'gotcha', subtype: 'bad', name: 'Gotcha Bad', setSize: 3, effect: 'This card has an effect' },
+        { id: 'gotcha-bad-3', type: 'gotcha', subtype: 'bad', name: 'Gotcha Bad', setSize: 3, effect: 'This card has an effect' }
+      ]
+
+      const player1 = createMockPlayer(0, player1Collection)
+      player1.points = 0 // Player has no points
+      const player2 = createMockPlayer(1, [])
+      player2.points = 1 // Buyer has 1 point
+      
+      const state = createMockGameState([player1, player2])
+      state.currentBuyerIndex = 1 // Player 2 is the buyer
+
+      const newState = processGotchaTradeins(state)
+
+      // Player 1 should keep 0 points (no penalty applied)
+      expect(newState.players[0].points).toBe(0)
+      // Buyer should keep 1 point (no transfer)
+      expect(newState.players[1].points).toBe(1)
+      // Gotcha Bad set should still be removed from collection
+      expect(newState.players[0].collection).toHaveLength(0)
+    })
+
+    it('discards point when buyer affects themselves', () => {
+      const player1Collection: Card[] = [
+        { id: 'gotcha-bad-1', type: 'gotcha', subtype: 'bad', name: 'Gotcha Bad', setSize: 3, effect: 'This card has an effect' },
+        { id: 'gotcha-bad-2', type: 'gotcha', subtype: 'bad', name: 'Gotcha Bad', setSize: 3, effect: 'This card has an effect' },
+        { id: 'gotcha-bad-3', type: 'gotcha', subtype: 'bad', name: 'Gotcha Bad', setSize: 3, effect: 'This card has an effect' }
+      ]
+
+      const player1 = createMockPlayer(0, player1Collection)
+      player1.points = 2 // Buyer has 2 points
+      const player2 = createMockPlayer(1, [])
+      player2.points = 1
+      
+      const state = createMockGameState([player1, player2])
+      state.currentBuyerIndex = 0 // Player 1 is the buyer (affecting themselves)
+
+      const newState = processGotchaTradeins(state)
+
+      // Buyer should lose 1 point (2 -> 1)
+      expect(newState.players[0].points).toBe(1)
+      // Other player should keep their points (no transfer to buyer when buyer affects themselves)
+      expect(newState.players[1].points).toBe(1)
+      // Gotcha Bad set should be removed from collection
+      expect(newState.players[0].collection).toHaveLength(0)
+    })
+
+    it('processes Gotcha sets in correct order: Bad, Twice, Once', () => {
+      const player1Collection: Card[] = [
+        // Gotcha Once (should be processed last)
+        { id: 'gotcha-once-1', type: 'gotcha', subtype: 'once', name: 'Gotcha Once', setSize: 1, effect: 'This card has an effect' },
+        // Gotcha Bad (should be processed first)
+        { id: 'gotcha-bad-1', type: 'gotcha', subtype: 'bad', name: 'Gotcha Bad', setSize: 3, effect: 'This card has an effect' },
+        { id: 'gotcha-bad-2', type: 'gotcha', subtype: 'bad', name: 'Gotcha Bad', setSize: 3, effect: 'This card has an effect' },
+        { id: 'gotcha-bad-3', type: 'gotcha', subtype: 'bad', name: 'Gotcha Bad', setSize: 3, effect: 'This card has an effect' },
+        // Gotcha Twice (should be processed second)
+        { id: 'gotcha-twice-1', type: 'gotcha', subtype: 'twice', name: 'Gotcha Twice', setSize: 2, effect: 'This card has an effect' },
+        { id: 'gotcha-twice-2', type: 'gotcha', subtype: 'twice', name: 'Gotcha Twice', setSize: 2, effect: 'This card has an effect' }
+      ]
+
+      const player1 = createMockPlayer(0, player1Collection)
+      player1.points = 3 // Player has 3 points
+      const player2 = createMockPlayer(1, [])
+      player2.points = 0 // Buyer has 0 points
+      
+      const state = createMockGameState([player1, player2])
+      state.currentBuyerIndex = 1 // Player 2 is the buyer
+
+      const newState = processGotchaTradeins(state)
+
+      // All Gotcha sets should be removed (Bad, Twice, Once)
+      expect(newState.players[0].collection).toHaveLength(0)
+      // Player should lose 1 point from Gotcha Bad effect (3 -> 2)
+      expect(newState.players[0].points).toBe(2)
+      // Buyer should gain 1 point from the transfer (0 -> 1)
+      expect(newState.players[1].points).toBe(1)
+      // All cards should be in discard pile
+      expect(newState.discardPile).toHaveLength(6) // 3 Bad + 2 Twice + 1 Once
+    })
+
+    it('handles multiple Gotcha Bad sets from same player', () => {
+      const player1Collection: Card[] = [
+        // First Gotcha Bad set
+        { id: 'gotcha-bad-1', type: 'gotcha', subtype: 'bad', name: 'Gotcha Bad', setSize: 3, effect: 'This card has an effect' },
+        { id: 'gotcha-bad-2', type: 'gotcha', subtype: 'bad', name: 'Gotcha Bad', setSize: 3, effect: 'This card has an effect' },
+        { id: 'gotcha-bad-3', type: 'gotcha', subtype: 'bad', name: 'Gotcha Bad', setSize: 3, effect: 'This card has an effect' },
+        // Second Gotcha Bad set
+        { id: 'gotcha-bad-4', type: 'gotcha', subtype: 'bad', name: 'Gotcha Bad', setSize: 3, effect: 'This card has an effect' },
+        { id: 'gotcha-bad-5', type: 'gotcha', subtype: 'bad', name: 'Gotcha Bad', setSize: 3, effect: 'This card has an effect' },
+        { id: 'gotcha-bad-6', type: 'gotcha', subtype: 'bad', name: 'Gotcha Bad', setSize: 3, effect: 'This card has an effect' }
+      ]
+
+      const player1 = createMockPlayer(0, player1Collection)
+      player1.points = 5 // Player has 5 points
+      const player2 = createMockPlayer(1, [])
+      player2.points = 0 // Buyer has 0 points
+      
+      const state = createMockGameState([player1, player2])
+      state.currentBuyerIndex = 1 // Player 2 is the buyer
+
+      const newState = processGotchaTradeins(state)
+
+      // All Gotcha Bad sets should be removed
+      expect(newState.players[0].collection).toHaveLength(0)
+      // Player should lose 2 points (one for each Bad set: 5 -> 3)
+      expect(newState.players[0].points).toBe(3)
+      // Buyer should gain 2 points from the transfers (0 -> 2)
+      expect(newState.players[1].points).toBe(2)
+      // All cards should be in discard pile
+      expect(newState.discardPile).toHaveLength(6) // 6 Bad cards
     })
   })
 })

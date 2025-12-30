@@ -1,4 +1,4 @@
-import { identifyGotchaSets, identifyThingSets } from '../../game-logic/cards'
+import { identifyGotchaSets, identifyThingSets, identifyGotchaSetsInOrder } from '../../game-logic/cards'
 import { Card } from '../../types'
 
 describe('Set Identification', () => {
@@ -199,6 +199,84 @@ describe('Set Identification', () => {
       expect(giantSets).toHaveLength(2)
       expect(bigSets).toHaveLength(1)
       expect(mediumSets).toHaveLength(1)
+    })
+  })
+
+  describe('identifyGotchaSetsInOrder', () => {
+    it('returns sets grouped by subtype in correct order', () => {
+      const collection: Card[] = [
+        // Mix of different Gotcha types
+        { id: 'gotcha-once-1', type: 'gotcha', subtype: 'once', name: 'Gotcha Once', setSize: 1, effect: 'This card has an effect' },
+        { id: 'gotcha-bad-1', type: 'gotcha', subtype: 'bad', name: 'Gotcha Bad', setSize: 3, effect: 'This card has an effect' },
+        { id: 'gotcha-twice-1', type: 'gotcha', subtype: 'twice', name: 'Gotcha Twice', setSize: 2, effect: 'This card has an effect' },
+        { id: 'gotcha-bad-2', type: 'gotcha', subtype: 'bad', name: 'Gotcha Bad', setSize: 3, effect: 'This card has an effect' },
+        { id: 'gotcha-twice-2', type: 'gotcha', subtype: 'twice', name: 'Gotcha Twice', setSize: 2, effect: 'This card has an effect' },
+        { id: 'gotcha-bad-3', type: 'gotcha', subtype: 'bad', name: 'Gotcha Bad', setSize: 3, effect: 'This card has an effect' }
+      ]
+
+      const setsBySubtype = identifyGotchaSetsInOrder(collection)
+
+      // Should have sets for all three subtypes
+      expect(setsBySubtype).toHaveProperty('bad')
+      expect(setsBySubtype).toHaveProperty('twice')
+      expect(setsBySubtype).toHaveProperty('once')
+
+      // Should identify complete sets correctly
+      expect(setsBySubtype.bad).toHaveLength(1) // 1 complete Bad set (3 cards)
+      expect(setsBySubtype.twice).toHaveLength(1) // 1 complete Twice set (2 cards)
+      expect(setsBySubtype.once).toHaveLength(1) // 1 complete Once set (1 card)
+
+      // Verify set contents
+      expect(setsBySubtype.bad[0]).toHaveLength(3)
+      expect(setsBySubtype.twice[0]).toHaveLength(2)
+      expect(setsBySubtype.once[0]).toHaveLength(1)
+    })
+
+    it('returns empty arrays for subtypes with no complete sets', () => {
+      const collection: Card[] = [
+        { id: 'gotcha-bad-1', type: 'gotcha', subtype: 'bad', name: 'Gotcha Bad', setSize: 3, effect: 'This card has an effect' },
+        { id: 'gotcha-bad-2', type: 'gotcha', subtype: 'bad', name: 'Gotcha Bad', setSize: 3, effect: 'This card has an effect' },
+        // Only 2 Bad cards - not enough for a complete set
+        { id: 'gotcha-twice-1', type: 'gotcha', subtype: 'twice', name: 'Gotcha Twice', setSize: 2, effect: 'This card has an effect' }
+        // Only 1 Twice card - not enough for a complete set
+      ]
+
+      const setsBySubtype = identifyGotchaSetsInOrder(collection)
+
+      // Should have empty arrays for incomplete sets
+      expect(setsBySubtype.bad).toHaveLength(0)
+      expect(setsBySubtype.twice).toHaveLength(0)
+      expect(setsBySubtype.once).toHaveLength(0)
+    })
+
+    it('handles multiple complete sets of same subtype', () => {
+      const collection: Card[] = [
+        // Two complete Bad sets
+        { id: 'gotcha-bad-1', type: 'gotcha', subtype: 'bad', name: 'Gotcha Bad', setSize: 3, effect: 'This card has an effect' },
+        { id: 'gotcha-bad-2', type: 'gotcha', subtype: 'bad', name: 'Gotcha Bad', setSize: 3, effect: 'This card has an effect' },
+        { id: 'gotcha-bad-3', type: 'gotcha', subtype: 'bad', name: 'Gotcha Bad', setSize: 3, effect: 'This card has an effect' },
+        { id: 'gotcha-bad-4', type: 'gotcha', subtype: 'bad', name: 'Gotcha Bad', setSize: 3, effect: 'This card has an effect' },
+        { id: 'gotcha-bad-5', type: 'gotcha', subtype: 'bad', name: 'Gotcha Bad', setSize: 3, effect: 'This card has an effect' },
+        { id: 'gotcha-bad-6', type: 'gotcha', subtype: 'bad', name: 'Gotcha Bad', setSize: 3, effect: 'This card has an effect' },
+        // Three complete Once sets
+        { id: 'gotcha-once-1', type: 'gotcha', subtype: 'once', name: 'Gotcha Once', setSize: 1, effect: 'This card has an effect' },
+        { id: 'gotcha-once-2', type: 'gotcha', subtype: 'once', name: 'Gotcha Once', setSize: 1, effect: 'This card has an effect' },
+        { id: 'gotcha-once-3', type: 'gotcha', subtype: 'once', name: 'Gotcha Once', setSize: 1, effect: 'This card has an effect' }
+      ]
+
+      const setsBySubtype = identifyGotchaSetsInOrder(collection)
+
+      // Should identify multiple sets correctly
+      expect(setsBySubtype.bad).toHaveLength(2) // 2 complete Bad sets
+      expect(setsBySubtype.twice).toHaveLength(0) // No Twice cards
+      expect(setsBySubtype.once).toHaveLength(3) // 3 complete Once sets
+
+      // Verify set contents
+      expect(setsBySubtype.bad[0]).toHaveLength(3)
+      expect(setsBySubtype.bad[1]).toHaveLength(3)
+      expect(setsBySubtype.once[0]).toHaveLength(1)
+      expect(setsBySubtype.once[1]).toHaveLength(1)
+      expect(setsBySubtype.once[2]).toHaveLength(1)
     })
   })
 })

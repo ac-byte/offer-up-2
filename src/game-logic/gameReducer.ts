@@ -1,5 +1,5 @@
 import { GameState, GameAction, GamePhase, Player, Card } from '../types'
-import { createShuffledDeck, shuffleArray, identifyGotchaSets, identifyThingSets } from './cards'
+import { createShuffledDeck, shuffleArray, identifyGotchaSets, identifyThingSets, identifyGotchaSetsInOrder } from './cards'
 
 /**
  * Creates initial game state
@@ -942,48 +942,75 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 }
 
 /**
- * Processes automatic Gotcha trade-ins for all players
- * Removes complete Gotcha sets from collections and applies their effects
+ * Applies Gotcha Bad effects to a player
+ * Reduces player points by 1 if they have points, transfers point to buyer if applicable
  */
-export function processGotchaTradeins(state: GameState): GameState {
+export function applyGotchaBadEffect(state: GameState, playerIndex: number): GameState {
   const newState = { ...state }
-  newState.players = state.players.map(player => {
-    const playerCopy = { ...player, collection: [...player.collection] }
-    
-    // Identify complete Gotcha sets
-    const completeSets = identifyGotchaSets(playerCopy.collection)
-    
-    if (completeSets.length === 0) {
-      return playerCopy
+  newState.players = [...state.players]
+  
+  const player = newState.players[playerIndex]
+  const buyer = newState.players[state.currentBuyerIndex]
+  
+  // Only apply penalty if player has at least one point
+  if (player.points > 0) {
+    // Reduce player's points by 1
+    newState.players[playerIndex] = {
+      ...player,
+      points: player.points - 1
     }
     
-    // Remove traded-in cards from collection
-    const tradedInCardIds = new Set(
-      completeSets.flat().map(card => card.id)
-    )
-    
-    playerCopy.collection = playerCopy.collection.filter(
-      card => !tradedInCardIds.has(card.id)
-    )
-    
-    // Apply Gotcha effects (for now, just remove the cards)
-    // TODO: Implement specific Gotcha effects in future tasks
-    
-    return playerCopy
-  })
+    // Transfer point to buyer if affected player is not the buyer
+    if (playerIndex !== state.currentBuyerIndex) {
+      newState.players[state.currentBuyerIndex] = {
+        ...buyer,
+        points: buyer.points + 1
+      }
+    }
+    // If affected player is the buyer, the point is discarded (no transfer)
+  }
   
-  // Add traded-in cards to discard pile
-  const tradedInCards = newState.players.flatMap(player => {
-    const originalPlayer = state.players.find(p => p.id === player.id)!
-    const originalCardIds = new Set(originalPlayer.collection.map(card => card.id))
-    const currentCardIds = new Set(player.collection.map(card => card.id))
-    
-    return originalPlayer.collection.filter(card => 
-      originalCardIds.has(card.id) && !currentCardIds.has(card.id)
-    )
-  })
+  return newState
+}
+
+/**
+ * Processes automatic Gotcha trade-ins for all players
+ * Removes complete Gotcha sets from collections and applies their effects
+ * Processes sets in order: Bad first, then Twice, then Once
+ */
+export function processGotchaTradeins(state: GameState): GameState {
+  let newState = { ...state }
+  newState.players = state.players.map(player => ({ ...player, collection: [...player.collection] }))
+  newState.discardPile = [...state.discardPile]
   
-  newState.discardPile = [...state.discardPile, ...tradedInCards]
+  // Process each player's Gotcha sets in the correct order
+  for (let playerIndex = 0; playerIndex < newState.players.length; playerIndex++) {
+    const player = newState.players[playerIndex]
+    const setsBySubtype = identifyGotchaSetsInOrder(player.collection)
+    
+    // Process in order: Bad, Twice, Once
+    for (const subtype of ['bad', 'twice', 'once']) {
+      const completeSets = setsBySubtype[subtype]
+      
+      for (const set of completeSets) {
+        // Remove the set from player's collection
+        const tradedInCardIds = new Set(set.map(card => card.id))
+        newState.players[playerIndex].collection = newState.players[playerIndex].collection.filter(
+          card => !tradedInCardIds.has(card.id)
+        )
+        
+        // Add traded-in cards to discard pile
+        newState.discardPile.push(...set)
+        
+        // Apply Gotcha effects based on subtype
+        if (subtype === 'bad') {
+          // Apply Gotcha Bad effect: point penalty and transfer
+          newState = applyGotchaBadEffect(newState, playerIndex)
+        }
+        // TODO: Implement Gotcha Once and Gotcha Twice effects in future tasks
+      }
+    }
+  }
   
   return newState
 }
