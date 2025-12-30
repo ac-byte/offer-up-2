@@ -93,9 +93,14 @@ interface GameState {
   drawPile: Card[]
   discardPile: Card[]
   
+  // Action Phase Pass System
+  actionPhasePassesRemaining: number
+  actionPhasePlayersWithActionCards: number[]
+  
   // UI State
   selectedPerspective: number
   phaseInstructions: string
+  autoFollowPerspective: boolean
   
   // Game Status
   winner: number | null
@@ -353,145 +358,153 @@ Based on the prework analysis, the following properties have been identified as 
 *For any* played action card, its effects should be applied immediately
 **Validates: Requirements 7.4**
 
-**Property 27: Action phase response rounds**
-*For any* action card played, all other players should get a response opportunity in a full rotation
-**Validates: Requirements 8.1, 8.2**
+**Property 27: Action phase pass system initialization**
+*For any* action phase start, the pass counter should be set to the count of players with action cards
+**Validates: Requirements 8.1**
 
-**Property 28: Automatic skipping in responses**
-*For any* response round, players without action cards should be automatically skipped
+**Property 28: Pass counter reset on action card play**
+*For any* action card played, the pass counter should reset to the current count of players with action cards
+**Validates: Requirements 8.2**
+
+**Property 29: Pass counter decrement on player pass**
+*For any* player with action cards who declares done, the pass counter should decrease by one
 **Validates: Requirements 8.3**
 
-**Property 29: Response round termination**
-*For any* action phase, response rounds should continue until a complete rotation occurs with no action cards played
+**Property 30: Automatic skipping without pass counter effect**
+*For any* player without action cards, they should be skipped automatically without affecting the pass counter
 **Validates: Requirements 8.4**
+
+**Property 31: Action phase termination conditions**
+*For any* action phase, it should end when either no players have action cards OR the pass counter reaches zero
+**Validates: Requirements 8.5**
 
 ### Offer Selection and Distribution Properties
 
-**Property 30: Single offer selection**
+**Property 32: Single offer selection**
 *For any* offer selection phase, the buyer should be able to select exactly one seller's offer
 **Validates: Requirements 9.1**
 
-**Property 31: Money bag transfer**
+**Property 33: Money bag transfer**
 *For any* offer selection, the money bag should transfer from buyer to the selected seller
 **Validates: Requirements 9.2**
 
-**Property 32: Selected offer distribution**
+**Property 34: Selected offer distribution**
 *For any* selected offer, it should move to the buyer's collection
 **Validates: Requirements 9.3**
 
-**Property 33: Non-selected offer return**
+**Property 35: Non-selected offer return**
 *For any* non-selected offers, they should return to their respective sellers' collections
 **Validates: Requirements 9.4**
 
-**Property 34: Offer area cleanup**
+**Property 36: Offer area cleanup**
 *For any* offer distribution completion, all offer areas should be empty
 **Validates: Requirements 9.5**
 
 ### Trade-in Properties
 
-**Property 35: Gotcha set identification**
+**Property 37: Gotcha set identification**
 *For any* player collection, all complete Gotcha sets should be correctly identified
 **Validates: Requirements 10.1**
 
-**Property 36: Automatic Gotcha trade-ins**
+**Property 38: Automatic Gotcha trade-ins**
 *For any* complete Gotcha sets in collections, they should be automatically traded in
 **Validates: Requirements 10.2**
 
-**Property 37: Thing set identification**
+**Property 39: Thing set identification**
 *For any* player collection, all complete Thing sets should be correctly identified
 **Validates: Requirements 10.3**
 
-**Property 38: Thing set point calculation**
+**Property 40: Thing set point calculation**
 *For any* complete Thing sets, points should be awarded correctly (1 Giant=1pt, 2 Big=1pt, 3 Medium=1pt, 4 Tiny=1pt)
 **Validates: Requirements 10.4**
 
-**Property 39: Point total updates**
+**Property 41: Point total updates**
 *For any* trade-in completion, player point totals should be updated correctly
 **Validates: Requirements 10.5**
 
 ### Winner Determination Properties
 
-**Property 40: Win condition checking**
+**Property 42: Win condition checking**
 *For any* winner determination phase, players with 5+ points should be identified
 **Validates: Requirements 11.1**
 
-**Property 41: Tie handling**
+**Property 43: Tie handling**
 *For any* scenario with tied players for most points, the game should continue to next round
 **Validates: Requirements 11.2**
 
-**Property 42: Winner declaration**
+**Property 44: Winner declaration**
 *For any* scenario with one player having 5+ points and more than others, that player should be declared winner
 **Validates: Requirements 11.3**
 
-**Property 43: Game end state**
+**Property 45: Game end state**
 *For any* declared winner, no further gameplay actions should be allowed
 **Validates: Requirements 11.5**
 
 ### Player Rotation Properties
 
-**Property 44: Clockwise rotation order**
+**Property 46: Clockwise rotation order**
 *For any* multi-player phase, player turns should proceed clockwise starting from buyer
 **Validates: Requirements 13.1**
 
-**Property 45: Buyer-excluded rotation**
+**Property 47: Buyer-excluded rotation**
 *For any* phase where buyer doesn't act, rotation should start with player to buyer's right
 **Validates: Requirements 13.2**
 
-**Property 46: Rotation wraparound**
+**Property 48: Rotation wraparound**
 *For any* rotation reaching the last player, it should continue with the first player
 **Validates: Requirements 13.3**
 
-**Property 47: Automatic player skipping**
+**Property 49: Automatic player skipping**
 *For any* player with no valid actions in current phase, they should be automatically skipped
 **Validates: Requirements 14.1, 14.2, 14.3**
 
-**Property 48: Complete rotation coverage**
+**Property 50: Complete rotation coverage**
 *For any* phase requiring player actions, rotation should continue until all eligible players have had opportunity
 **Validates: Requirements 14.5**
 
 ### Perspective and Display Properties
 
-**Property 49: Perspective independence**
+**Property 51: Perspective independence**
 *For any* perspective change, the current acting player should remain unchanged
 **Validates: Requirements 15.2**
 
-**Property 50: Card display updates**
+**Property 52: Card display updates**
 *For any* perspective selection, all card displays should update according to that player's view
 **Validates: Requirements 15.3**
 
-**Property 51: Perspective switching availability**
+**Property 53: Perspective switching availability**
 *For any* game phase, perspective switching should be allowed
 **Validates: Requirements 15.4**
 
-**Property 52: Card display states**
+**Property 54: Card display states**
 *For any* card, it should be displayable in face up, face down, and partial states
 **Validates: Requirements 16.1**
 
-**Property 53: Own hand visibility**
+**Property 55: Own hand visibility**
 *For any* player viewing their own perspective, their hand cards should be face up
 **Validates: Requirements 16.2**
 
-**Property 54: Other hand privacy**
+**Property 56: Other hand privacy**
 *For any* player viewing other players' hands, those cards should be face down
 **Validates: Requirements 16.3**
 
-**Property 55: Collection visibility**
+**Property 57: Collection visibility**
 *For any* perspective, all collection cards should be face up
 **Validates: Requirements 16.4**
 
-**Property 56: Offer card visibility**
+**Property 58: Offer card visibility**
 *For any* offer viewing, face down cards should be partial for owner's perspective and face down for others
 **Validates: Requirements 16.5**
 
-**Property 57: Partial card content**
+**Property 59: Partial card content**
 *For any* partial card display, it should show card name and description in the top half
 **Validates: Requirements 17.1**
 
-**Property 58: Partial display conditions**
+**Property 60: Partial display conditions**
 *For any* card display, partial state should be used only for player's own face down offer cards from their perspective
 **Validates: Requirements 17.3**
 
-**Property 59: Automatic perspective following**
+**Property 61: Automatic perspective following**
 *For any* active player change, the selected perspective should automatically update to match the new active player
 **Validates: Requirements 20.1, 20.2**
 
@@ -530,7 +543,7 @@ The testing approach combines unit tests for specific scenarios with property-ba
 ### Property-Based Testing
 - **Framework**: Use Jest with fast-check library for property-based testing
 - **Test configuration**: Minimum 100 iterations per property test
-- **Coverage**: All 58 correctness properties will be implemented as property tests
+- **Coverage**: All 61 correctness properties will be implemented as property tests
 - **Tagging**: Each test tagged with format: **Feature: trading-card-game, Property {number}: {property_text}**
 
 ### Unit Testing

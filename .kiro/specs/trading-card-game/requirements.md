@@ -106,17 +106,17 @@ A digital trading card game implemented as a React application featuring a fixed
 4. THE Game_System SHALL execute Action card effects immediately when played
 5. THE Game_System SHALL end the Action phase when all players declare they are done or have no Action cards
 
-### Requirement 8: Action Phase Response Rounds
+### Requirement 8: Action Phase Pass System
 
-**User Story:** As a player, I want the opportunity to respond with Action cards after any player plays one, so that I can react strategically to other players' actions.
+**User Story:** As a player, I want the Action phase to end when all players with Action cards have passed, so that the game progresses efficiently without infinite loops.
 
 #### Acceptance Criteria
 
-1. WHEN any player plays an Action card, THE Game_System SHALL give all other players a chance to respond
-2. THE Game_System SHALL complete a full rotation around all players after each Action card is played
-3. WHEN a player has no Action cards available, THE Game_System SHALL automatically skip them in the response round
-4. THE Game_System SHALL continue response rounds until a complete rotation occurs with no Action cards played
-5. THE Game_System SHALL advance to Offer selection phase only after all response opportunities are exhausted
+1. WHEN the Action phase begins, THE Game_System SHALL count all players who have Action cards in their collections
+2. WHEN any player plays an Action card, THE Game_System SHALL reset the pass counter to the current count of players with Action cards
+3. WHEN a player with Action cards declares done (passes), THE Game_System SHALL decrement the pass counter
+4. WHEN a player has no Action cards available, THE Game_System SHALL automatically skip them without affecting the pass counter
+5. THE Game_System SHALL end the Action phase when either no players have Action cards OR the pass counter reaches zero
 
 ### Requirement 9: Offer Selection and Distribution
 

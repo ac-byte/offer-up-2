@@ -114,10 +114,11 @@ This implementation plan breaks down the trading card game into discrete, testab
     - Implement immediate effect execution
     - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5_
 
-  - [x] 8.2 Implement action phase response rounds
-    - Create full rotation system after each action card
-    - Handle automatic skipping of players without action cards
-    - Continue until no action cards played in full rotation
+  - [x] 8.2 Implement action phase pass system
+    - Create pass counter system to track players with action cards
+    - Reset counter when action cards are played
+    - Decrement counter when players pass
+    - End phase when no players have action cards or passes remaining reaches zero
     - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5_
 
   - [ ]* 8.3 Write property tests for action phase
@@ -125,10 +126,12 @@ This implementation plan breaks down the trading card game into discrete, testab
     - **Property 24: Multiple action card play**
     - **Property 25: Action card restriction**
     - **Property 26: Immediate effect execution**
-    - **Property 27: Action phase response rounds**
-    - **Property 28: Automatic skipping in responses**
-    - **Property 29: Response round termination**
-    - **Validates: Requirements 7.1, 7.2, 7.3, 7.4, 8.1, 8.2, 8.3, 8.4**
+    - **Property 27: Action phase pass system initialization**
+    - **Property 28: Pass counter reset on action card play**
+    - **Property 29: Pass counter decrement on player pass**
+    - **Property 30: Automatic skipping without pass counter effect**
+    - **Property 31: Action phase termination conditions**
+    - **Validates: Requirements 7.1, 7.2, 7.3, 7.4, 8.1, 8.2, 8.3, 8.4, 8.5**
 
 - [ ] 9. Implement offer selection and distribution
   - [x] 9.1 Create offer selection logic
@@ -140,11 +143,11 @@ This implementation plan breaks down the trading card game into discrete, testab
     - _Requirements: 9.1, 9.2, 9.3, 9.4, 9.5_
 
   - [ ]* 9.2 Write property tests for offer distribution
-    - **Property 30: Single offer selection**
-    - **Property 31: Money bag transfer**
-    - **Property 32: Selected offer distribution**
-    - **Property 33: Non-selected offer return**
-    - **Property 34: Offer area cleanup**
+    - **Property 32: Single offer selection**
+    - **Property 33: Money bag transfer**
+    - **Property 34: Selected offer distribution**
+    - **Property 35: Non-selected offer return**
+    - **Property 36: Offer area cleanup**
     - **Validates: Requirements 9.1, 9.2, 9.3, 9.4, 9.5**
 
 - [ ] 10. Implement trade-in mechanics
@@ -160,11 +163,11 @@ This implementation plan breaks down the trading card game into discrete, testab
     - _Requirements: 10.4, 10.5_
 
   - [ ]* 10.3 Write property tests for trade-ins
-    - **Property 35: Gotcha set identification**
-    - **Property 36: Automatic Gotcha trade-ins**
-    - **Property 37: Thing set identification**
-    - **Property 38: Thing set point calculation**
-    - **Property 39: Point total updates**
+    - **Property 37: Gotcha set identification**
+    - **Property 38: Automatic Gotcha trade-ins**
+    - **Property 39: Thing set identification**
+    - **Property 40: Thing set point calculation**
+    - **Property 41: Point total updates**
     - **Validates: Requirements 10.1, 10.2, 10.3, 10.4, 10.5**
 
 - [ ] 11. Implement winner determination
@@ -176,10 +179,10 @@ This implementation plan breaks down the trading card game into discrete, testab
     - _Requirements: 11.1, 11.2, 11.3, 11.5_
 
   - [ ]* 11.2 Write property tests for winner determination
-    - **Property 40: Win condition checking**
-    - **Property 41: Tie handling**
-    - **Property 42: Winner declaration**
-    - **Property 43: Game end state**
+    - **Property 42: Win condition checking**
+    - **Property 43: Tie handling**
+    - **Property 44: Winner declaration**
+    - **Property 45: Game end state**
     - **Validates: Requirements 11.1, 11.2, 11.3, 11.5**
 
 - [ ] 12. Checkpoint - Ensure all game logic tests pass
@@ -199,11 +202,11 @@ This implementation plan breaks down the trading card game into discrete, testab
     - _Requirements: 14.1, 14.2, 14.3, 14.5_
 
   - [ ]* 13.3 Write property tests for player rotation
-    - **Property 44: Clockwise rotation order**
-    - **Property 45: Buyer-excluded rotation**
-    - **Property 46: Rotation wraparound**
-    - **Property 47: Automatic player skipping**
-    - **Property 48: Complete rotation coverage**
+    - **Property 46: Clockwise rotation order**
+    - **Property 47: Buyer-excluded rotation**
+    - **Property 48: Rotation wraparound**
+    - **Property 49: Automatic player skipping**
+    - **Property 50: Complete rotation coverage**
     - **Validates: Requirements 13.1, 13.2, 13.3, 14.1, 14.2, 14.3, 14.5**
 
 - [ ] 14. Create React UI components
@@ -233,17 +236,17 @@ This implementation plan breaks down the trading card game into discrete, testab
     - _Requirements: 20.1, 20.2, 20.3, 20.4, 20.5_
 
   - [ ]* 14.5 Write property tests for display logic
-    - **Property 49: Perspective independence**
-    - **Property 50: Card display updates**
-    - **Property 51: Perspective switching availability**
-    - **Property 52: Card display states**
-    - **Property 53: Own hand visibility**
-    - **Property 54: Other hand privacy**
-    - **Property 55: Collection visibility**
-    - **Property 56: Offer card visibility**
-    - **Property 57: Partial card content**
-    - **Property 58: Partial display conditions**
-    - **Property 59: Automatic perspective following**
+    - **Property 51: Perspective independence**
+    - **Property 52: Card display updates**
+    - **Property 53: Perspective switching availability**
+    - **Property 54: Card display states**
+    - **Property 55: Own hand visibility**
+    - **Property 56: Other hand privacy**
+    - **Property 57: Collection visibility**
+    - **Property 58: Offer card visibility**
+    - **Property 59: Partial card content**
+    - **Property 60: Partial display conditions**
+    - **Property 61: Automatic perspective following**
     - **Validates: Requirements 15.2, 15.3, 15.4, 16.1, 16.2, 16.3, 16.4, 16.5, 17.1, 17.3, 20.1, 20.2**
 
 - [ ] 15. Create GameBoard main component

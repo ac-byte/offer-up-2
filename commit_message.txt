@@ -1,18 +1,28 @@
-Fix action phase infinite loop by implementing pass system
+Update requirements and design docs for action phase pass system
 
-- Replace response round system with cleaner pass-based logic
-- Track actionPhasePassesRemaining and actionPhasePlayersWithActionCards
-- Reset pass counter when action cards are played
-- Decrement counter when players pass
-- End phase when no players have action cards OR passes remaining reaches 0
-- Update GameState interface to use new pass system fields
-- Rewrite action phase handlers (PLAY_ACTION_CARD, DECLARE_DONE)
-- Replace handleActionPhasePlayerDone with handleActionPhasePlayerPass
-- Remove all response round functions and logic
-- Update all 21 action phase tests to use new pass system
-- All 250 tests passing, TypeScript compilation successful
+- Replace Requirement 8 "Action Phase Response Rounds" with "Action Phase Pass System"
+- Update all 5 acceptance criteria to describe pass-based logic:
+  * Count players with action cards at phase start
+  * Reset pass counter when action cards are played
+  * Decrement counter when players pass
+  * Auto-skip players without action cards
+  * End phase when no action cards remain OR pass counter reaches zero
 
-Fixes the infinite loop bug where action phase would never end
-as long as any player had action cards. The new system properly
-tracks passes from eligible players and terminates when all
-have passed or no action cards remain.
+- Update GameState interface in design doc to include:
+  * actionPhasePassesRemaining: number
+  * actionPhasePlayersWithActionCards: number[]
+  * autoFollowPerspective: boolean
+
+- Rewrite Properties 27-31 for new pass system:
+  * Property 27: Pass system initialization
+  * Property 28: Pass counter reset on action card play
+  * Property 29: Pass counter decrement on player pass
+  * Property 30: Automatic skipping without affecting pass counter
+  * Property 31: Action phase termination conditions
+
+- Renumber all subsequent properties (32-61) and update property count from 58 to 61
+- Update tasks.md to reflect completed task 8.2 and new property numbers
+- Mark task 8.2 as completed with pass system description
+
+Documentation now accurately reflects the implemented pass system that
+fixes the infinite loop bug while maintaining comprehensive property coverage.
