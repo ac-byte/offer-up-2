@@ -1,1 +1,5 @@
 node_modules
+
+# Temporary commit message files
+temp_commit_message.txt
+*_commit_message.txt
