@@ -20,6 +20,9 @@ export interface GameState {
   // Gotcha Effects State
   gotchaEffectState: GotchaEffectState | null
   
+  // Action Card Effects State
+  flipOneEffectState: FlipOneEffectState | null
+  
   // UI State
   selectedPerspective: number
   phaseInstructions: string
@@ -64,6 +67,11 @@ export interface GotchaEffectState {
   twiceIteration?: number
 }
 
+export interface FlipOneEffectState {
+  playerId: number // Player who played the Flip One card
+  awaitingCardSelection: boolean
+}
+
 export enum GamePhase {
   BUYER_ASSIGNMENT = 'buyer_assignment',
   DEAL = 'deal',
@@ -91,6 +99,7 @@ export type GameAction =
   | { type: 'DECLARE_DONE'; playerId: number }
   | { type: 'SELECT_GOTCHA_CARD'; cardId: string }
   | { type: 'CHOOSE_GOTCHA_ACTION'; action: 'steal' | 'discard' }
+  | { type: 'SELECT_FLIP_ONE_CARD'; offerId: number; cardIndex: number }
 
 // Card display states
 export type CardDisplayState = 'face_up' | 'face_down' | 'partial'

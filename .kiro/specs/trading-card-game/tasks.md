@@ -134,7 +134,7 @@ This implementation plan breaks down the trading card game into discrete, testab
     - **Validates: Requirements 7.1, 7.2, 7.3, 7.4, 8.1, 8.2, 8.3, 8.4, 8.5**
 
 - [ ] 8.4 Implement Flip One action card effects
-  - [ ] 8.4.1 Create Flip One card selection logic
+  - [x] 8.4.1 Create Flip One card selection logic
     - Allow player to select one face down card from any offer
     - Flip selected card face up for all players to see
     - Prevent selection of already face up cards

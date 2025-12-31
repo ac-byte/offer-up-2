@@ -1,4 +1,4 @@
-import { GameState, GameAction, GamePhase, Player, Card, GotchaEffectState } from '../types'
+import { GameState, GameAction, GamePhase, Player, Card, GotchaEffectState, FlipOneEffectState } from '../types'
 import { createShuffledDeck, shuffleArray, identifyGotchaSets, identifyThingSets, identifyGotchaSetsInOrder } from './cards'
 
 /**
@@ -17,6 +17,7 @@ export function createInitialGameState(): GameState {
     actionPhasePassesRemaining: 0,
     actionPhasePlayersWithActionCards: [],
     gotchaEffectState: null,
+    flipOneEffectState: null,
     selectedPerspective: 0,
     phaseInstructions: 'Waiting for game to start...',
     autoFollowPerspective: true,
@@ -125,6 +126,10 @@ export function validatePhaseAction(phase: GamePhase, action: GameAction): boole
     case 'CHOOSE_GOTCHA_ACTION':
       // Gotcha actions are only allowed during Gotcha trade-ins phase
       return phase === GamePhase.GOTCHA_TRADEINS
+    
+    case 'SELECT_FLIP_ONE_CARD':
+      // Flip One card selection is only allowed during action phase when effect is active
+      return phase === GamePhase.ACTION_PHASE
     
     default:
       return false
@@ -974,6 +979,77 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       return handleGotchaActionChoice(state, gotchaAction)
     }
     
+    case 'SELECT_FLIP_ONE_CARD': {
+      const { offerId, cardIndex } = action
+      
+      // Validate that we're in a Flip One effect state
+      if (!state.flipOneEffectState) {
+        throw new Error('No Flip One effect is currently active')
+      }
+      
+      // Validate that we're waiting for card selection
+      if (!state.flipOneEffectState.awaitingCardSelection) {
+        throw new Error('Flip One effect is not awaiting card selection')
+      }
+      
+      // Validate offerId (player index)
+      if (offerId < 0 || offerId >= state.players.length) {
+        throw new Error(`Invalid offer ID: ${offerId}`)
+      }
+      
+      // Validate that the player is not the buyer (buyers don't have offers)
+      if (offerId === state.currentBuyerIndex) {
+        throw new Error('Cannot flip cards from buyer\'s offer (buyer has no offer)')
+      }
+      
+      const targetPlayer = state.players[offerId]
+      
+      // Validate that the player has an offer
+      if (targetPlayer.offer.length === 0) {
+        throw new Error('Player has no offer to flip cards from')
+      }
+      
+      // Validate cardIndex
+      if (cardIndex < 0 || cardIndex >= targetPlayer.offer.length) {
+        throw new Error(`Invalid card index: ${cardIndex}`)
+      }
+      
+      const targetCard = targetPlayer.offer[cardIndex]
+      
+      // Validate that the card is face down (can only flip face down cards)
+      if (targetCard.faceUp) {
+        throw new Error('Cannot flip a card that is already face up')
+      }
+      
+      // Create new state with the flipped card and cleared effect state
+      const newState = { ...state }
+      newState.players = state.players.map((player, playerIndex) => {
+        if (playerIndex !== offerId) {
+          return player
+        }
+        
+        // Update the specific card to be face up
+        const newOffer = player.offer.map((card, index) => {
+          if (index === cardIndex) {
+            return { ...card, faceUp: true }
+          }
+          return card
+        })
+        
+        return {
+          ...player,
+          offer: newOffer
+        }
+      })
+      
+      // Clear the Flip One effect state
+      newState.flipOneEffectState = null
+      newState.phaseInstructions = getPhaseInstructions(state.currentPhase)
+      
+      // Continue with action phase - advance to next eligible player
+      return advanceToNextEligiblePlayerInActionPhase(newState)
+    }
+    
     
     default:
       return state
@@ -1430,10 +1506,15 @@ function executeActionCardEffect(state: GameState, actionCard: Card, playerId: n
   switch (actionCard.subtype) {
     case 'flip-one': {
       // Flip One: Allows player to flip one face-down card in any offer
-      // For now, we'll just return the state as-is since the actual flipping
-      // will be handled by subsequent FLIP_CARD actions
-      // The effect is that the player gains the ability to flip a card
-      return state
+      // Set up the effect state to await card selection
+      return {
+        ...state,
+        flipOneEffectState: {
+          playerId,
+          awaitingCardSelection: true
+        },
+        phaseInstructions: `${state.players[playerId].name} played Flip One. Select a face-down card from any offer to flip.`
+      }
     }
     
     case 'add-one': {
@@ -1815,6 +1896,11 @@ export function decrementPassCounter(state: GameState): GameState {
  * @returns True if action phase should end
  */
 export function shouldEndActionPhase(state: GameState): boolean {
+  // If a Flip One effect is active, don't end the action phase
+  if (state.flipOneEffectState && state.flipOneEffectState.awaitingCardSelection) {
+    return false
+  }
+  
   // If no players have action cards, end the phase
   const playersWithActionCards = getPlayersWithActionCards(state)
   if (playersWithActionCards.length === 0) {
