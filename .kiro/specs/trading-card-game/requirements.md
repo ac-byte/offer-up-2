@@ -234,10 +234,10 @@ A digital trading card game implemented as a React application featuring a fixed
 #### Acceptance Criteria
 
 1. THE Game_System SHALL display Thing cards with blue writing and the card name in the largest font at the top
-2. THE Game_System SHALL display "Set = X cards" text below the card name on Thing cards in smaller font
+2. THE Game_System SHALL display "Set = X cards" text below the card name on Thing and Gotcha cards in smaller font
 3. THE Game_System SHALL display Gotcha cards with red writing and the card name in the largest font at the top
-4. THE Game_System SHALL display set requirements and "This card has an effect" text on Gotcha cards below the name
-5. THE Game_System SHALL display Action cards with black writing, card name at top, and "This card has an effect" text below
+4. THE Game_System SHALL display set requirements and a brief description of their effect on Gotcha cards below the set size
+5. THE Game_System SHALL display Action cards with black writing, card name at top, and a brief description of their effect in smaller text below that
 
 ### Requirement 29: Player Rotation System
 
