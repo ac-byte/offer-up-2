@@ -133,6 +133,84 @@ This implementation plan breaks down the trading card game into discrete, testab
     - **Property 31: Action phase termination conditions**
     - **Validates: Requirements 7.1, 7.2, 7.3, 7.4, 8.1, 8.2, 8.3, 8.4, 8.5**
 
+- [ ] 8.4 Implement Flip One action card effects
+  - [ ] 8.4.1 Create Flip One card selection logic
+    - Allow player to select one face down card from any offer
+    - Flip selected card face up for all players to see
+    - Prevent selection of already face up cards
+    - Update visual display to show newly revealed card
+    - _Requirements: 37.1, 37.2, 37.3, 37.4, 37.5_
+
+  - [ ]* 8.4.2 Write property tests for Flip One effects
+    - **Property 81: Flip One card selection**
+    - **Property 82: Flip One face up restriction**
+    - **Property 83: Flip One visual update**
+    - **Validates: Requirements 37.1, 37.2, 37.3, 37.4**
+
+- [ ] 8.5 Implement Add One action card effects
+  - [ ] 8.5.1 Create Add One card logic
+    - Allow player to select one card from their own hand
+    - Allow selection of any existing offer to add card to
+    - Add selected card face down to chosen offer
+    - Remove selected card from player's hand
+    - Update visual display to show modified offer
+    - _Requirements: 38.1, 38.2, 38.3, 38.4, 38.5_
+
+  - [ ]* 8.5.2 Write property tests for Add One effects
+    - **Property 84: Add One hand selection**
+    - **Property 85: Add One offer targeting**
+    - **Property 86: Add One face down addition**
+    - **Property 87: Add One hand removal**
+    - **Validates: Requirements 38.1, 38.2, 38.3, 38.4**
+
+- [ ] 8.6 Implement Remove One action card effects
+  - [ ] 8.6.1 Create Remove One card logic
+    - Allow player to select one card from any offer
+    - Allow selection of both face up and face down cards
+    - Move selected card to discard pile
+    - Remove card from the offer it was taken from
+    - Update visual display to show modified offer
+    - _Requirements: 39.1, 39.2, 39.3, 39.4, 39.5_
+
+  - [ ]* 8.6.2 Write property tests for Remove One effects
+    - **Property 88: Remove One offer selection**
+    - **Property 89: Remove One face up/down handling**
+    - **Property 90: Remove One discard pile movement**
+    - **Property 91: Remove One offer removal**
+    - **Validates: Requirements 39.1, 39.2, 39.3, 39.4**
+
+- [ ] 8.7 Implement Remove Two action card effects
+  - [ ] 8.7.1 Create Remove Two card logic
+    - Allow player to select exactly two cards from among all offers
+    - Allow selection of both face up and face down cards
+    - Allow selection from same offer or different offers
+    - Move both selected cards to discard pile
+    - Update visual display to show all modified offers
+    - _Requirements: 40.1, 40.2, 40.3, 40.4, 40.5_
+
+  - [ ]* 8.7.2 Write property tests for Remove Two effects
+    - **Property 92: Remove Two card count**
+    - **Property 93: Remove Two flexible selection**
+    - **Property 94: Remove Two face up/down handling**
+    - **Property 95: Remove Two discard pile movement**
+    - **Validates: Requirements 40.1, 40.2, 40.3, 40.4**
+
+- [ ] 8.8 Implement Steal A Point action card effects
+  - [ ] 8.8.1 Create Steal A Point logic
+    - Allow player to select any player who has more points than them
+    - Transfer exactly one point from selected player to card player
+    - Prevent selection of players with equal or fewer points
+    - Handle case when no valid targets exist (no effect)
+    - Update point displays for both affected players immediately
+    - _Requirements: 41.1, 41.2, 41.3, 41.4, 41.5_
+
+  - [ ]* 8.8.2 Write property tests for Steal A Point effects
+    - **Property 96: Steal A Point target validation**
+    - **Property 97: Steal A Point point transfer**
+    - **Property 98: Steal A Point invalid target handling**
+    - **Property 99: Steal A Point display update**
+    - **Validates: Requirements 41.1, 41.2, 41.3, 41.4, 41.5**
+
 - [ ] 9. Implement offer selection and distribution
   - [x] 9.1 Create offer selection logic
     - Allow buyer to select exactly one offer

@@ -334,3 +334,63 @@ A digital trading card game implemented as a React application featuring a fixed
 3. WHEN a player manually changes the perspective, THE Game_System SHALL temporarily disable automatic following until the next player change
 4. THE Game_System SHALL provide visual indication when perspective is automatically following the active player versus manually selected
 5. THE Game_System SHALL ensure automatic perspective changes occur smoothly without disrupting the user experience
+
+### Requirement 37: Flip One Action Card Effects
+
+**User Story:** As a player, I want to use Flip One cards to reveal hidden information in offers, so that I can make more informed decisions or help other players.
+
+#### Acceptance Criteria
+
+1. WHEN a player plays a Flip One card, THE Game_System SHALL allow them to select one face down card from any offer
+2. THE Game_System SHALL flip the selected card face up for all players to see
+3. THE Game_System SHALL prevent selection of cards that are already face up
+4. THE Game_System SHALL update the visual display to show the newly revealed card
+5. THE Game_System SHALL allow the effect to target any player's offer, including the card player's own offer if they have one
+
+### Requirement 38: Add One Action Card Effects
+
+**User Story:** As a player, I want to use Add One cards to modify offers strategically, so that I can influence the available options for the buyer.
+
+#### Acceptance Criteria
+
+1. WHEN a player plays an Add One card, THE Game_System SHALL allow them to select one card from their own hand
+2. THE Game_System SHALL allow them to choose any existing offer to add the card to
+3. THE Game_System SHALL add the selected card face down to the chosen offer
+4. THE Game_System SHALL remove the selected card from the player's hand
+5. THE Game_System SHALL update the visual display to show the modified offer with the additional face down card
+
+### Requirement 39: Remove One Action Card Effects
+
+**User Story:** As a player, I want to use Remove One cards to eliminate specific cards from offers, so that I can reduce options or remove threats.
+
+#### Acceptance Criteria
+
+1. WHEN a player plays a Remove One card, THE Game_System SHALL allow them to select one card from any offer
+2. THE Game_System SHALL allow selection of both face up and face down cards
+3. THE Game_System SHALL move the selected card to the discard pile
+4. THE Game_System SHALL remove the card from the offer it was taken from
+5. THE Game_System SHALL update the visual display to show the modified offer
+
+### Requirement 40: Remove Two Action Card Effects
+
+**User Story:** As a player, I want to use Remove Two cards to eliminate multiple cards from offers, so that I can make significant strategic impacts on the available options.
+
+#### Acceptance Criteria
+
+1. WHEN a player plays a Remove Two card, THE Game_System SHALL allow them to select exactly two cards from among all offers
+2. THE Game_System SHALL allow selection of both face up and face down cards
+3. THE Game_System SHALL allow selection of two cards from the same offer or one card each from two different offers
+4. THE Game_System SHALL move both selected cards to the discard pile
+5. THE Game_System SHALL update the visual display to show all modified offers
+
+### Requirement 41: Steal A Point Action Card Effects
+
+**User Story:** As a player, I want to use Steal A Point cards to gain points from leading players, so that I can catch up in the scoring race.
+
+#### Acceptance Criteria
+
+1. WHEN a player plays a Steal A Point card, THE Game_System SHALL allow them to select any player who has more points than them
+2. THE Game_System SHALL transfer exactly one point from the selected player to the card player
+3. THE Game_System SHALL prevent selection of players who have equal or fewer points than the card player
+4. WHEN no valid targets exist (no players have more points), THE Game_System SHALL inform the player and the card effect has no impact
+5. THE Game_System SHALL update the point displays for both affected players immediately
