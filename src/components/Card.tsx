@@ -72,6 +72,38 @@ export const Card: React.FC<CardProps> = ({
     }
   };
 
+  // Get specific effect description for Gotcha cards
+  const getGotchaEffectDescription = () => {
+    switch (card.subtype) {
+      case 'once':
+        return 'Buyer steals or discards 1 card';
+      case 'twice':
+        return 'Buyer steals or discards 2 cards';
+      case 'bad':
+        return 'Buyer steals 1 point';
+      default:
+        return 'This card has an effect';
+    }
+  };
+
+  // Get specific effect description for Action cards
+  const getActionEffectDescription = () => {
+    switch (card.subtype) {
+      case 'flip-one':
+        return 'Flip 1 card in any offer face up';
+      case 'add-one':
+        return 'Add 1 card from your hand face down to any offer';
+      case 'remove-one':
+        return 'Discard 1 card from any offer';
+      case 'remove-two':
+        return 'Discard 2 cards from among the offers';
+      case 'steal-point':
+        return 'Steal 1 point from any player with more points than you';
+      default:
+        return 'This card has an effect';
+    }
+  };
+
   // Render card content based on display state
   const renderCardContent = () => {
     if (displayState === 'face_down') {
@@ -92,15 +124,24 @@ export const Card: React.FC<CardProps> = ({
         </div>
         
         <div className="card__body">
-          {card.type === 'thing' && (
+          {/* Requirement 28.2: Both Thing cards and Gotcha cards show "Set = X cards" */}
+          {(card.type === 'thing' || card.type === 'gotcha') && (
             <div className="card__set-info">
               Set = {card.setSize} cards
             </div>
           )}
           
-          {(card.type === 'gotcha' || card.type === 'action') && card.effect && (
+          {/* Requirement 28.4: Gotcha cards show specific effect descriptions */}
+          {card.type === 'gotcha' && (
             <div className="card__effect">
-              This card has an effect
+              {getGotchaEffectDescription()}
+            </div>
+          )}
+          
+          {/* Requirement 28.5: Action cards show specific effect descriptions */}
+          {card.type === 'action' && (
+            <div className="card__effect">
+              {getActionEffectDescription()}
             </div>
           )}
         </div>
