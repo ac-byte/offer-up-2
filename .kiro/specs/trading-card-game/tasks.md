@@ -211,13 +211,13 @@ This implementation plan breaks down the trading card game into discrete, testab
   - **Property 53: Gotcha set self-selection prevention**
   - **Validates: Requirements 21.1, 21.2, 21.3, 21.4, 21.5, 24.2, 24.3, 24.5**
 
-- [ ] 10.7 Implement Gotcha Twice effects
+- [x] 10.7 Implement Gotcha Twice effects
   - Create Gotcha Twice effect logic (buyer selects 2 cards independently)
   - Reuse Gotcha Once selection logic for each card
   - Handle independent steal/discard choices for each card
   - _Requirements: 22.1, 22.2, 22.3, 22.4, 22.5_
 
-- [ ]* 10.7.1 Write property tests for Gotcha Twice effects
+- [x]* 10.7.1 Write property tests for Gotcha Twice effects
   - **Property 45: Gotcha Twice card selection**
   - **Property 46: Gotcha Twice independent choices**
   - **Validates: Requirements 22.1, 22.2, 22.3, 22.4, 22.5**

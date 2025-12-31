@@ -46,17 +46,18 @@ describe('Trade-in Processing', () => {
 
       const newState = processGotchaTradeins(state)
 
-      // Should have a pending Gotcha Once effect (processing stops when buyer interaction needed)
+      // Should have a pending Gotcha Twice effect (processing stops when buyer interaction needed)
       expect(newState.gotchaEffectState).not.toBeNull()
-      expect(newState.gotchaEffectState?.type).toBe('once')
+      expect(newState.gotchaEffectState?.type).toBe('twice')
       expect(newState.gotchaEffectState?.affectedPlayerIndex).toBe(0)
       
-      // Should remove the complete Gotcha Twice set and Gotcha Once set
-      expect(newState.players[0].collection).toHaveLength(1)
-      expect(newState.players[0].collection[0].type).toBe('thing')
+      // Should remove the complete Gotcha Twice set (Once set remains for later processing)
+      expect(newState.players[0].collection).toHaveLength(3) // 2 Once + 1 Thing
+      expect(newState.players[0].collection.filter(c => c.type === 'gotcha')).toHaveLength(2)
+      expect(newState.players[0].collection.filter(c => c.type === 'thing')).toHaveLength(1)
       
-      // Should add traded-in cards to discard pile
-      expect(newState.discardPile).toHaveLength(4) // 2 Once + 2 Twice
+      // Should add traded-in Gotcha Twice cards to discard pile
+      expect(newState.discardPile).toHaveLength(2) // 2 Twice cards only
     })
 
     it('handles multiple players with different Gotcha sets', () => {
@@ -367,19 +368,19 @@ describe('Trade-in Processing', () => {
 
       const newState = processGotchaTradeins(state)
 
-      // Should have a pending Gotcha Once effect (processing stops when buyer interaction needed)
+      // Should have a pending Gotcha Twice effect (processing stops when buyer interaction needed)
       expect(newState.gotchaEffectState).not.toBeNull()
-      expect(newState.gotchaEffectState?.type).toBe('once')
+      expect(newState.gotchaEffectState?.type).toBe('twice')
       expect(newState.gotchaEffectState?.affectedPlayerIndex).toBe(0)
       
-      // Gotcha Bad and Twice sets should be removed, Once set removed, Thing card auto-selected for effect
-      expect(newState.players[0].collection).toHaveLength(1) // Thing card remains
+      // Gotcha Bad should be processed, Twice set removed for effect, Once set remains
+      expect(newState.players[0].collection).toHaveLength(3) // 2 Once + 1 Thing
       // Player should lose 1 point from Gotcha Bad effect (3 -> 2)
       expect(newState.players[0].points).toBe(2)
       // Buyer should gain 1 point from the transfer (0 -> 1)
       expect(newState.players[1].points).toBe(1)
-      // Bad, Twice, and Once cards should be in discard pile
-      expect(newState.discardPile).toHaveLength(7) // 3 Bad + 2 Twice + 2 Once
+      // Bad and Twice cards should be in discard pile
+      expect(newState.discardPile).toHaveLength(5) // 3 Bad + 2 Twice
     })
 
     it('handles multiple Gotcha Bad sets from same player', () => {
