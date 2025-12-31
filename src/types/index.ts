@@ -60,9 +60,8 @@ export interface GotchaEffectState {
   cardsToSelect: number
   selectedCards: Card[]
   awaitingBuyerChoice: boolean
-  // For Gotcha Twice: track choices for each card independently
-  cardChoices?: Array<{ card: Card; action: 'steal' | 'discard' | null }>
-  currentChoiceIndex?: number // Which card we're currently choosing for
+  // For Gotcha Twice: track which iteration we're on (1 or 2)
+  twiceIteration?: number
 }
 
 export enum GamePhase {
@@ -92,7 +91,6 @@ export type GameAction =
   | { type: 'DECLARE_DONE'; playerId: number }
   | { type: 'SELECT_GOTCHA_CARD'; cardId: string }
   | { type: 'CHOOSE_GOTCHA_ACTION'; action: 'steal' | 'discard' }
-  | { type: 'CHOOSE_GOTCHA_CARD_ACTION'; cardId: string; action: 'steal' | 'discard' }
 
 // Card display states
 export type CardDisplayState = 'face_up' | 'face_down' | 'partial'
