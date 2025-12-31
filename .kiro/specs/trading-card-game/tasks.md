@@ -196,7 +196,7 @@ This implementation plan breaks down the trading card game into discrete, testab
   - **Property 60: Gotcha processing order**
   - **Validates: Requirements 23.1, 23.2, 23.3, 23.4, 23.5, 26.6**
 
-- [ ] 10.6 Implement Gotcha Once effects
+- [x] 10.6 Implement Gotcha Once effects
   - Create Gotcha Once effect logic (buyer selects 1 card to steal/discard)
   - Handle buyer affecting own collection (must discard, can't steal)
   - Implement card selection UI for buyer choices

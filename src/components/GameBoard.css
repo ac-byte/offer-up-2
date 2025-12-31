@@ -390,3 +390,87 @@
     text-align: center;
   }
 }
+/* Gotcha Effect Styles */
+.gotcha-effect-controls {
+  background-color: #fff3cd;
+  border: 2px solid #ffc107;
+  border-radius: 8px;
+  padding: 16px;
+  margin: 8px 0;
+}
+
+.gotcha-effect-header {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #856404;
+  margin-bottom: 12px;
+}
+
+.gotcha-selection-info {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 12px;
+  font-size: 0.9rem;
+  color: #6c757d;
+}
+
+.selected-cards {
+  margin-bottom: 12px;
+  padding: 8px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+}
+
+.selected-card-name {
+  display: inline-block;
+  background-color: #007bff;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  margin-right: 8px;
+  font-size: 0.85rem;
+}
+
+.gotcha-action-buttons {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.gotcha-steal-button {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.gotcha-steal-button:hover {
+  background-color: #218838;
+}
+
+.gotcha-discard-button {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.gotcha-discard-button:hover {
+  background-color: #c82333;
+}
+
+.gotcha-self-effect-note {
+  margin-top: 8px;
+  padding: 8px;
+  background-color: #e9ecef;
+  border-radius: 4px;
+  font-style: italic;
+  color: #6c757d;
+  font-size: 0.9rem;
+}

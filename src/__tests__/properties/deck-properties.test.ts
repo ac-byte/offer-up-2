@@ -91,7 +91,7 @@ describe('Feature: trading-card-game, Property 3: Gotcha card distribution', () 
         // Verify each card has correct properties
         onceCards.forEach(card => {
           expect(card.name).toBe('Gotcha Once')
-          expect(card.setSize).toBe(1)
+          expect(card.setSize).toBe(2)
           expect(card.effect).toBe('This card has an effect')
         })
         

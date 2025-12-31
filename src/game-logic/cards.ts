@@ -34,9 +34,9 @@ export function createThingCard(subtype: 'giant' | 'big' | 'medium' | 'tiny', in
  */
 export function createGotchaCard(subtype: 'once' | 'twice' | 'bad', index: number): Card {
   const setSize = {
-    once: 1,
-    twice: 2,
-    bad: 3
+    once: 2,  // Requires 2 cards to form a set (per requirement 21.1)
+    twice: 2, // Requires 2 cards to form a set (per requirement 22.1)
+    bad: 3    // Requires 3 cards to form a set (per requirement 23.1)
   }[subtype]
 
   const name = {

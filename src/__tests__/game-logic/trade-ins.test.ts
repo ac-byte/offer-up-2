@@ -1,4 +1,4 @@
-import { processGotchaTradeins, processThingTradeins, applyGotchaBadEffect } from '../../game-logic/gameReducer'
+import { processGotchaTradeins, processThingTradeins } from '../../game-logic/gameReducer'
 import { GameState, GamePhase, Player, Card } from '../../types'
 
 describe('Trade-in Processing', () => {
@@ -23,6 +23,7 @@ describe('Trade-in Processing', () => {
     discardPile: [],
     actionPhasePassesRemaining: 0,
     actionPhasePlayersWithActionCards: [],
+    gotchaEffectState: null,
     selectedPerspective: 0,
     phaseInstructions: '',
     autoFollowPerspective: true,
@@ -33,7 +34,8 @@ describe('Trade-in Processing', () => {
   describe('processGotchaTradeins', () => {
     it('removes complete Gotcha sets from player collections', () => {
       const player1Collection: Card[] = [
-        { id: 'gotcha-once-1', type: 'gotcha', subtype: 'once', name: 'Gotcha Once', setSize: 1, effect: 'This card has an effect' },
+        { id: 'gotcha-once-1', type: 'gotcha', subtype: 'once', name: 'Gotcha Once', setSize: 2, effect: 'This card has an effect' },
+        { id: 'gotcha-once-2', type: 'gotcha', subtype: 'once', name: 'Gotcha Once', setSize: 2, effect: 'This card has an effect' },
         { id: 'gotcha-twice-1', type: 'gotcha', subtype: 'twice', name: 'Gotcha Twice', setSize: 2, effect: 'This card has an effect' },
         { id: 'gotcha-twice-2', type: 'gotcha', subtype: 'twice', name: 'Gotcha Twice', setSize: 2, effect: 'This card has an effect' },
         { id: 'thing-giant-1', type: 'thing', subtype: 'giant', name: 'Giant Thing', setSize: 1 }
@@ -44,18 +46,24 @@ describe('Trade-in Processing', () => {
 
       const newState = processGotchaTradeins(state)
 
-      // Should remove the complete Gotcha Once set and complete Gotcha Twice set
+      // Should have a pending Gotcha Once effect (processing stops when buyer interaction needed)
+      expect(newState.gotchaEffectState).not.toBeNull()
+      expect(newState.gotchaEffectState?.type).toBe('once')
+      expect(newState.gotchaEffectState?.affectedPlayerIndex).toBe(0)
+      
+      // Should remove the complete Gotcha Twice set and Gotcha Once set
       expect(newState.players[0].collection).toHaveLength(1)
       expect(newState.players[0].collection[0].type).toBe('thing')
       
       // Should add traded-in cards to discard pile
-      expect(newState.discardPile).toHaveLength(3) // 1 Once + 2 Twice
+      expect(newState.discardPile).toHaveLength(4) // 2 Once + 2 Twice
     })
 
     it('handles multiple players with different Gotcha sets', () => {
       const player1Collection: Card[] = [
-        { id: 'gotcha-once-1', type: 'gotcha', subtype: 'once', name: 'Gotcha Once', setSize: 1, effect: 'This card has an effect' },
-        { id: 'gotcha-once-2', type: 'gotcha', subtype: 'once', name: 'Gotcha Once', setSize: 1, effect: 'This card has an effect' }
+        { id: 'gotcha-once-1', type: 'gotcha', subtype: 'once', name: 'Gotcha Once', setSize: 2, effect: 'This card has an effect' },
+        { id: 'gotcha-once-2', type: 'gotcha', subtype: 'once', name: 'Gotcha Once', setSize: 2, effect: 'This card has an effect' },
+        { id: 'thing-1', type: 'thing', subtype: 'giant', name: 'Giant Thing', setSize: 1 } // Add a non-Gotcha card
       ]
 
       const player2Collection: Card[] = [
@@ -70,14 +78,19 @@ describe('Trade-in Processing', () => {
 
       const newState = processGotchaTradeins(state)
 
-      // Player 1 should have no cards left (2 complete Once sets)
-      expect(newState.players[0].collection).toHaveLength(0)
+      // Player 1 should have a pending Gotcha Once effect (processing stopped here)
+      expect(newState.gotchaEffectState).not.toBeNull()
+      expect(newState.gotchaEffectState?.type).toBe('once')
+      expect(newState.gotchaEffectState?.affectedPlayerIndex).toBe(0)
       
-      // Player 2 should have no cards left (1 complete Bad set)
-      expect(newState.players[1].collection).toHaveLength(0)
+      // Player 1 should have 1 card left (the Thing card, auto-selected for Gotcha effect)
+      expect(newState.players[0].collection).toHaveLength(1)
       
-      // Should add all traded-in cards to discard pile
-      expect(newState.discardPile).toHaveLength(5) // 2 Once + 3 Bad
+      // Player 2 should still have all cards (processing stopped before reaching them)
+      expect(newState.players[1].collection).toHaveLength(3)
+      
+      // Should add only the Gotcha Once cards to discard pile
+      expect(newState.discardPile).toHaveLength(2) // 2 Once cards
     })
 
     it('leaves incomplete sets in collections', () => {
@@ -120,7 +133,7 @@ describe('Trade-in Processing', () => {
         { id: 'giant-1', type: 'thing', subtype: 'giant', name: 'Giant Thing', setSize: 1 },
         { id: 'big-1', type: 'thing', subtype: 'big', name: 'Big Thing', setSize: 2 },
         { id: 'big-2', type: 'thing', subtype: 'big', name: 'Big Thing', setSize: 2 },
-        { id: 'gotcha-once-1', type: 'gotcha', subtype: 'once', name: 'Gotcha Once', setSize: 1, effect: 'This card has an effect' }
+        { id: 'gotcha-once-1', type: 'gotcha', subtype: 'once', name: 'Gotcha Once', setSize: 2, effect: 'This card has an effect' }
       ]
 
       const player1 = createMockPlayer(0, player1Collection)
@@ -219,7 +232,7 @@ describe('Trade-in Processing', () => {
 
     it('does not affect players with no Thing cards', () => {
       const player1Collection: Card[] = [
-        { id: 'gotcha-once-1', type: 'gotcha', subtype: 'once', name: 'Gotcha Once', setSize: 1, effect: 'This card has an effect' },
+        { id: 'gotcha-once-1', type: 'gotcha', subtype: 'once', name: 'Gotcha Once', setSize: 2, effect: 'This card has an effect' },
         { id: 'action-flip-1', type: 'action', subtype: 'flip-one', name: 'Flip One', setSize: 1, effect: 'This card has an effect' }
       ]
 
@@ -331,14 +344,17 @@ describe('Trade-in Processing', () => {
     it('processes Gotcha sets in correct order: Bad, Twice, Once', () => {
       const player1Collection: Card[] = [
         // Gotcha Once (should be processed last)
-        { id: 'gotcha-once-1', type: 'gotcha', subtype: 'once', name: 'Gotcha Once', setSize: 1, effect: 'This card has an effect' },
+        { id: 'gotcha-once-1', type: 'gotcha', subtype: 'once', name: 'Gotcha Once', setSize: 2, effect: 'This card has an effect' },
+        { id: 'gotcha-once-2', type: 'gotcha', subtype: 'once', name: 'Gotcha Once', setSize: 2, effect: 'This card has an effect' },
         // Gotcha Bad (should be processed first)
         { id: 'gotcha-bad-1', type: 'gotcha', subtype: 'bad', name: 'Gotcha Bad', setSize: 3, effect: 'This card has an effect' },
         { id: 'gotcha-bad-2', type: 'gotcha', subtype: 'bad', name: 'Gotcha Bad', setSize: 3, effect: 'This card has an effect' },
         { id: 'gotcha-bad-3', type: 'gotcha', subtype: 'bad', name: 'Gotcha Bad', setSize: 3, effect: 'This card has an effect' },
         // Gotcha Twice (should be processed second)
         { id: 'gotcha-twice-1', type: 'gotcha', subtype: 'twice', name: 'Gotcha Twice', setSize: 2, effect: 'This card has an effect' },
-        { id: 'gotcha-twice-2', type: 'gotcha', subtype: 'twice', name: 'Gotcha Twice', setSize: 2, effect: 'This card has an effect' }
+        { id: 'gotcha-twice-2', type: 'gotcha', subtype: 'twice', name: 'Gotcha Twice', setSize: 2, effect: 'This card has an effect' },
+        // Add a non-Gotcha card so Once effect has something to target
+        { id: 'thing-giant-1', type: 'thing', subtype: 'giant', name: 'Giant Thing', setSize: 1 }
       ]
 
       const player1 = createMockPlayer(0, player1Collection)
@@ -351,14 +367,19 @@ describe('Trade-in Processing', () => {
 
       const newState = processGotchaTradeins(state)
 
-      // All Gotcha sets should be removed (Bad, Twice, Once)
-      expect(newState.players[0].collection).toHaveLength(0)
+      // Should have a pending Gotcha Once effect (processing stops when buyer interaction needed)
+      expect(newState.gotchaEffectState).not.toBeNull()
+      expect(newState.gotchaEffectState?.type).toBe('once')
+      expect(newState.gotchaEffectState?.affectedPlayerIndex).toBe(0)
+      
+      // Gotcha Bad and Twice sets should be removed, Once set removed, Thing card auto-selected for effect
+      expect(newState.players[0].collection).toHaveLength(1) // Thing card remains
       // Player should lose 1 point from Gotcha Bad effect (3 -> 2)
       expect(newState.players[0].points).toBe(2)
       // Buyer should gain 1 point from the transfer (0 -> 1)
       expect(newState.players[1].points).toBe(1)
-      // All cards should be in discard pile
-      expect(newState.discardPile).toHaveLength(6) // 3 Bad + 2 Twice + 1 Once
+      // Bad, Twice, and Once cards should be in discard pile
+      expect(newState.discardPile).toHaveLength(7) // 3 Bad + 2 Twice + 2 Once
     })
 
     it('handles multiple Gotcha Bad sets from same player', () => {

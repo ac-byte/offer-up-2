@@ -13,8 +13,10 @@ interface PlayerAreaProps {
   onOfferPlace: (cards: Card[], faceUpIndex: number) => void;
   onCardFlip: (cardIndex: number) => void;
   onOfferSelect: () => void;
+  onGotchaCardSelect?: (cardId: string) => void;
   canFlipCards: boolean;
   canSelectOffer: boolean;
+  canSelectGotchaCards?: boolean;
 }
 
 interface HandProps {
@@ -38,6 +40,7 @@ interface CollectionAreaProps {
   cards: Card[];
   points: number;
   onCardClick?: (card: Card) => void;
+  canSelectGotchaCards?: boolean;
 }
 
 // Hand sub-component
@@ -171,7 +174,7 @@ const OfferArea: React.FC<OfferAreaProps> = ({ offer, isOwnOffer, canFlipCards, 
 };
 
 // CollectionArea sub-component
-const CollectionArea: React.FC<CollectionAreaProps> = ({ cards, points, onCardClick }) => {
+const CollectionArea: React.FC<CollectionAreaProps> = ({ cards, points, onCardClick, canSelectGotchaCards = false }) => {
   // Group cards by type for better organization
   const groupedCards = cards.reduce((groups, card) => {
     const key = `${card.type}-${card.subtype}`;
@@ -188,6 +191,11 @@ const CollectionArea: React.FC<CollectionAreaProps> = ({ cards, points, onCardCl
         <h4 className="collection-area__title">
           Collection ({cards.length} cards, {points} points)
         </h4>
+        {canSelectGotchaCards && (
+          <div className="collection-area__gotcha-hint">
+            Click a card to select for Gotcha effect
+          </div>
+        )}
       </div>
       <div className="collection-area__cards">
         {Object.entries(groupedCards).map(([groupKey, groupCards]) => (
@@ -204,7 +212,9 @@ const CollectionArea: React.FC<CollectionAreaProps> = ({ cards, points, onCardCl
                   card={card}
                   displayState="face_up"
                   onClick={() => onCardClick?.(card)}
-                  className="collection-area__card"
+                  className={`collection-area__card ${
+                    canSelectGotchaCards ? 'collection-area__card--selectable' : ''
+                  }`}
                 />
               ))}
             </div>
@@ -229,8 +239,10 @@ export const PlayerArea: React.FC<PlayerAreaProps> = ({
   onOfferPlace,
   onCardFlip,
   onOfferSelect,
+  onGotchaCardSelect,
   canFlipCards,
-  canSelectOffer
+  canSelectOffer,
+  canSelectGotchaCards = false
 }) => {
   const isOwnPerspective = player.id === perspective;
   const [selectedCards, setSelectedCards] = React.useState<Card[]>([])
@@ -271,6 +283,12 @@ export const PlayerArea: React.FC<PlayerAreaProps> = ({
   };
 
   const handleCollectionCardClick = (card: Card) => {
+    // Handle Gotcha card selection during Gotcha trade-ins phase
+    if (phase === GamePhase.GOTCHA_TRADEINS && canSelectGotchaCards && onGotchaCardSelect) {
+      onGotchaCardSelect(card.id);
+      return;
+    }
+
     // Handle action card clicks during action phase from collection
     if (phase === GamePhase.ACTION_PHASE && card.type === 'action' && isOwnPerspective) {
       onCardPlay(card);
@@ -424,6 +442,7 @@ export const PlayerArea: React.FC<PlayerAreaProps> = ({
             cards={player.collection}
             points={player.points}
             onCardClick={handleCollectionCardClick}
+            canSelectGotchaCards={canSelectGotchaCards}
           />
         </div>
       </div>

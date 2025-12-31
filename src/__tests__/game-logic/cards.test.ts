@@ -52,7 +52,7 @@ describe('Card Factory Functions', () => {
       expect(card.type).toBe('gotcha')
       expect(card.subtype).toBe('once')
       expect(card.name).toBe('Gotcha Once')
-      expect(card.setSize).toBe(1)
+      expect(card.setSize).toBe(2)
       expect(card.effect).toBe('This card has an effect')
     })
 

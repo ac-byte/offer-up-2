@@ -434,3 +434,24 @@
     transform: scale(0.6);
   }
 }
+/* Gotcha Card Selection Styles */
+.collection-area__gotcha-hint {
+  font-size: 0.85rem;
+  color: #856404;
+  background-color: #fff3cd;
+  padding: 4px 8px;
+  border-radius: 4px;
+  margin-top: 4px;
+}
+
+.collection-area__card--selectable {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 2px solid transparent;
+}
+
+.collection-area__card--selectable:hover {
+  border-color: #ffc107;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(255, 193, 7, 0.3);
+}

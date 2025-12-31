@@ -17,6 +17,9 @@ export interface GameState {
   actionPhasePassesRemaining: number
   actionPhasePlayersWithActionCards: number[]
   
+  // Gotcha Effects State
+  gotchaEffectState: GotchaEffectState | null
+  
   // UI State
   selectedPerspective: number
   phaseInstructions: string
@@ -51,6 +54,14 @@ export interface OfferCard extends Card {
   position: number // 0, 1, or 2
 }
 
+export interface GotchaEffectState {
+  type: 'once' | 'twice'
+  affectedPlayerIndex: number
+  cardsToSelect: number
+  selectedCards: Card[]
+  awaitingBuyerChoice: boolean
+}
+
 export enum GamePhase {
   BUYER_ASSIGNMENT = 'buyer_assignment',
   DEAL = 'deal',
@@ -76,6 +87,8 @@ export type GameAction =
   | { type: 'CHANGE_PERSPECTIVE'; playerId: number }
   | { type: 'TOGGLE_AUTO_FOLLOW' }
   | { type: 'DECLARE_DONE'; playerId: number }
+  | { type: 'SELECT_GOTCHA_CARD'; cardId: string }
+  | { type: 'CHOOSE_GOTCHA_ACTION'; action: 'steal' | 'discard' }
 
 // Card display states
 export type CardDisplayState = 'face_up' | 'face_down' | 'partial'

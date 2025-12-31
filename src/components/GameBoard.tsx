@@ -75,6 +75,26 @@ export const GameBoard: React.FC = () => {
     }
   }
 
+  const handleGotchaCardSelect = (cardId: string) => {
+    const action: GameAction = { type: 'SELECT_GOTCHA_CARD', cardId }
+    try {
+      dispatch(action)
+    } catch (error) {
+      console.error('Error selecting Gotcha card:', error)
+      // In a real app, you'd show this error to the user
+    }
+  }
+
+  const handleGotchaActionChoice = (actionChoice: 'steal' | 'discard') => {
+    const action: GameAction = { type: 'CHOOSE_GOTCHA_ACTION', action: actionChoice }
+    try {
+      dispatch(action)
+    } catch (error) {
+      console.error('Error choosing Gotcha action:', error)
+      // In a real app, you'd show this error to the user
+    }
+  }
+
   const formatPhaseName = (phase: GamePhase): string => {
     return phase.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
   }
@@ -146,7 +166,6 @@ export const GameBoard: React.FC = () => {
       
       case GamePhase.BUYER_ASSIGNMENT:
       case GamePhase.OFFER_DISTRIBUTION:
-      case GamePhase.GOTCHA_TRADEINS:
       case GamePhase.THING_TRADEINS:
       case GamePhase.WINNER_DETERMINATION:
         return (
@@ -154,6 +173,72 @@ export const GameBoard: React.FC = () => {
             Continue to Next Phase
           </button>
         )
+      
+      case GamePhase.GOTCHA_TRADEINS:
+        // Check if there's a pending Gotcha effect
+        if (gameState.gotchaEffectState) {
+          const { type, affectedPlayerIndex, selectedCards, awaitingBuyerChoice } = gameState.gotchaEffectState
+          const affectedPlayer = gameState.players[affectedPlayerIndex]
+          const buyer = getCurrentBuyer()
+          
+          if (awaitingBuyerChoice) {
+            // Buyer needs to choose steal or discard for selected cards
+            return (
+              <div className="gotcha-effect-controls">
+                <div className="gotcha-effect-header">
+                  <strong>{buyer?.name}</strong> (Buyer): Choose action for selected card(s)
+                </div>
+                <div className="selected-cards">
+                  <strong>Selected Cards:</strong>
+                  {selectedCards.map(card => (
+                    <span key={card.id} className="selected-card-name">{card.name}</span>
+                  ))}
+                </div>
+                <div className="gotcha-action-buttons">
+                  {affectedPlayerIndex !== gameState.currentBuyerIndex && (
+                    <button
+                      onClick={() => handleGotchaActionChoice('steal')}
+                      className="action-button gotcha-steal-button"
+                    >
+                      Steal to Collection
+                    </button>
+                  )}
+                  <button
+                    onClick={() => handleGotchaActionChoice('discard')}
+                    className="action-button gotcha-discard-button"
+                  >
+                    Discard
+                  </button>
+                </div>
+                {affectedPlayerIndex === gameState.currentBuyerIndex && (
+                  <div className="gotcha-self-effect-note">
+                    <em>Note: Cards from your own collection must be discarded</em>
+                  </div>
+                )}
+              </div>
+            )
+          } else {
+            // Buyer needs to select cards from affected player's collection
+            return (
+              <div className="gotcha-effect-controls">
+                <div className="gotcha-effect-header">
+                  <strong>{buyer?.name}</strong> (Buyer): Select {gameState.gotchaEffectState.cardsToSelect} card(s) from {affectedPlayer.name}'s collection
+                </div>
+                <div className="gotcha-selection-info">
+                  <span>Gotcha {type.charAt(0).toUpperCase() + type.slice(1)} effect</span>
+                  <span>Cards selected: {selectedCards.length} / {gameState.gotchaEffectState.cardsToSelect}</span>
+                </div>
+              </div>
+            )
+          }
+        } else {
+          // No pending Gotcha effect - continue processing
+          return (
+            <button onClick={handleAdvancePhase} className="action-button">
+              Continue to Next Phase
+            </button>
+          )
+        }
       
       default:
         return (
@@ -255,8 +340,16 @@ export const GameBoard: React.FC = () => {
             onOfferPlace={(cards, faceUpIndex) => handleOfferPlace(player.id, cards, faceUpIndex)}
             onCardFlip={(cardIndex) => handleCardFlip(index, cardIndex)} // index is the player index (offerId)
             onOfferSelect={() => handleOfferSelect(player.id)}
+            onGotchaCardSelect={handleGotchaCardSelect}
             canFlipCards={gameState.currentPhase === GamePhase.BUYER_FLIP && gameState.selectedPerspective === gameState.currentBuyerIndex}
             canSelectOffer={gameState.currentPhase === GamePhase.OFFER_SELECTION && gameState.selectedPerspective === gameState.currentBuyerIndex && index !== gameState.currentBuyerIndex && player.offer.length > 0}
+            canSelectGotchaCards={
+              gameState.currentPhase === GamePhase.GOTCHA_TRADEINS &&
+              gameState.gotchaEffectState !== null &&
+              !gameState.gotchaEffectState.awaitingBuyerChoice &&
+              gameState.gotchaEffectState.affectedPlayerIndex === index &&
+              gameState.selectedPerspective === gameState.currentBuyerIndex
+            }
           />
         ))}
       </div>
