@@ -11,7 +11,7 @@ import {
 } from '../../game-logic/gameReducer'
 import { GamePhase } from '../../types'
 
-describe('Action Phase Pass System', () => {
+describe.skip('Action Phase Pass System (DEPRECATED - replaced by done system)', () => {
   let initialState: ReturnType<typeof createInitialGameState>
 
   beforeEach(() => {
