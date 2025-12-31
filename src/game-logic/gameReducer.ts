@@ -243,30 +243,7 @@ export function handleWinnerDeterminationPhase(state: GameState): GameState {
     }
   } else {
     // No winner yet - continue to next round
-    const { nextPhase, nextRound } = advanceToNextPhase(state.currentPhase, state.round)
-    
-    // Create state with advanced phase
-    const stateWithNewPhase = {
-      ...state,
-      currentPhase: nextPhase,
-      round: nextRound,
-      phaseInstructions: getPhaseInstructions(nextPhase)
-    }
-    
-    // Set current player to first eligible player for the new phase
-    const firstEligiblePlayer = getNextEligiblePlayer(-1, stateWithNewPhase, new Set())
-    
-    let finalState = {
-      ...stateWithNewPhase,
-      currentPlayerIndex: firstEligiblePlayer !== null ? firstEligiblePlayer : 0
-    }
-    
-    // Apply automatic perspective following if enabled
-    if (firstEligiblePlayer !== null) {
-      finalState = updatePerspectiveForActivePlayer(finalState, firstEligiblePlayer)
-    }
-    
-    return finalState
+    return advanceToNextPhaseWithInitialization(state)
   }
 }
 
@@ -376,30 +353,7 @@ export function handleBuyerAssignmentPhase(state: GameState): GameState {
   }
   
   // Automatically advance to next phase after buyer assignment
-  const { nextPhase, nextRound } = advanceToNextPhase(newState.currentPhase, newState.round)
-  
-  // Create state with advanced phase
-  const stateWithNewPhase = {
-    ...newState,
-    currentPhase: nextPhase,
-    round: nextRound,
-    phaseInstructions: getPhaseInstructions(nextPhase)
-  }
-  
-  // Set current player to first eligible player for the new phase
-  const firstEligiblePlayer = getNextEligiblePlayer(-1, stateWithNewPhase, new Set())
-  
-  let finalState = {
-    ...stateWithNewPhase,
-    currentPlayerIndex: firstEligiblePlayer !== null ? firstEligiblePlayer : 0
-  }
-  
-  // Apply automatic perspective following if enabled
-  if (firstEligiblePlayer !== null) {
-    finalState = updatePerspectiveForActivePlayer(finalState, firstEligiblePlayer)
-  }
-  
-  return finalState
+  return advanceToNextPhaseWithInitialization(newState)
 }
 
 /**
@@ -414,30 +368,7 @@ export function handleDealPhase(state: GameState): GameState {
   const newState = dealCards(state)
   
   // Automatically advance to next phase after dealing
-  const { nextPhase, nextRound } = advanceToNextPhase(newState.currentPhase, newState.round)
-  
-  // Create state with advanced phase
-  const stateWithNewPhase = {
-    ...newState,
-    currentPhase: nextPhase,
-    round: nextRound,
-    phaseInstructions: getPhaseInstructions(nextPhase)
-  }
-  
-  // Set current player to first eligible player for the new phase
-  const firstEligiblePlayer = getNextEligiblePlayer(-1, stateWithNewPhase, new Set())
-  
-  let finalState = {
-    ...stateWithNewPhase,
-    currentPlayerIndex: firstEligiblePlayer !== null ? firstEligiblePlayer : 0
-  }
-  
-  // Apply automatic perspective following if enabled
-  if (firstEligiblePlayer !== null) {
-    finalState = updatePerspectiveForActivePlayer(finalState, firstEligiblePlayer)
-  }
-  
-  return finalState
+  return advanceToNextPhaseWithInitialization(newState)
 }
 
 /**
@@ -532,30 +463,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         return handleWinnerDeterminationPhase(state)
       }
       
-      const { nextPhase, nextRound } = advanceToNextPhase(state.currentPhase, state.round)
-      
-      // Create new state with advanced phase
-      const newState = {
-        ...state,
-        currentPhase: nextPhase,
-        round: nextRound,
-        phaseInstructions: getPhaseInstructions(nextPhase)
-      }
-      
-      // Set current player to first eligible player for the new phase
-      const firstEligiblePlayer = getNextEligiblePlayer(-1, newState, new Set())
-      
-      let finalState = {
-        ...newState,
-        currentPlayerIndex: firstEligiblePlayer !== null ? firstEligiblePlayer : 0
-      }
-      
-      // Apply automatic perspective following if enabled
-      if (firstEligiblePlayer !== null) {
-        finalState = updatePerspectiveForActivePlayer(finalState, firstEligiblePlayer)
-      }
-      
-      return finalState
+      return advanceToNextPhaseWithInitialization(state)
     }
     
     case 'ADVANCE_PLAYER': {
@@ -754,30 +662,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       })
       
       // Automatically advance to action phase after flip
-      const { nextPhase, nextRound } = advanceToNextPhase(newState.currentPhase, newState.round)
-      
-      // Create state with advanced phase
-      const stateWithNewPhase = {
-        ...newState,
-        currentPhase: nextPhase,
-        round: nextRound,
-        phaseInstructions: getPhaseInstructions(nextPhase)
-      }
-      
-      // Set current player to first eligible player for the new phase
-      const firstEligiblePlayer = getNextEligiblePlayer(-1, stateWithNewPhase, new Set())
-      
-      let finalState = {
-        ...stateWithNewPhase,
-        currentPlayerIndex: firstEligiblePlayer !== null ? firstEligiblePlayer : 0
-      }
-      
-      // Apply automatic perspective following if enabled
-      if (firstEligiblePlayer !== null) {
-        finalState = updatePerspectiveForActivePlayer(finalState, firstEligiblePlayer)
-      }
-      
-      return finalState
+      return advanceToNextPhaseWithInitialization(newState)
     }
     
     case 'PLAY_ACTION_CARD': {
@@ -1830,30 +1715,7 @@ export function handleGotchaTradeinsPhase(state: GameState): GameState {
   }
   
   // Automatically advance to next phase after trade-ins
-  const { nextPhase, nextRound } = advanceToNextPhase(newState.currentPhase, newState.round)
-  
-  // Create state with advanced phase
-  const stateWithNewPhase = {
-    ...newState,
-    currentPhase: nextPhase,
-    round: nextRound,
-    phaseInstructions: getPhaseInstructions(nextPhase)
-  }
-  
-  // Set current player to first eligible player for the new phase
-  const firstEligiblePlayer = getNextEligiblePlayer(-1, stateWithNewPhase, new Set())
-  
-  let finalState = {
-    ...stateWithNewPhase,
-    currentPlayerIndex: firstEligiblePlayer !== null ? firstEligiblePlayer : 0
-  }
-  
-  // Apply automatic perspective following if enabled
-  if (firstEligiblePlayer !== null) {
-    finalState = updatePerspectiveForActivePlayer(finalState, firstEligiblePlayer)
-  }
-  
-  return finalState
+  return advanceToNextPhaseWithInitialization(newState)
 }
 
 /**
@@ -1868,30 +1730,7 @@ export function handleThingTradeinsPhase(state: GameState): GameState {
   const newState = processThingTradeins(state)
   
   // Automatically advance to next phase after trade-ins
-  const { nextPhase, nextRound } = advanceToNextPhase(newState.currentPhase, newState.round)
-  
-  // Create state with advanced phase
-  const stateWithNewPhase = {
-    ...newState,
-    currentPhase: nextPhase,
-    round: nextRound,
-    phaseInstructions: getPhaseInstructions(nextPhase)
-  }
-  
-  // Set current player to first eligible player for the new phase
-  const firstEligiblePlayer = getNextEligiblePlayer(-1, stateWithNewPhase, new Set())
-  
-  let finalState = {
-    ...stateWithNewPhase,
-    currentPlayerIndex: firstEligiblePlayer !== null ? firstEligiblePlayer : 0
-  }
-  
-  // Apply automatic perspective following if enabled
-  if (firstEligiblePlayer !== null) {
-    finalState = updatePerspectiveForActivePlayer(finalState, firstEligiblePlayer)
-  }
-  
-  return finalState
+  return advanceToNextPhaseWithInitialization(newState)
 }
 
 /**
@@ -2235,6 +2074,58 @@ export function getPlayersWithActionCards(state: GameState): number[] {
   }
   
   return playersWithActionCards
+}
+
+/**
+ * Advances to next phase and initializes action phase if entering it
+ * @param state Current game state
+ * @returns Updated state with advanced phase and action phase initialized if needed
+ */
+export function advanceToNextPhaseWithInitialization(state: GameState): GameState {
+  const { nextPhase, nextRound } = advanceToNextPhase(state.currentPhase, state.round)
+  
+  // Create state with advanced phase
+  const stateWithNewPhase = {
+    ...state,
+    currentPhase: nextPhase,
+    round: nextRound,
+    phaseInstructions: getPhaseInstructions(nextPhase)
+  }
+  
+  // Initialize action phase if we're entering it
+  let stateWithInitializedPhase = stateWithNewPhase
+  if (nextPhase === GamePhase.ACTION_PHASE) {
+    stateWithInitializedPhase = initializeActionPhase(stateWithNewPhase)
+  }
+  
+  // Set current player to first eligible player for the new phase
+  const firstEligiblePlayer = getNextEligiblePlayer(-1, stateWithInitializedPhase, new Set())
+  
+  let finalState = {
+    ...stateWithInitializedPhase,
+    currentPlayerIndex: firstEligiblePlayer !== null ? firstEligiblePlayer : 0
+  }
+  
+  // Apply automatic perspective following if enabled
+  if (firstEligiblePlayer !== null) {
+    finalState = updatePerspectiveForActivePlayer(finalState, firstEligiblePlayer)
+  }
+  
+  return finalState
+}
+
+/**
+ * Initializes the action phase with proper done system setup
+ * @param state Current game state that should be in action phase
+ * @returns Updated state with done system initialized
+ */
+export function initializeActionPhase(state: GameState): GameState {
+  if (state.currentPhase !== GamePhase.ACTION_PHASE) {
+    return state
+  }
+  
+  // Initialize the done system immediately when entering action phase
+  return initializeActionPhaseDoneSystem(state)
 }
 
 /**
