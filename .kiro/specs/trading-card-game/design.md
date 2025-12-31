@@ -93,9 +93,8 @@ interface GameState {
   drawPile: Card[]
   discardPile: Card[]
   
-  // Action Phase Pass System
-  actionPhasePassesRemaining: number
-  actionPhasePlayersWithActionCards: number[]
+  // Action Phase Done System
+  actionPhaseDoneStates: boolean[] // Array indexed by player ID, true if player is done
   
   // UI State
   selectedPerspective: number
@@ -234,7 +233,7 @@ The game implements clockwise player rotation with automatic skipping:
 - **Standard rotation**: Buyer → Player to Buyer's right → ... → Player to Buyer's left
 - **Buyer-excluded phases**: Start with player to Buyer's right
 - **Auto-skip conditions**: Players with no valid actions are automatically skipped
-- **Action phase special case**: After any action card play, full rotation occurs for responses
+- **Action phase special case**: Only players who are not done participate in rotation; when any action card is played, all players with action cards are marked as not done and can participate again
 
 ## Correctness Properties
 
@@ -343,39 +342,39 @@ Based on the prework analysis, the following properties have been identified as 
 ### Action Phase Properties
 
 **Property 23: Action card play permissions**
-*For any* player with action cards in collection, they should be able to play them during action phase
+*For any* player with action cards in collection who is not done, they should be able to play them during action phase
 **Validates: Requirements 7.1**
 
 **Property 24: Multiple action card play**
-*For any* player with multiple action cards, they should be able to play multiple cards in sequence
+*For any* player with multiple action cards who is not done, they should be able to play multiple cards in sequence
 **Validates: Requirements 7.2**
 
 **Property 25: Action card restriction**
-*For any* player without action cards in collection, they should be unable to play action cards
+*For any* player without action cards in collection or who is done, they should be unable to play action cards
 **Validates: Requirements 7.3**
 
 **Property 26: Immediate effect execution**
 *For any* played action card, its effects should be applied immediately
 **Validates: Requirements 7.4**
 
-**Property 27: Action phase pass system initialization**
-*For any* action phase start, the pass counter should be set to the count of players with action cards
+**Property 27: Action phase done state initialization**
+*For any* action phase start, players with no action cards should be marked as done (checked and disabled), and players with action cards should be marked as not done (unchecked and enabled)
 **Validates: Requirements 8.1**
 
-**Property 28: Pass counter reset on action card play**
-*For any* action card played, the pass counter should reset to the current count of players with action cards
-**Validates: Requirements 8.2**
-
-**Property 29: Pass counter decrement on player pass**
-*For any* player with action cards who declares done, the pass counter should decrease by one
+**Property 28: Done state reset on action card play**
+*For any* action card played, all players who still have action cards should be automatically marked as not done (unchecked)
 **Validates: Requirements 8.3**
 
-**Property 30: Automatic skipping without pass counter effect**
-*For any* player without action cards, they should be skipped automatically without affecting the pass counter
+**Property 29: Automatic done state for depleted players**
+*For any* player who plays an action card and has no more action cards remaining, they should be automatically marked as done (checked and disabled)
 **Validates: Requirements 8.4**
 
+**Property 30: Player rotation restriction**
+*For any* action phase rotation, only players who are not done should be included in the rotation
+**Validates: Requirements 7.5**
+
 **Property 31: Action phase termination conditions**
-*For any* action phase, it should end when either no players have action cards OR the pass counter reaches zero
+*For any* action phase, it should end when all players are marked as done
 **Validates: Requirements 8.5**
 
 ### Offer Selection and Distribution Properties

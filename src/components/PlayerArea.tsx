@@ -19,6 +19,7 @@ interface PlayerAreaProps {
   onAddOneOfferSelect?: () => void;
   onRemoveOneCardSelect?: (cardIndex: number) => void;
   onRemoveTwoCardSelect?: (cardIndex: number) => void;
+  onDeclareDone?: () => void;
   canFlipCards: boolean;
   canSelectOffer: boolean;
   canSelectGotchaCards?: boolean;
@@ -27,6 +28,8 @@ interface PlayerAreaProps {
   canSelectAddOneOffers?: boolean;
   canSelectRemoveOneCards?: boolean;
   canSelectRemoveTwoCards?: boolean;
+  isDone?: boolean;
+  canDeclareDone?: boolean;
 }
 
 interface HandProps {
@@ -303,6 +306,7 @@ export const PlayerArea: React.FC<PlayerAreaProps> = ({
   onAddOneOfferSelect,
   onRemoveOneCardSelect,
   onRemoveTwoCardSelect,
+  onDeclareDone,
   canFlipCards,
   canSelectOffer,
   canSelectGotchaCards = false,
@@ -310,7 +314,9 @@ export const PlayerArea: React.FC<PlayerAreaProps> = ({
   canSelectAddOneHandCards = false,
   canSelectAddOneOffers = false,
   canSelectRemoveOneCards = false,
-  canSelectRemoveTwoCards = false
+  canSelectRemoveTwoCards = false,
+  isDone = false,
+  canDeclareDone = false
 }) => {
   const isOwnPerspective = player.id === perspective;
   const [selectedCards, setSelectedCards] = React.useState<Card[]>([])
@@ -444,6 +450,7 @@ export const PlayerArea: React.FC<PlayerAreaProps> = ({
     if (isBuyer) classes.push('player-area--buyer');
     if (isOwnPerspective) classes.push('player-area--own-perspective');
     if (isSelectingOffer) classes.push('player-area--selecting-offer');
+    if (phase === GamePhase.ACTION_PHASE && isDone) classes.push('player-area--action-phase-done');
     
     return classes.join(' ');
   };
@@ -465,6 +472,26 @@ export const PlayerArea: React.FC<PlayerAreaProps> = ({
         <div className="player-area__stats">
           Points: {player.points} | Cards: {player.hand.length + player.collection.length}
         </div>
+        
+        {/* Action Phase "I'm done" checkbox */}
+        {phase === GamePhase.ACTION_PHASE && (
+          <div className="player-area__done-checkbox">
+            <label className="done-checkbox__label">
+              <input
+                type="checkbox"
+                className="done-checkbox__input"
+                checked={isDone}
+                disabled={!canDeclareDone}
+                onChange={() => {
+                  if (canDeclareDone && !isDone) {
+                    onDeclareDone?.()
+                  }
+                }}
+              />
+              <span className="done-checkbox__text">I'm done</span>
+            </label>
+          </div>
+        )}
         
         {/* Offer selection controls */}
         {canMakeOffer && !isSelectingOffer && (

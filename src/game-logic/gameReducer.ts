@@ -14,8 +14,7 @@ export function createInitialGameState(): GameState {
     round: 1,
     drawPile: [],
     discardPile: [],
-    actionPhasePassesRemaining: 0,
-    actionPhasePlayersWithActionCards: [],
+    actionPhaseDoneStates: [],
     gotchaEffectState: null,
     flipOneEffectState: null,
     addOneEffectState: null,
@@ -346,10 +345,10 @@ export function handleActionPhaseAdvancement(state: GameState): GameState {
     return state
   }
 
-  // Initialize the pass system if not already initialized
+  // Initialize the done system if not already initialized
   let newState = state
-  if (state.actionPhasePassesRemaining === 0 && state.actionPhasePlayersWithActionCards.length === 0) {
-    newState = initializeActionPhasePassSystem(state)
+  if (state.actionPhaseDoneStates.length === 0) {
+    newState = initializeActionPhaseDoneSystem(state)
   }
 
   // Check if action phase should end
@@ -488,8 +487,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         round: 1,
         drawPile,
         discardPile: [],
-        actionPhasePassesRemaining: 0,
-        actionPhasePlayersWithActionCards: [],
+        actionPhaseDoneStates: [],
         selectedPerspective: 0,
         phaseInstructions: getPhaseInstructions(GamePhase.DEAL),
         autoFollowPerspective: true,
@@ -825,16 +823,16 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       // Execute the action card effect immediately
       const stateAfterEffect = executeActionCardEffect(newState, actionCard, playerId)
       
-      // Reset the pass counter since someone played an action card
-      const stateWithResetPasses = resetPassCounter(stateAfterEffect)
+      // Reset the done states since someone played an action card
+      const stateWithResetDoneStates = resetDoneStates(stateAfterEffect)
       
       // Check if action phase should end (no more players with action cards)
-      if (shouldEndActionPhase(stateWithResetPasses)) {
-        return endActionPhaseAndAdvance(stateWithResetPasses)
+      if (shouldEndActionPhase(stateWithResetDoneStates)) {
+        return endActionPhaseAndAdvance(stateWithResetDoneStates)
       }
       
       // Advance to next eligible player for action phase
-      return advanceToNextEligiblePlayerInActionPhase(stateWithResetPasses)
+      return advanceToNextEligiblePlayerInActionPhase(stateWithResetDoneStates)
     }
     
     case 'SELECT_OFFER': {
@@ -959,9 +957,9 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         throw new Error('Only the current player can declare done')
       }
       
-      // Handle action phase pass system
+      // Handle action phase done system
       if (state.currentPhase === GamePhase.ACTION_PHASE) {
-        return handleActionPhasePlayerPass(state, playerId)
+        return handleActionPhasePlayerDone(state, playerId)
       }
       
       // Advance to next eligible player with automatic skipping for other phases
@@ -2240,49 +2238,61 @@ export function getPlayersWithActionCards(state: GameState): number[] {
 }
 
 /**
- * Initializes the pass system for action phase
+ * Initializes the done system for action phase
  * @param state Current game state
- * @returns Updated state with pass system initialized
+ * @returns Updated state with done system initialized
  */
-export function initializeActionPhasePassSystem(state: GameState): GameState {
-  const playersWithActionCards = getPlayersWithActionCards(state)
+export function initializeActionPhaseDoneSystem(state: GameState): GameState {
+  const doneStates = state.players.map((player, index) => {
+    // Players with no action cards are automatically done (checked and disabled)
+    const isBuyer = index === state.currentBuyerIndex
+    return !playerHasValidActions(player, GamePhase.ACTION_PHASE, isBuyer)
+  })
   
   return {
     ...state,
-    actionPhasePassesRemaining: playersWithActionCards.length,
-    actionPhasePlayersWithActionCards: playersWithActionCards
+    actionPhaseDoneStates: doneStates
   }
 }
 
 /**
- * Resets the pass counter when someone plays an action card
+ * Resets the done states when someone plays an action card
+ * All players who still have action cards get their checkbox unchecked
+ * Players who played their last action card get automatically marked as done
  * @param state Current game state
- * @returns Updated state with reset pass counter
+ * @returns Updated state with reset done states
  */
-export function resetPassCounter(state: GameState): GameState {
-  const playersWithActionCards = getPlayersWithActionCards(state)
+export function resetDoneStates(state: GameState): GameState {
+  const doneStates = state.players.map((player, index) => {
+    const isBuyer = index === state.currentBuyerIndex
+    // Players with no action cards are done (checked and disabled)
+    return !playerHasValidActions(player, GamePhase.ACTION_PHASE, isBuyer)
+  })
   
   return {
     ...state,
-    actionPhasePassesRemaining: playersWithActionCards.length,
-    actionPhasePlayersWithActionCards: playersWithActionCards
+    actionPhaseDoneStates: doneStates
   }
 }
 
 /**
- * Decrements the pass counter when a player passes
+ * Marks a player as done in the action phase
  * @param state Current game state
- * @returns Updated state with decremented pass counter
+ * @param playerId Player who declared done
+ * @returns Updated state with player marked as done
  */
-export function decrementPassCounter(state: GameState): GameState {
+export function markPlayerAsDone(state: GameState, playerId: number): GameState {
+  const newDoneStates = [...state.actionPhaseDoneStates]
+  newDoneStates[playerId] = true
+  
   return {
     ...state,
-    actionPhasePassesRemaining: Math.max(0, state.actionPhasePassesRemaining - 1)
+    actionPhaseDoneStates: newDoneStates
   }
 }
 
 /**
- * Checks if the action phase should end based on pass system
+ * Checks if the action phase should end based on done system
  * @param state Current game state
  * @returns True if action phase should end
  */
@@ -2318,8 +2328,8 @@ export function shouldEndActionPhase(state: GameState): boolean {
     return true
   }
   
-  // If all players with action cards have passed, end the phase
-  if (state.actionPhasePassesRemaining <= 0) {
+  // If all checkboxes are checked (all players are done), end the phase
+  if (state.actionPhaseDoneStates.length > 0 && state.actionPhaseDoneStates.every(done => done)) {
     return true
   }
   
@@ -2327,35 +2337,36 @@ export function shouldEndActionPhase(state: GameState): boolean {
 }
 
 /**
- * Handles player passing during action phase (using pass system)
+ * Handles player declaring done during action phase (using done system)
  * @param state Current game state
- * @param playerId Player who passed
+ * @param playerId Player who declared done
  * @returns Updated game state
  */
-export function handleActionPhasePlayerPass(state: GameState, playerId: number): GameState {
-  // Validate that the player has action cards (only players with action cards can pass)
+export function handleActionPhasePlayerDone(state: GameState, playerId: number): GameState {
+  // Validate that the player has action cards (only players with action cards can declare done)
   const player = state.players[playerId]
   const isBuyer = playerId === state.currentBuyerIndex
   
   if (!playerHasValidActions(player, GamePhase.ACTION_PHASE, isBuyer)) {
-    // Player has no action cards, they should be automatically skipped
+    // Player has no action cards, they should be automatically done already
     return advanceToNextEligiblePlayerInActionPhase(state)
   }
   
-  // Decrement the pass counter
-  const stateWithDecrementedPasses = decrementPassCounter(state)
+  // Mark the player as done
+  const stateWithPlayerDone = markPlayerAsDone(state, playerId)
   
   // Check if action phase should end
-  if (shouldEndActionPhase(stateWithDecrementedPasses)) {
-    return endActionPhaseAndAdvance(stateWithDecrementedPasses)
+  if (shouldEndActionPhase(stateWithPlayerDone)) {
+    return endActionPhaseAndAdvance(stateWithPlayerDone)
   }
   
   // Advance to next eligible player in action phase
-  return advanceToNextEligiblePlayerInActionPhase(stateWithDecrementedPasses)
+  return advanceToNextEligiblePlayerInActionPhase(stateWithPlayerDone)
 }
 
 /**
- * Advances to the next eligible player specifically for action phase with pass system logic
+ * Advances to the next eligible player specifically for action phase with done system logic
+ * Only players who are not done participate in rotation
  * @param state Current game state
  * @returns Updated game state with next eligible player
  */
@@ -2380,6 +2391,7 @@ export function advanceToNextEligiblePlayerInActionPhase(state: GameState): Game
 
 /**
  * Finds the next eligible player in action phase rotation
+ * Only players who are not done and have action cards can be active
  * @param state Current game state
  * @param startPosition Position to start checking from
  * @param rotationOrder Array of player indices in rotation order
@@ -2400,8 +2412,11 @@ function findNextEligiblePlayerInActionPhase(
     const player = players[playerIndex]
     const isBuyer = playerIndex === currentBuyerIndex
     
-    // Check if this player has valid actions (action cards)
-    if (playerHasValidActions(player, GamePhase.ACTION_PHASE, isBuyer)) {
+    // Check if this player has valid actions (action cards) and is not done
+    const hasActionCards = playerHasValidActions(player, GamePhase.ACTION_PHASE, isBuyer)
+    const isDone = state.actionPhaseDoneStates[playerIndex] || false
+    
+    if (hasActionCards && !isDone) {
       let newState = {
         ...state,
         currentPlayerIndex: playerIndex
@@ -2429,11 +2444,10 @@ function findNextEligiblePlayerInActionPhase(
  * @returns Updated game state with next phase
  */
 function endActionPhaseAndAdvance(state: GameState): GameState {
-  // Clear action phase pass system state
+  // Clear action phase done system state
   const clearedState: GameState = {
     ...state,
-    actionPhasePassesRemaining: 0,
-    actionPhasePlayersWithActionCards: []
+    actionPhaseDoneStates: []
   }
   
   // Advance to next phase

@@ -13,9 +13,8 @@ export interface GameState {
   drawPile: Card[]
   discardPile: Card[]
   
-  // Action Phase Pass System
-  actionPhasePassesRemaining: number
-  actionPhasePlayersWithActionCards: number[]
+  // Action Phase Done System
+  actionPhaseDoneStates: boolean[] // Array indexed by player ID, true if player is done
   
   // Gotcha Effects State
   gotchaEffectState: GotchaEffectState | null

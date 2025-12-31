@@ -96,27 +96,27 @@ A digital trading card game implemented as a React application featuring a fixed
 
 ### Requirement 7: Action Phase Mechanics
 
-**User Story:** As a player, I want to play Action cards from my collection, so that I can influence the game state before offer selection.
+**User Story:** As a player, I want to play Action cards from my collection during the Action phase, so that I can influence the game state before offer selection.
 
 #### Acceptance Criteria
 
-1. WHEN the Action phase begins, THE Game_System SHALL allow all players to play Action cards from their collections
-2. THE Game_System SHALL allow players to play multiple Action cards if available
-3. THE Game_System SHALL prevent players from playing Action cards if their collection contains none
+1. WHEN the Action phase begins, THE Game_System SHALL allow players with Action cards to either play Action cards from their collections or declare themselves done
+2. THE Game_System SHALL allow players to play multiple Action cards if available and they haven't declared themselves done
+3. THE Game_System SHALL prevent players from playing Action cards if their collection contains none or if they have declared themselves done
 4. THE Game_System SHALL execute Action card effects immediately when played
-5. THE Game_System SHALL end the Action phase when all players declare they are done or have no Action cards
+5. THE Game_System SHALL rotate through only players who have Action cards and haven't declared themselves done
 
-### Requirement 8: Action Phase Pass System
+### Requirement 8: Action Phase Done System
 
-**User Story:** As a player, I want the Action phase to end when all players with Action cards have passed, so that the game progresses efficiently without infinite loops.
+**User Story:** As a player, I want to declare myself done during the Action phase when I don't want to play more Action cards, so that the game can progress efficiently while allowing strategic response rounds.
 
 #### Acceptance Criteria
 
-1. WHEN the Action phase begins, THE Game_System SHALL count all players who have Action cards in their collections
-2. WHEN any player plays an Action card, THE Game_System SHALL reset the pass counter to the current count of players with Action cards
-3. WHEN a player with Action cards declares done (passes), THE Game_System SHALL decrement the pass counter
-4. WHEN a player has no Action cards available, THE Game_System SHALL automatically skip them without affecting the pass counter
-5. THE Game_System SHALL end the Action phase when either no players have Action cards OR the pass counter reaches zero
+1. WHEN the Action phase begins, THE Game_System SHALL display an "I'm done" checkbox for each player that is checked and disabled for players with no Action cards, and unchecked and enabled for players with Action cards
+2. WHEN it is a player's turn and they have Action cards, THE Game_System SHALL allow them to either play an Action card from their collection or check their "I'm done" checkbox
+3. WHEN any player plays an Action card, THE Game_System SHALL automatically uncheck the "I'm done" checkbox for all players who still have Action cards in their collections
+4. WHEN a player plays an Action card and has no more Action cards remaining, THE Game_System SHALL automatically check and disable their "I'm done" checkbox
+5. THE Game_System SHALL end the Action phase and advance to Offer Selection when all players have their "I'm done" checkbox checked
 
 ### Requirement 9: Offer Selection and Distribution
 

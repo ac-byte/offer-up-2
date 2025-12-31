@@ -579,3 +579,46 @@
   font-size: 0.8em;
   font-weight: normal;
 }
+/* Action Phase "I'm done" checkbox styles */
+.player-area__done-checkbox {
+  margin-top: 8px;
+}
+
+.done-checkbox__label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  user-select: none;
+}
+
+.done-checkbox__label:has(.done-checkbox__input:disabled) {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.done-checkbox__input {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.done-checkbox__input:disabled {
+  cursor: default;
+}
+
+.done-checkbox__text {
+  font-weight: 500;
+}
+
+/* Visual feedback for done state */
+.player-area--action-phase-done {
+  opacity: 0.8;
+}
+
+.player-area--action-phase-done .player-area__header {
+  background-color: #f0f0f0;
+  border-radius: 4px;
+  padding: 8px;
+}

@@ -1,11 +1,11 @@
 import { 
   gameReducer, 
   createInitialGameState,
-  initializeActionPhasePassSystem,
-  resetPassCounter,
-  decrementPassCounter,
+  initializeActionPhaseDoneSystem,
+  resetDoneStates,
+  markPlayerAsDone,
   shouldEndActionPhase,
-  handleActionPhasePlayerPass,
+  handleActionPhasePlayerDone,
   advanceToNextEligiblePlayerInActionPhase,
   getPlayersWithActionCards
 } from '../../game-logic/gameReducer'

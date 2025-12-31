@@ -145,6 +145,16 @@ export const GameBoard: React.FC = () => {
     }
   }
 
+  const handleDeclareDone = (playerId: number) => {
+    const action: GameAction = { type: 'DECLARE_DONE', playerId }
+    try {
+      dispatch(action)
+    } catch (error) {
+      console.error('Error declaring done:', error)
+      // In a real app, you'd show this error to the user
+    }
+  }
+
   const handleStealAPointTargetSelect = (targetPlayerId: number) => {
     const action: GameAction = { type: 'SELECT_STEAL_A_POINT_TARGET', targetPlayerId }
     try {
@@ -570,6 +580,14 @@ export const GameBoard: React.FC = () => {
               gameState.removeTwoEffectState.awaitingCardSelection &&
               index !== gameState.currentBuyerIndex && // Can't remove from buyer's offer (buyer has no offer)
               player.offer.length > 0 // Player must have an offer
+            }
+            onDeclareDone={() => handleDeclareDone(player.id)} // New handler for declaring done
+            isDone={gameState.actionPhaseDoneStates[index] || false} // Whether player is done
+            canDeclareDone={
+              gameState.currentPhase === GamePhase.ACTION_PHASE &&
+              gameState.selectedPerspective === player.id && // Only own perspective can declare done
+              player.collection.some(card => card.type === 'action') && // Player must have action cards
+              !(gameState.actionPhaseDoneStates[index] || false) // Player must not already be done
             }
           />
         ))}

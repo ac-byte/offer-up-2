@@ -114,11 +114,12 @@ This implementation plan breaks down the trading card game into discrete, testab
     - Implement immediate effect execution
     - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5_
 
-  - [x] 8.2 Implement action phase pass system
-    - Create pass counter system to track players with action cards
-    - Reset counter when action cards are played
-    - Decrement counter when players pass
-    - End phase when no players have action cards or passes remaining reaches zero
+  - [ ] 8.2 Implement action phase done system
+    - Replace pass counter system with "I'm done" checkbox system
+    - Initialize done states based on action card availability
+    - Reset done states when action cards are played
+    - Auto-mark players as done when they have no action cards
+    - End phase when all players are done
     - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5_
 
   - [ ]* 8.3 Write property tests for action phase
@@ -126,10 +127,10 @@ This implementation plan breaks down the trading card game into discrete, testab
     - **Property 24: Multiple action card play**
     - **Property 25: Action card restriction**
     - **Property 26: Immediate effect execution**
-    - **Property 27: Action phase pass system initialization**
-    - **Property 28: Pass counter reset on action card play**
-    - **Property 29: Pass counter decrement on player pass**
-    - **Property 30: Automatic skipping without pass counter effect**
+    - **Property 27: Action phase done state initialization**
+    - **Property 28: Done state reset on action card play**
+    - **Property 29: Automatic done state for depleted players**
+    - **Property 30: Player rotation restriction**
     - **Property 31: Action phase termination conditions**
     - **Validates: Requirements 7.1, 7.2, 7.3, 7.4, 8.1, 8.2, 8.3, 8.4, 8.5**
 
@@ -377,7 +378,15 @@ This implementation plan breaks down the trading card game into discrete, testab
     - Provide visual indication of auto-follow vs manual mode
     - _Requirements: 20.1, 20.2, 20.3, 20.4, 20.5_
 
-  - [ ]* 14.5 Write property tests for display logic
+  - [ ] 14.5 Add "I'm done" checkbox to PlayerArea
+    - Add checkbox to each player area during action phase
+    - Show checked and disabled for players with no action cards
+    - Show unchecked and enabled for players with action cards
+    - Allow players to check the checkbox to declare themselves done
+    - Update checkbox states when action cards are played
+    - _Requirements: 8.1, 8.2, 8.3, 8.4_
+
+  - [ ]* 14.6 Write property tests for display logic
     - **Property 70: Perspective independence**
     - **Property 71: Card display updates**
     - **Property 72: Perspective switching availability**
