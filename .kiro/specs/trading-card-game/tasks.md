@@ -195,8 +195,8 @@ This implementation plan breaks down the trading card game into discrete, testab
     - **Property 95: Remove Two discard pile movement**
     - **Validates: Requirements 40.1, 40.2, 40.3, 40.4**
 
-- [ ] 8.8 Implement Steal A Point action card effects
-  - [ ] 8.8.1 Create Steal A Point logic
+- [x] 8.8 Implement Steal A Point action card effects
+  - [x] 8.8.1 Create Steal A Point logic
     - Allow player to select any player who has more points than them
     - Transfer exactly one point from selected player to card player
     - Prevent selection of players with equal or fewer points

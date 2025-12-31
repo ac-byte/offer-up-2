@@ -135,6 +135,16 @@ export const GameBoard: React.FC = () => {
     }
   }
 
+  const handleStealAPointTargetSelect = (targetPlayerId: number) => {
+    const action: GameAction = { type: 'SELECT_STEAL_A_POINT_TARGET', targetPlayerId }
+    try {
+      dispatch(action)
+    } catch (error) {
+      console.error('Error selecting target for Steal A Point:', error)
+      // In a real app, you'd show this error to the user
+    }
+  }
+
   const formatPhaseName = (phase: GamePhase): string => {
     return phase.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
   }
@@ -326,6 +336,70 @@ export const GameBoard: React.FC = () => {
               </div>
             )
           }
+        }
+        
+        // Check if there's a pending Remove One effect
+        if (gameState.removeOneEffectState && gameState.removeOneEffectState.awaitingCardSelection) {
+          const removeOnePlayer = gameState.players[gameState.removeOneEffectState.playerId]
+          return (
+            <div className="remove-one-effect-controls">
+              <div className="remove-one-effect-header">
+                <strong>{removeOnePlayer?.name}</strong> played Remove One: Select a card from any offer to remove
+              </div>
+              <div className="remove-one-selection-info">
+                <span>Click on any card in the offers below to discard it</span>
+              </div>
+            </div>
+          )
+        }
+        
+        // Check if there's a pending Steal A Point effect
+        if (gameState.stealAPointEffectState && gameState.stealAPointEffectState.awaitingTargetSelection) {
+          const stealAPointPlayer = gameState.players[gameState.stealAPointEffectState.playerId]
+          const validTargets = gameState.players.filter((player, index) => 
+            index !== gameState.stealAPointEffectState!.playerId && 
+            player.points > stealAPointPlayer.points
+          )
+          
+          if (validTargets.length === 0) {
+            return (
+              <div className="steal-a-point-effect-controls">
+                <div className="steal-a-point-effect-header">
+                  <strong>{stealAPointPlayer?.name}</strong> played Steal A Point, but no valid targets exist
+                </div>
+                <div className="steal-a-point-no-targets">
+                  <span>No players have more points than you. The card effect has no impact.</span>
+                  <button onClick={handleAdvancePhase} className="action-button secondary">
+                    Continue
+                  </button>
+                </div>
+              </div>
+            )
+          }
+          
+          return (
+            <div className="steal-a-point-effect-controls">
+              <div className="steal-a-point-effect-header">
+                <strong>{stealAPointPlayer?.name}</strong> played Steal A Point: Select a player with more points than you
+              </div>
+              <div className="steal-a-point-targets">
+                <div className="steal-a-point-info">
+                  Your points: {stealAPointPlayer.points}
+                </div>
+                <div className="target-buttons">
+                  {validTargets.map((target) => (
+                    <button
+                      key={target.id}
+                      onClick={() => handleStealAPointTargetSelect(target.id)}
+                      className="action-button steal-target-button"
+                    >
+                      Steal from {target.name} ({target.points} points)
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )
         }
         
         return (

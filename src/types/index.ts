@@ -24,6 +24,7 @@ export interface GameState {
   flipOneEffectState: FlipOneEffectState | null
   addOneEffectState: AddOneEffectState | null
   removeOneEffectState: RemoveOneEffectState | null
+  stealAPointEffectState: StealAPointEffectState | null
   
   // UI State
   selectedPerspective: number
@@ -86,6 +87,11 @@ export interface RemoveOneEffectState {
   awaitingCardSelection: boolean
 }
 
+export interface StealAPointEffectState {
+  playerId: number // Player who played the Steal A Point card
+  awaitingTargetSelection: boolean
+}
+
 export enum GamePhase {
   BUYER_ASSIGNMENT = 'buyer_assignment',
   DEAL = 'deal',
@@ -117,6 +123,7 @@ export type GameAction =
   | { type: 'SELECT_ADD_ONE_HAND_CARD'; cardId: string }
   | { type: 'SELECT_ADD_ONE_OFFER'; offerId: number }
   | { type: 'SELECT_REMOVE_ONE_CARD'; offerId: number; cardIndex: number }
+  | { type: 'SELECT_STEAL_A_POINT_TARGET'; targetPlayerId: number }
 
 // Card display states
 export type CardDisplayState = 'face_up' | 'face_down' | 'partial'

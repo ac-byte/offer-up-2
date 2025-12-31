@@ -190,10 +190,16 @@ describe('Action Phase Pass System', () => {
       // Remove action cards from Bob and Charlie so only Alice has one
       gameState.players[1].collection = []
       gameState.players[2].collection = []
+      
+      // Give Alice a Remove Two card instead of Add One (Remove Two has no interactive effect)
+      gameState.players[0].collection = [
+        { id: 'remove-two-0', type: 'action' as const, subtype: 'remove-two', name: 'Remove Two', setSize: 1, effect: 'This card has an effect' }
+      ]
+      
       gameState = initializeActionPhasePassSystem(gameState) // Reinitialize with new state
       
       // Alice plays her only action card
-      const state = gameReducer(gameState, { type: 'PLAY_ACTION_CARD', playerId: 0, cardId: 'add-one-0' })
+      const state = gameReducer(gameState, { type: 'PLAY_ACTION_CARD', playerId: 0, cardId: 'remove-two-0' })
       
       // Since no other players have action cards, the action phase should end
       expect(state.currentPhase).toBe(GamePhase.OFFER_SELECTION)

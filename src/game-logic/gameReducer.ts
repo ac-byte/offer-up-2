@@ -1,4 +1,4 @@
-import { GameState, GameAction, GamePhase, Player, Card, GotchaEffectState, FlipOneEffectState } from '../types'
+import { GameState, GameAction, GamePhase, Player, Card, GotchaEffectState, FlipOneEffectState, StealAPointEffectState } from '../types'
 import { createShuffledDeck, shuffleArray, identifyGotchaSets, identifyThingSets, identifyGotchaSetsInOrder } from './cards'
 
 /**
@@ -20,6 +20,7 @@ export function createInitialGameState(): GameState {
     flipOneEffectState: null,
     addOneEffectState: null,
     removeOneEffectState: null,
+    stealAPointEffectState: null,
     selectedPerspective: 0,
     phaseInstructions: 'Waiting for game to start...',
     autoFollowPerspective: true,
@@ -140,6 +141,10 @@ export function validatePhaseAction(phase: GamePhase, action: GameAction): boole
     
     case 'SELECT_REMOVE_ONE_CARD':
       // Remove One card selection is only allowed during action phase when effect is active
+      return phase === GamePhase.ACTION_PHASE
+    
+    case 'SELECT_STEAL_A_POINT_TARGET':
+      // Steal A Point target selection is only allowed during action phase when effect is active
       return phase === GamePhase.ACTION_PHASE
     
     default:
@@ -1244,6 +1249,71 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       return advanceToNextEligiblePlayerInActionPhase(newState)
     }
     
+    case 'SELECT_STEAL_A_POINT_TARGET': {
+      const { targetPlayerId } = action
+      
+      // Validate that we're in a Steal A Point effect state
+      if (!state.stealAPointEffectState) {
+        throw new Error('No Steal A Point effect is currently active')
+      }
+      
+      // Validate that we're waiting for target selection
+      if (!state.stealAPointEffectState.awaitingTargetSelection) {
+        throw new Error('Steal A Point effect is not awaiting target selection')
+      }
+      
+      const playerId = state.stealAPointEffectState.playerId
+      
+      // Validate targetPlayerId
+      if (targetPlayerId < 0 || targetPlayerId >= state.players.length) {
+        throw new Error(`Invalid target player ID: ${targetPlayerId}`)
+      }
+      
+      // Validate that target is not the same as the card player
+      if (targetPlayerId === playerId) {
+        throw new Error('Cannot steal points from yourself')
+      }
+      
+      const cardPlayer = state.players[playerId]
+      const targetPlayer = state.players[targetPlayerId]
+      
+      // Validate that target player has more points than the card player
+      if (targetPlayer.points <= cardPlayer.points) {
+        throw new Error('Target player must have more points than you')
+      }
+      
+      // Validate that target player has at least one point to steal
+      if (targetPlayer.points <= 0) {
+        throw new Error('Target player has no points to steal')
+      }
+      
+      // Create new state with point transfer
+      const newState = { ...state }
+      newState.players = state.players.map((player, index) => {
+        if (index === playerId) {
+          // Card player gains 1 point
+          return {
+            ...player,
+            points: player.points + 1
+          }
+        } else if (index === targetPlayerId) {
+          // Target player loses 1 point
+          return {
+            ...player,
+            points: player.points - 1
+          }
+        }
+        return player
+      })
+      
+      // Clear the Steal A Point effect state
+      newState.stealAPointEffectState = null
+      newState.phaseInstructions = getPhaseInstructions(state.currentPhase)
+      
+      // Continue with action phase - advance to next eligible player
+      return advanceToNextEligiblePlayerInActionPhase(newState)
+    }
+    
     
     default:
       return state
@@ -1747,11 +1817,16 @@ function executeActionCardEffect(state: GameState, actionCard: Card, playerId: n
     }
     
     case 'steal-point': {
-      // Steal A Point: Player steals one point from another player
-      // For now, we'll just return the state as-is since the actual target selection
-      // will be handled by subsequent actions or UI interactions
-      // The effect is that the player can steal a point from another player
-      return state
+      // Steal A Point: Allow player to select any player who has more points than them
+      // Set up the effect state to await target selection
+      return {
+        ...state,
+        stealAPointEffectState: {
+          playerId,
+          awaitingTargetSelection: true
+        },
+        phaseInstructions: `${state.players[playerId].name} played Steal A Point. Select a player with more points than you to steal 1 point from.`
+      }
     }
     
     default:
@@ -2084,6 +2159,11 @@ export function shouldEndActionPhase(state: GameState): boolean {
   
   // If a Remove One effect is active, don't end the action phase
   if (state.removeOneEffectState && state.removeOneEffectState.awaitingCardSelection) {
+    return false
+  }
+  
+  // If a Steal A Point effect is active, don't end the action phase
+  if (state.stealAPointEffectState && state.stealAPointEffectState.awaitingTargetSelection) {
     return false
   }
   
