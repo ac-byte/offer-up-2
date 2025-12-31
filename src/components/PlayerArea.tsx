@@ -17,12 +17,14 @@ interface PlayerAreaProps {
   onFlipOneCardSelect?: (cardIndex: number) => void;
   onAddOneHandCardSelect?: (cardId: string) => void;
   onAddOneOfferSelect?: () => void;
+  onRemoveOneCardSelect?: (cardIndex: number) => void;
   canFlipCards: boolean;
   canSelectOffer: boolean;
   canSelectGotchaCards?: boolean;
   canSelectFlipOneCards?: boolean;
   canSelectAddOneHandCards?: boolean;
   canSelectAddOneOffers?: boolean;
+  canSelectRemoveOneCards?: boolean;
 }
 
 interface HandProps {
@@ -40,6 +42,7 @@ interface OfferAreaProps {
   canFlipCards: boolean;
   canSelectFlipOneCards?: boolean;
   canSelectAddOneOffers?: boolean;
+  canSelectRemoveOneCards?: boolean;
   onCardClick?: (card: OfferCard, index: number) => void;
   onOfferClick?: () => void;
   onDrop?: (cards: Card[], faceUpIndex: number) => void;
@@ -102,7 +105,7 @@ const Hand: React.FC<HandProps> = ({ cards, isOwnHand, onCardDrag, onCardClick, 
 };
 
 // OfferArea sub-component
-const OfferArea: React.FC<OfferAreaProps> = ({ offer, isOwnOffer, canFlipCards, canSelectFlipOneCards = false, canSelectAddOneOffers = false, onCardClick, onOfferClick, onDrop, onStartOfferSelection }) => {
+const OfferArea: React.FC<OfferAreaProps> = ({ offer, isOwnOffer, canFlipCards, canSelectFlipOneCards = false, canSelectAddOneOffers = false, canSelectRemoveOneCards = false, onCardClick, onOfferClick, onDrop, onStartOfferSelection }) => {
   const [isDragOver, setIsDragOver] = React.useState(false)
 
   const getCardDisplayState = (offerCard: OfferCard): CardDisplayState => {
@@ -177,6 +180,9 @@ const OfferArea: React.FC<OfferAreaProps> = ({ offer, isOwnOffer, canFlipCards, 
           {canSelectAddOneOffers && offer.length > 0 && (
             <span className="offer-area__add-one-hint"> (Click to add card here)</span>
           )}
+          {canSelectRemoveOneCards && offer.length > 0 && (
+            <span className="offer-area__remove-one-hint"> (Click card to remove)</span>
+          )}
         </h4>
       </div>
       <div className="offer-area__cards">
@@ -193,6 +199,8 @@ const OfferArea: React.FC<OfferAreaProps> = ({ offer, isOwnOffer, canFlipCards, 
                   canFlipCards && !offerCard.faceUp ? 'offer-area__card--flippable' : ''
                 } ${
                   canSelectFlipOneCards && !offerCard.faceUp ? 'offer-area__card--flip-one-selectable' : ''
+                } ${
+                  canSelectRemoveOneCards ? 'offer-area__card--remove-one-selectable' : ''
                 }`}
               />
             ))
@@ -285,12 +293,14 @@ export const PlayerArea: React.FC<PlayerAreaProps> = ({
   onFlipOneCardSelect,
   onAddOneHandCardSelect,
   onAddOneOfferSelect,
+  onRemoveOneCardSelect,
   canFlipCards,
   canSelectOffer,
   canSelectGotchaCards = false,
   canSelectFlipOneCards = false,
   canSelectAddOneHandCards = false,
-  canSelectAddOneOffers = false
+  canSelectAddOneOffers = false,
+  canSelectRemoveOneCards = false
 }) => {
   const isOwnPerspective = player.id === perspective;
   const [selectedCards, setSelectedCards] = React.useState<Card[]>([])
@@ -350,6 +360,13 @@ export const PlayerArea: React.FC<PlayerAreaProps> = ({
   };
 
   const handleOfferCardClick = (offerCard: OfferCard, index: number) => {
+    // Handle Remove One card selection during action phase
+    if (canSelectRemoveOneCards && onRemoveOneCardSelect) {
+      console.log('Selecting card for Remove One effect:', offerCard.name);
+      onRemoveOneCardSelect(index);
+      return;
+    }
+
     // Handle Flip One card selection during action phase
     if (canSelectFlipOneCards && !offerCard.faceUp && onFlipOneCardSelect) {
       console.log('Selecting card for Flip One effect:', offerCard.name);
@@ -502,6 +519,7 @@ export const PlayerArea: React.FC<PlayerAreaProps> = ({
             canFlipCards={canFlipCards}
             canSelectFlipOneCards={canSelectFlipOneCards}
             canSelectAddOneOffers={canSelectAddOneOffers}
+            canSelectRemoveOneCards={canSelectRemoveOneCards}
             onCardClick={handleOfferCardClick}
             onOfferClick={handleAddOneOfferClick}
             onDrop={handleOfferDrop}

@@ -164,7 +164,7 @@ This implementation plan breaks down the trading card game into discrete, testab
     - **Validates: Requirements 38.1, 38.2, 38.3, 38.4**
 
 - [ ] 8.6 Implement Remove One action card effects
-  - [ ] 8.6.1 Create Remove One card logic
+  - [x] 8.6.1 Create Remove One card logic
     - Allow player to select one card from any offer
     - Allow selection of both face up and face down cards
     - Move selected card to discard pile

@@ -23,6 +23,7 @@ export interface GameState {
   // Action Card Effects State
   flipOneEffectState: FlipOneEffectState | null
   addOneEffectState: AddOneEffectState | null
+  removeOneEffectState: RemoveOneEffectState | null
   
   // UI State
   selectedPerspective: number
@@ -80,6 +81,11 @@ export interface AddOneEffectState {
   awaitingOfferSelection: boolean
 }
 
+export interface RemoveOneEffectState {
+  playerId: number // Player who played the Remove One card
+  awaitingCardSelection: boolean
+}
+
 export enum GamePhase {
   BUYER_ASSIGNMENT = 'buyer_assignment',
   DEAL = 'deal',
@@ -110,6 +116,7 @@ export type GameAction =
   | { type: 'SELECT_FLIP_ONE_CARD'; offerId: number; cardIndex: number }
   | { type: 'SELECT_ADD_ONE_HAND_CARD'; cardId: string }
   | { type: 'SELECT_ADD_ONE_OFFER'; offerId: number }
+  | { type: 'SELECT_REMOVE_ONE_CARD'; offerId: number; cardIndex: number }
 
 // Card display states
 export type CardDisplayState = 'face_up' | 'face_down' | 'partial'

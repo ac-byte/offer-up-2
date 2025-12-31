@@ -125,6 +125,16 @@ export const GameBoard: React.FC = () => {
     }
   }
 
+  const handleRemoveOneCardSelect = (offerId: number, cardIndex: number) => {
+    const action: GameAction = { type: 'SELECT_REMOVE_ONE_CARD', offerId, cardIndex }
+    try {
+      dispatch(action)
+    } catch (error) {
+      console.error('Error selecting card for Remove One:', error)
+      // In a real app, you'd show this error to the user
+    }
+  }
+
   const formatPhaseName = (phase: GamePhase): string => {
     return phase.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
   }
@@ -459,6 +469,14 @@ export const GameBoard: React.FC = () => {
               gameState.addOneEffectState !== null &&
               gameState.addOneEffectState.awaitingOfferSelection &&
               index !== gameState.currentBuyerIndex && // Can't add to buyer's offer (buyer has no offer)
+              player.offer.length > 0 // Player must have an offer
+            }
+            onRemoveOneCardSelect={(cardIndex) => handleRemoveOneCardSelect(index, cardIndex)} // New handler for Remove One
+            canSelectRemoveOneCards={
+              gameState.currentPhase === GamePhase.ACTION_PHASE &&
+              gameState.removeOneEffectState !== null &&
+              gameState.removeOneEffectState.awaitingCardSelection &&
+              index !== gameState.currentBuyerIndex && // Can't remove from buyer's offer (buyer has no offer)
               player.offer.length > 0 // Player must have an offer
             }
           />

@@ -19,6 +19,7 @@ export function createInitialGameState(): GameState {
     gotchaEffectState: null,
     flipOneEffectState: null,
     addOneEffectState: null,
+    removeOneEffectState: null,
     selectedPerspective: 0,
     phaseInstructions: 'Waiting for game to start...',
     autoFollowPerspective: true,
@@ -135,6 +136,10 @@ export function validatePhaseAction(phase: GamePhase, action: GameAction): boole
     case 'SELECT_ADD_ONE_HAND_CARD':
     case 'SELECT_ADD_ONE_OFFER':
       // Add One card/offer selection is only allowed during action phase when effect is active
+      return phase === GamePhase.ACTION_PHASE
+    
+    case 'SELECT_REMOVE_ONE_CARD':
+      // Remove One card selection is only allowed during action phase when effect is active
       return phase === GamePhase.ACTION_PHASE
     
     default:
@@ -1161,6 +1166,84 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       return advanceToNextEligiblePlayerInActionPhase(newState)
     }
     
+    case 'SELECT_REMOVE_ONE_CARD': {
+      const { offerId, cardIndex } = action
+      
+      // Validate that we're in a Remove One effect state
+      if (!state.removeOneEffectState) {
+        throw new Error('No Remove One effect is currently active')
+      }
+      
+      // Validate that we're waiting for card selection
+      if (!state.removeOneEffectState.awaitingCardSelection) {
+        throw new Error('Remove One effect is not awaiting card selection')
+      }
+      
+      // Validate offerId (player index)
+      if (offerId < 0 || offerId >= state.players.length) {
+        throw new Error(`Invalid offer ID: ${offerId}`)
+      }
+      
+      // Validate that the player is not the buyer (buyers don't have offers)
+      if (offerId === state.currentBuyerIndex) {
+        throw new Error('Cannot remove cards from buyer\'s offer (buyer has no offer)')
+      }
+      
+      const targetPlayer = state.players[offerId]
+      
+      // Validate that the player has an offer
+      if (targetPlayer.offer.length === 0) {
+        throw new Error('Player has no offer to remove cards from')
+      }
+      
+      // Validate cardIndex
+      if (cardIndex < 0 || cardIndex >= targetPlayer.offer.length) {
+        throw new Error(`Invalid card index: ${cardIndex}`)
+      }
+      
+      const targetCard = targetPlayer.offer[cardIndex]
+      
+      // Create new state with the card removed from offer and added to discard pile
+      const newState = { ...state }
+      newState.players = state.players.map((player, playerIndex) => {
+        if (playerIndex !== offerId) {
+          return player
+        }
+        
+        // Remove the selected card from the offer
+        const newOffer = player.offer.filter((_, index) => index !== cardIndex)
+        
+        // Update positions for remaining cards
+        const updatedOffer = newOffer.map((card, index) => ({
+          ...card,
+          position: index
+        }))
+        
+        return {
+          ...player,
+          offer: updatedOffer
+        }
+      })
+      
+      // Add the removed card to discard pile (convert back to regular Card)
+      const discardedCard: Card = {
+        id: targetCard.id,
+        type: targetCard.type,
+        subtype: targetCard.subtype,
+        name: targetCard.name,
+        setSize: targetCard.setSize,
+        effect: targetCard.effect
+      }
+      newState.discardPile = [...state.discardPile, discardedCard]
+      
+      // Clear the Remove One effect state
+      newState.removeOneEffectState = null
+      newState.phaseInstructions = getPhaseInstructions(state.currentPhase)
+      
+      // Continue with action phase - advance to next eligible player
+      return advanceToNextEligiblePlayerInActionPhase(newState)
+    }
+    
     
     default:
       return state
@@ -1643,11 +1726,16 @@ function executeActionCardEffect(state: GameState, actionCard: Card, playerId: n
     }
     
     case 'remove-one': {
-      // Remove One: Player discards one card from their hand
-      // For now, we'll just return the state as-is since the actual card selection
-      // will be handled by subsequent actions or UI interactions
-      // The effect is that the player must discard a card
-      return state
+      // Remove One: Allow player to select one card from any offer to discard
+      // Set up the effect state to await card selection
+      return {
+        ...state,
+        removeOneEffectState: {
+          playerId,
+          awaitingCardSelection: true
+        },
+        phaseInstructions: `${state.players[playerId].name} played Remove One. Select a card from any offer to remove.`
+      }
     }
     
     case 'remove-two': {
@@ -1986,6 +2074,16 @@ export function decrementPassCounter(state: GameState): GameState {
 export function shouldEndActionPhase(state: GameState): boolean {
   // If a Flip One effect is active, don't end the action phase
   if (state.flipOneEffectState && state.flipOneEffectState.awaitingCardSelection) {
+    return false
+  }
+  
+  // If an Add One effect is active, don't end the action phase
+  if (state.addOneEffectState && (state.addOneEffectState.awaitingHandCardSelection || state.addOneEffectState.awaitingOfferSelection)) {
+    return false
+  }
+  
+  // If a Remove One effect is active, don't end the action phase
+  if (state.removeOneEffectState && state.removeOneEffectState.awaitingCardSelection) {
     return false
   }
   
