@@ -18,6 +18,7 @@ interface PlayerAreaProps {
   onAddOneHandCardSelect?: (cardId: string) => void;
   onAddOneOfferSelect?: () => void;
   onRemoveOneCardSelect?: (cardIndex: number) => void;
+  onRemoveTwoCardSelect?: (cardIndex: number) => void;
   canFlipCards: boolean;
   canSelectOffer: boolean;
   canSelectGotchaCards?: boolean;
@@ -25,6 +26,7 @@ interface PlayerAreaProps {
   canSelectAddOneHandCards?: boolean;
   canSelectAddOneOffers?: boolean;
   canSelectRemoveOneCards?: boolean;
+  canSelectRemoveTwoCards?: boolean;
 }
 
 interface HandProps {
@@ -43,6 +45,7 @@ interface OfferAreaProps {
   canSelectFlipOneCards?: boolean;
   canSelectAddOneOffers?: boolean;
   canSelectRemoveOneCards?: boolean;
+  canSelectRemoveTwoCards?: boolean;
   onCardClick?: (card: OfferCard, index: number) => void;
   onOfferClick?: () => void;
   onDrop?: (cards: Card[], faceUpIndex: number) => void;
@@ -105,7 +108,7 @@ const Hand: React.FC<HandProps> = ({ cards, isOwnHand, onCardDrag, onCardClick, 
 };
 
 // OfferArea sub-component
-const OfferArea: React.FC<OfferAreaProps> = ({ offer, isOwnOffer, canFlipCards, canSelectFlipOneCards = false, canSelectAddOneOffers = false, canSelectRemoveOneCards = false, onCardClick, onOfferClick, onDrop, onStartOfferSelection }) => {
+const OfferArea: React.FC<OfferAreaProps> = ({ offer, isOwnOffer, canFlipCards, canSelectFlipOneCards = false, canSelectAddOneOffers = false, canSelectRemoveOneCards = false, canSelectRemoveTwoCards = false, onCardClick, onOfferClick, onDrop, onStartOfferSelection }) => {
   const [isDragOver, setIsDragOver] = React.useState(false)
 
   const getCardDisplayState = (offerCard: OfferCard): CardDisplayState => {
@@ -183,6 +186,9 @@ const OfferArea: React.FC<OfferAreaProps> = ({ offer, isOwnOffer, canFlipCards, 
           {canSelectRemoveOneCards && offer.length > 0 && (
             <span className="offer-area__remove-one-hint"> (Click card to remove)</span>
           )}
+          {canSelectRemoveTwoCards && offer.length > 0 && (
+            <span className="offer-area__remove-two-hint"> (Click cards to remove - 2 total)</span>
+          )}
         </h4>
       </div>
       <div className="offer-area__cards">
@@ -201,6 +207,8 @@ const OfferArea: React.FC<OfferAreaProps> = ({ offer, isOwnOffer, canFlipCards, 
                   canSelectFlipOneCards && !offerCard.faceUp ? 'offer-area__card--flip-one-selectable' : ''
                 } ${
                   canSelectRemoveOneCards ? 'offer-area__card--remove-one-selectable' : ''
+                } ${
+                  canSelectRemoveTwoCards ? 'offer-area__card--remove-two-selectable' : ''
                 }`}
               />
             ))
@@ -294,13 +302,15 @@ export const PlayerArea: React.FC<PlayerAreaProps> = ({
   onAddOneHandCardSelect,
   onAddOneOfferSelect,
   onRemoveOneCardSelect,
+  onRemoveTwoCardSelect,
   canFlipCards,
   canSelectOffer,
   canSelectGotchaCards = false,
   canSelectFlipOneCards = false,
   canSelectAddOneHandCards = false,
   canSelectAddOneOffers = false,
-  canSelectRemoveOneCards = false
+  canSelectRemoveOneCards = false,
+  canSelectRemoveTwoCards = false
 }) => {
   const isOwnPerspective = player.id === perspective;
   const [selectedCards, setSelectedCards] = React.useState<Card[]>([])
@@ -360,6 +370,13 @@ export const PlayerArea: React.FC<PlayerAreaProps> = ({
   };
 
   const handleOfferCardClick = (offerCard: OfferCard, index: number) => {
+    // Handle Remove Two card selection during action phase
+    if (canSelectRemoveTwoCards && onRemoveTwoCardSelect) {
+      console.log('Selecting card for Remove Two effect:', offerCard.name);
+      onRemoveTwoCardSelect(index);
+      return;
+    }
+
     // Handle Remove One card selection during action phase
     if (canSelectRemoveOneCards && onRemoveOneCardSelect) {
       console.log('Selecting card for Remove One effect:', offerCard.name);
@@ -520,6 +537,7 @@ export const PlayerArea: React.FC<PlayerAreaProps> = ({
             canSelectFlipOneCards={canSelectFlipOneCards}
             canSelectAddOneOffers={canSelectAddOneOffers}
             canSelectRemoveOneCards={canSelectRemoveOneCards}
+            canSelectRemoveTwoCards={canSelectRemoveTwoCards}
             onCardClick={handleOfferCardClick}
             onOfferClick={handleAddOneOfferClick}
             onDrop={handleOfferDrop}

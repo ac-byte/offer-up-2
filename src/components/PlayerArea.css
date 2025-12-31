@@ -559,3 +559,23 @@
   font-size: 0.8em;
   font-weight: normal;
 }
+
+/* Remove Two Effect Styles */
+.offer-area__card--remove-two-selectable {
+  cursor: pointer;
+  border: 2px solid #fd7e14;
+  box-shadow: 0 0 8px rgba(253, 126, 20, 0.3);
+  transition: all 0.2s ease;
+}
+
+.offer-area__card--remove-two-selectable:hover {
+  border-color: #e8590c;
+  box-shadow: 0 0 12px rgba(253, 126, 20, 0.5);
+  transform: translateY(-2px);
+}
+
+.offer-area__remove-two-hint {
+  color: #fd7e14;
+  font-size: 0.8em;
+  font-weight: normal;
+}

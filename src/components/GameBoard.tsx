@@ -135,6 +135,16 @@ export const GameBoard: React.FC = () => {
     }
   }
 
+  const handleRemoveTwoCardSelect = (offerId: number, cardIndex: number) => {
+    const action: GameAction = { type: 'SELECT_REMOVE_TWO_CARD', offerId, cardIndex }
+    try {
+      dispatch(action)
+    } catch (error) {
+      console.error('Error selecting card for Remove Two:', error)
+      // In a real app, you'd show this error to the user
+    }
+  }
+
   const handleStealAPointTargetSelect = (targetPlayerId: number) => {
     const action: GameAction = { type: 'SELECT_STEAL_A_POINT_TARGET', targetPlayerId }
     try {
@@ -550,6 +560,14 @@ export const GameBoard: React.FC = () => {
               gameState.currentPhase === GamePhase.ACTION_PHASE &&
               gameState.removeOneEffectState !== null &&
               gameState.removeOneEffectState.awaitingCardSelection &&
+              index !== gameState.currentBuyerIndex && // Can't remove from buyer's offer (buyer has no offer)
+              player.offer.length > 0 // Player must have an offer
+            }
+            onRemoveTwoCardSelect={(cardIndex) => handleRemoveTwoCardSelect(index, cardIndex)} // New handler for Remove Two
+            canSelectRemoveTwoCards={
+              gameState.currentPhase === GamePhase.ACTION_PHASE &&
+              gameState.removeTwoEffectState !== null &&
+              gameState.removeTwoEffectState.awaitingCardSelection &&
               index !== gameState.currentBuyerIndex && // Can't remove from buyer's offer (buyer has no offer)
               player.offer.length > 0 // Player must have an offer
             }

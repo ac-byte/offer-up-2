@@ -180,7 +180,7 @@ This implementation plan breaks down the trading card game into discrete, testab
     - **Validates: Requirements 39.1, 39.2, 39.3, 39.4**
 
 - [ ] 8.7 Implement Remove Two action card effects
-  - [ ] 8.7.1 Create Remove Two card logic
+  - [x] 8.7.1 Create Remove Two card logic
     - Allow player to select exactly two cards from among all offers
     - Allow selection of both face up and face down cards
     - Allow selection from same offer or different offers

@@ -24,6 +24,7 @@ export interface GameState {
   flipOneEffectState: FlipOneEffectState | null
   addOneEffectState: AddOneEffectState | null
   removeOneEffectState: RemoveOneEffectState | null
+  removeTwoEffectState: RemoveTwoEffectState | null
   stealAPointEffectState: StealAPointEffectState | null
   
   // UI State
@@ -87,6 +88,13 @@ export interface RemoveOneEffectState {
   awaitingCardSelection: boolean
 }
 
+export interface RemoveTwoEffectState {
+  playerId: number // Player who played the Remove Two card
+  awaitingCardSelection: boolean
+  selectedCards: { offerId: number; cardIndex: number }[] // Track selected cards
+  cardsToSelect: number // How many more cards need to be selected (2 initially)
+}
+
 export interface StealAPointEffectState {
   playerId: number // Player who played the Steal A Point card
   awaitingTargetSelection: boolean
@@ -123,6 +131,7 @@ export type GameAction =
   | { type: 'SELECT_ADD_ONE_HAND_CARD'; cardId: string }
   | { type: 'SELECT_ADD_ONE_OFFER'; offerId: number }
   | { type: 'SELECT_REMOVE_ONE_CARD'; offerId: number; cardIndex: number }
+  | { type: 'SELECT_REMOVE_TWO_CARD'; offerId: number; cardIndex: number }
   | { type: 'SELECT_STEAL_A_POINT_TARGET'; targetPlayerId: number }
 
 // Card display states
