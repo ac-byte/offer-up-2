@@ -1216,18 +1216,15 @@ export function handleGotchaCardSelection(state: GameState, cardId: string): Gam
         phaseInstructions: `Buyer must choose to steal or discard ${selectedCard.name}`
       }
     } else if (type === 'twice') {
-      // For Gotcha Twice, initialize per-card choices
-      const cardChoices = newSelectedCards.map(card => ({ card, action: null as 'steal' | 'discard' | null }))
+      // For Gotcha Twice, use the same single-action system as Gotcha Once
       return {
         ...state,
         gotchaEffectState: {
           ...state.gotchaEffectState,
           selectedCards: newSelectedCards,
-          awaitingBuyerChoice: true,
-          cardChoices,
-          currentChoiceIndex: 0
+          awaitingBuyerChoice: true
         },
-        phaseInstructions: `Buyer must choose to steal or discard ${newSelectedCards[0].name} (1 of ${newSelectedCards.length})`
+        phaseInstructions: `Buyer must choose to steal or discard ${selectedCard.name} (${state.gotchaEffectState.twiceIteration} of 2)`
       }
     }
   }
