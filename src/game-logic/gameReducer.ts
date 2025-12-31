@@ -1402,17 +1402,17 @@ export function processGotchaTradeins(state: GameState): GameState {
         if (subtype === 'bad') {
           // Apply Gotcha Bad effect: point penalty and transfer
           newState = applyGotchaBadEffect(newState, playerIndex)
-        } else if (subtype === 'once') {
-          // Apply Gotcha Once effect: buyer selects 1 card to steal/discard
-          newState = applyGotchaOnceEffect(newState, playerIndex)
+        } else if (subtype === 'twice') {
+          // Apply Gotcha Twice effect: buyer selects 2 cards to steal/discard
+          newState = applyGotchaTwiceEffect(newState, playerIndex)
           
           // If buyer interaction is needed, return state with pending effect
           if (newState.gotchaEffectState !== null) {
             return newState
           }
-        } else if (subtype === 'twice') {
-          // Apply Gotcha Twice effect: buyer selects 2 cards to steal/discard
-          newState = applyGotchaTwiceEffect(newState, playerIndex)
+        } else if (subtype === 'once') {
+          // Apply Gotcha Once effect: buyer selects 1 card to steal/discard
+          newState = applyGotchaOnceEffect(newState, playerIndex)
           
           // If buyer interaction is needed, return state with pending effect
           if (newState.gotchaEffectState !== null) {
