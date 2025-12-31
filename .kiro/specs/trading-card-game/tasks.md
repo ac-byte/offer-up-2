@@ -148,7 +148,7 @@ This implementation plan breaks down the trading card game into discrete, testab
     - **Validates: Requirements 37.1, 37.2, 37.3, 37.4**
 
 - [ ] 8.5 Implement Add One action card effects
-  - [ ] 8.5.1 Create Add One card logic
+  - [x] 8.5.1 Create Add One card logic
     - Allow player to select one card from their own hand
     - Allow selection of any existing offer to add card to
     - Add selected card face down to chosen offer

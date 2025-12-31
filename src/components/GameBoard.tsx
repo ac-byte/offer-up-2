@@ -105,6 +105,26 @@ export const GameBoard: React.FC = () => {
     }
   }
 
+  const handleAddOneHandCardSelect = (cardId: string) => {
+    const action: GameAction = { type: 'SELECT_ADD_ONE_HAND_CARD', cardId }
+    try {
+      dispatch(action)
+    } catch (error) {
+      console.error('Error selecting hand card for Add One:', error)
+      // In a real app, you'd show this error to the user
+    }
+  }
+
+  const handleAddOneOfferSelect = (offerId: number) => {
+    const action: GameAction = { type: 'SELECT_ADD_ONE_OFFER', offerId }
+    try {
+      dispatch(action)
+    } catch (error) {
+      console.error('Error selecting offer for Add One:', error)
+      // In a real app, you'd show this error to the user
+    }
+  }
+
   const formatPhaseName = (phase: GamePhase): string => {
     return phase.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
   }
@@ -266,6 +286,38 @@ export const GameBoard: React.FC = () => {
           )
         }
         
+        // Check if there's a pending Add One effect
+        if (gameState.addOneEffectState) {
+          const addOnePlayer = gameState.players[gameState.addOneEffectState.playerId]
+          
+          if (gameState.addOneEffectState.awaitingHandCardSelection) {
+            return (
+              <div className="add-one-effect-controls">
+                <div className="add-one-effect-header">
+                  <strong>{addOnePlayer?.name}</strong> played Add One: Select a card from your hand to add to an offer
+                </div>
+                <div className="add-one-selection-info">
+                  <span>Click on a card in your hand below</span>
+                </div>
+              </div>
+            )
+          }
+          
+          if (gameState.addOneEffectState.awaitingOfferSelection) {
+            const selectedCard = gameState.addOneEffectState.selectedHandCard
+            return (
+              <div className="add-one-effect-controls">
+                <div className="add-one-effect-header">
+                  <strong>{addOnePlayer?.name}</strong> selected <strong>{selectedCard?.name}</strong>: Now select an offer to add it to
+                </div>
+                <div className="add-one-selection-info">
+                  <span>Click on any offer below to add the card face-down</span>
+                </div>
+              </div>
+            )
+          }
+        }
+        
         return (
           <div className="phase-waiting">
             <span>Players can play action cards from their collections...</span>
@@ -377,6 +429,8 @@ export const GameBoard: React.FC = () => {
             onOfferSelect={() => handleOfferSelect(player.id)}
             onGotchaCardSelect={handleGotchaCardSelect}
             onFlipOneCardSelect={(cardIndex) => handleFlipOneCardSelect(index, cardIndex)} // New handler for Flip One
+            onAddOneHandCardSelect={handleAddOneHandCardSelect} // New handler for Add One hand card selection
+            onAddOneOfferSelect={() => handleAddOneOfferSelect(index)} // New handler for Add One offer selection
             canFlipCards={gameState.currentPhase === GamePhase.BUYER_FLIP && gameState.selectedPerspective === gameState.currentBuyerIndex}
             canSelectOffer={gameState.currentPhase === GamePhase.OFFER_SELECTION && gameState.selectedPerspective === gameState.currentBuyerIndex && index !== gameState.currentBuyerIndex && player.offer.length > 0}
             canSelectGotchaCards={
@@ -391,6 +445,20 @@ export const GameBoard: React.FC = () => {
               gameState.flipOneEffectState !== null &&
               gameState.flipOneEffectState.awaitingCardSelection &&
               index !== gameState.currentBuyerIndex && // Can't flip buyer's cards (buyer has no offer)
+              player.offer.length > 0 // Player must have an offer
+            }
+            canSelectAddOneHandCards={
+              gameState.currentPhase === GamePhase.ACTION_PHASE &&
+              gameState.addOneEffectState !== null &&
+              gameState.addOneEffectState.awaitingHandCardSelection &&
+              index === gameState.addOneEffectState.playerId && // Only the player who played Add One can select from their hand
+              gameState.selectedPerspective === gameState.addOneEffectState.playerId
+            }
+            canSelectAddOneOffers={
+              gameState.currentPhase === GamePhase.ACTION_PHASE &&
+              gameState.addOneEffectState !== null &&
+              gameState.addOneEffectState.awaitingOfferSelection &&
+              index !== gameState.currentBuyerIndex && // Can't add to buyer's offer (buyer has no offer)
               player.offer.length > 0 // Player must have an offer
             }
           />

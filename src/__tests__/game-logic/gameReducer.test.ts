@@ -972,13 +972,17 @@ describe('Game Reducer', () => {
         
         const newState = gameReducer(gameState, action)
         
-        // Player should have drawn one card
-        expect(newState.players[0].hand).toHaveLength(1)
-        expect(newState.players[0].hand[0].id).toBe('giant-0')
+        // Add One should set up effect state for hand card selection
+        expect(newState.addOneEffectState).not.toBeNull()
+        expect(newState.addOneEffectState?.playerId).toBe(0)
+        expect(newState.addOneEffectState?.awaitingHandCardSelection).toBe(true)
+        expect(newState.addOneEffectState?.awaitingOfferSelection).toBe(false)
         
-        // Draw pile should have one less card
-        expect(newState.drawPile).toHaveLength(1)
-        expect(newState.drawPile[0].id).toBe('big-0')
+        // Player's hand should remain unchanged (no card drawn)
+        expect(newState.players[0].hand).toHaveLength(0)
+        
+        // Draw pile should remain unchanged
+        expect(newState.drawPile).toHaveLength(2)
       })
 
       test('handles Add One effect when draw pile is empty', () => {
@@ -993,19 +997,21 @@ describe('Game Reducer', () => {
         
         const newState = gameReducer(gameState, action)
         
-        // Player should have drawn one card
-        expect(newState.players[0].hand).toHaveLength(1)
+        // Add One should set up effect state regardless of draw pile status
+        expect(newState.addOneEffectState).not.toBeNull()
+        expect(newState.addOneEffectState?.playerId).toBe(0)
+        expect(newState.addOneEffectState?.awaitingHandCardSelection).toBe(true)
         
-        // Discard pile should have been reshuffled and now contains the played action card
-        expect(newState.discardPile).toHaveLength(1)
-        expect(newState.discardPile[0].id).toBe('add-one-0')
+        // Player's hand should remain unchanged (no card drawn)
+        expect(newState.players[0].hand).toHaveLength(0)
         
-        // Draw pile should have remaining card after reshuffling and drawing
-        expect(newState.drawPile).toHaveLength(1)
+        // Discard pile should contain the played action card
+        expect(newState.discardPile).toHaveLength(3)
+        expect(newState.discardPile[2].id).toBe('add-one-0')
       })
 
       test('handles Add One effect when no cards available', () => {
-        // Empty both piles
+        // Empty both piles (not relevant for Add One anymore, but test still valid)
         gameState.drawPile = []
         gameState.discardPile = []
         
@@ -1013,7 +1019,12 @@ describe('Game Reducer', () => {
         
         const newState = gameReducer(gameState, action)
         
-        // Player should not have drawn any cards
+        // Add One should still set up effect state regardless of draw pile status
+        expect(newState.addOneEffectState).not.toBeNull()
+        expect(newState.addOneEffectState?.playerId).toBe(0)
+        expect(newState.addOneEffectState?.awaitingHandCardSelection).toBe(true)
+        
+        // Player should not have any cards in hand (unchanged)
         expect(newState.players[0].hand).toHaveLength(0)
         
         // Action card should still be discarded

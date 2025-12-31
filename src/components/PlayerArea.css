@@ -483,3 +483,60 @@
     box-shadow: 0 0 16px rgba(255, 107, 53, 0.6);
   }
 }
+/* Add One Effect Styles */
+.hand--add-one-selectable {
+  border: 2px dashed #17a2b8;
+  background-color: #e6f7ff;
+}
+
+.hand__add-one-hint {
+  font-size: 0.8em;
+  color: #17a2b8;
+  font-style: italic;
+}
+
+.hand__card--add-one-selectable {
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.hand__card--add-one-selectable:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 8px rgba(23, 162, 184, 0.3);
+}
+
+.offer-area--add-one-selectable {
+  border: 2px dashed #17a2b8;
+  background-color: #e6f7ff;
+  cursor: pointer;
+}
+
+.offer-area--add-one-selectable:hover {
+  background-color: #d1ecf1;
+}
+
+.offer-area__add-one-hint {
+  font-size: 0.8em;
+  color: #17a2b8;
+  font-style: italic;
+}
+
+.add-one-effect-controls {
+  background-color: #e6f7ff;
+  border: 2px solid #17a2b8;
+  border-radius: 8px;
+  padding: 16px;
+  margin: 8px 0;
+}
+
+.add-one-effect-header {
+  font-size: 1.1em;
+  margin-bottom: 8px;
+  color: #0c5460;
+}
+
+.add-one-selection-info {
+  font-size: 0.9em;
+  color: #17a2b8;
+  font-style: italic;
+}

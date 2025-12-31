@@ -18,6 +18,7 @@ export function createInitialGameState(): GameState {
     actionPhasePlayersWithActionCards: [],
     gotchaEffectState: null,
     flipOneEffectState: null,
+    addOneEffectState: null,
     selectedPerspective: 0,
     phaseInstructions: 'Waiting for game to start...',
     autoFollowPerspective: true,
@@ -129,6 +130,11 @@ export function validatePhaseAction(phase: GamePhase, action: GameAction): boole
     
     case 'SELECT_FLIP_ONE_CARD':
       // Flip One card selection is only allowed during action phase when effect is active
+      return phase === GamePhase.ACTION_PHASE
+    
+    case 'SELECT_ADD_ONE_HAND_CARD':
+    case 'SELECT_ADD_ONE_OFFER':
+      // Add One card/offer selection is only allowed during action phase when effect is active
       return phase === GamePhase.ACTION_PHASE
     
     default:
@@ -1050,6 +1056,111 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       return advanceToNextEligiblePlayerInActionPhase(newState)
     }
     
+    case 'SELECT_ADD_ONE_HAND_CARD': {
+      const { cardId } = action
+      
+      // Validate that we're in an Add One effect state
+      if (!state.addOneEffectState) {
+        throw new Error('No Add One effect is currently active')
+      }
+      
+      // Validate that we're waiting for hand card selection
+      if (!state.addOneEffectState.awaitingHandCardSelection) {
+        throw new Error('Add One effect is not awaiting hand card selection')
+      }
+      
+      const playerId = state.addOneEffectState.playerId
+      const player = state.players[playerId]
+      
+      // Find the selected card in player's hand
+      const selectedCard = player.hand.find(card => card.id === cardId)
+      if (!selectedCard) {
+        throw new Error(`Card with ID ${cardId} not found in player's hand`)
+      }
+      
+      // Update state to await offer selection
+      return {
+        ...state,
+        addOneEffectState: {
+          ...state.addOneEffectState,
+          awaitingHandCardSelection: false,
+          selectedHandCard: selectedCard,
+          awaitingOfferSelection: true
+        },
+        phaseInstructions: `${player.name} selected ${selectedCard.name}. Now select an offer to add it to.`
+      }
+    }
+    
+    case 'SELECT_ADD_ONE_OFFER': {
+      const { offerId } = action
+      
+      // Validate that we're in an Add One effect state
+      if (!state.addOneEffectState) {
+        throw new Error('No Add One effect is currently active')
+      }
+      
+      // Validate that we're waiting for offer selection
+      if (!state.addOneEffectState.awaitingOfferSelection) {
+        throw new Error('Add One effect is not awaiting offer selection')
+      }
+      
+      // Validate that we have a selected hand card
+      if (!state.addOneEffectState.selectedHandCard) {
+        throw new Error('No hand card selected for Add One effect')
+      }
+      
+      // Validate offerId (player index)
+      if (offerId < 0 || offerId >= state.players.length) {
+        throw new Error(`Invalid offer ID: ${offerId}`)
+      }
+      
+      // Validate that the player is not the buyer (buyers don't have offers)
+      if (offerId === state.currentBuyerIndex) {
+        throw new Error('Cannot add cards to buyer\'s offer (buyer has no offer)')
+      }
+      
+      const targetPlayer = state.players[offerId]
+      
+      // Validate that the player has an offer
+      if (targetPlayer.offer.length === 0) {
+        throw new Error('Player has no offer to add cards to')
+      }
+      
+      const playerId = state.addOneEffectState.playerId
+      const selectedCard = state.addOneEffectState.selectedHandCard
+      
+      // Create new state with the card moved from hand to offer
+      const newState = { ...state }
+      newState.players = state.players.map((player, playerIndex) => {
+        if (playerIndex === playerId) {
+          // Remove selected card from player's hand
+          return {
+            ...player,
+            hand: player.hand.filter(card => card.id !== selectedCard.id)
+          }
+        } else if (playerIndex === offerId) {
+          // Add selected card face down to target player's offer
+          const newOfferCard = {
+            ...selectedCard,
+            faceUp: false,
+            position: player.offer.length // Add at the end
+          }
+          return {
+            ...player,
+            offer: [...player.offer, newOfferCard]
+          }
+        }
+        return player
+      })
+      
+      // Clear the Add One effect state
+      newState.addOneEffectState = null
+      newState.phaseInstructions = getPhaseInstructions(state.currentPhase)
+      
+      // Continue with action phase - advance to next eligible player
+      return advanceToNextEligiblePlayerInActionPhase(newState)
+    }
+    
     
     default:
       return state
@@ -1518,40 +1629,17 @@ function executeActionCardEffect(state: GameState, actionCard: Card, playerId: n
     }
     
     case 'add-one': {
-      // Add One: Player draws one additional card from the draw pile
-      const newState = { ...state }
-      newState.players = [...state.players]
-      newState.drawPile = [...state.drawPile]
-      newState.discardPile = [...state.discardPile]
-      
-      // Check if we need to reshuffle (excluding the action card that was just played)
-      if (newState.drawPile.length === 0) {
-        if (newState.discardPile.length === 0) {
-          // No cards available - effect cannot be executed
-          return newState
-        }
-        
-        // Reshuffle discard pile into draw pile (excluding the action card just played)
-        const cardsToReshuffle = newState.discardPile.filter(card => card.id !== actionCard.id)
-        if (cardsToReshuffle.length === 0) {
-          // No cards available after filtering out the action card
-          return newState
-        }
-        
-        newState.drawPile = shuffleArray(cardsToReshuffle)
-        newState.discardPile = [actionCard] // Keep only the played action card in discard
+      // Add One: Allow player to select one card from their hand and add it to any existing offer
+      // Set up the effect state to await hand card selection first
+      return {
+        ...state,
+        addOneEffectState: {
+          playerId,
+          awaitingHandCardSelection: true,
+          awaitingOfferSelection: false
+        },
+        phaseInstructions: `${state.players[playerId].name} played Add One. Select a card from your hand to add to an offer.`
       }
-      
-      // Draw one card for the player
-      if (newState.drawPile.length > 0) {
-        const drawnCard = newState.drawPile.shift()!
-        newState.players[playerId] = {
-          ...newState.players[playerId],
-          hand: [...newState.players[playerId].hand, drawnCard]
-        }
-      }
-      
-      return newState
     }
     
     case 'remove-one': {

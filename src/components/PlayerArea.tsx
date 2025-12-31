@@ -15,10 +15,14 @@ interface PlayerAreaProps {
   onOfferSelect: () => void;
   onGotchaCardSelect?: (cardId: string) => void;
   onFlipOneCardSelect?: (cardIndex: number) => void;
+  onAddOneHandCardSelect?: (cardId: string) => void;
+  onAddOneOfferSelect?: () => void;
   canFlipCards: boolean;
   canSelectOffer: boolean;
   canSelectGotchaCards?: boolean;
   canSelectFlipOneCards?: boolean;
+  canSelectAddOneHandCards?: boolean;
+  canSelectAddOneOffers?: boolean;
 }
 
 interface HandProps {
@@ -27,6 +31,7 @@ interface HandProps {
   onCardDrag?: (card: Card) => void;
   onCardClick?: (card: Card) => void;
   selectedCards?: Card[];
+  canSelectAddOneCards?: boolean;
 }
 
 interface OfferAreaProps {
@@ -34,7 +39,9 @@ interface OfferAreaProps {
   isOwnOffer: boolean;
   canFlipCards: boolean;
   canSelectFlipOneCards?: boolean;
+  canSelectAddOneOffers?: boolean;
   onCardClick?: (card: OfferCard, index: number) => void;
+  onOfferClick?: () => void;
   onDrop?: (cards: Card[], faceUpIndex: number) => void;
   onStartOfferSelection?: (initialCard?: Card) => void;
 }
@@ -47,7 +54,7 @@ interface CollectionAreaProps {
 }
 
 // Hand sub-component
-const Hand: React.FC<HandProps> = ({ cards, isOwnHand, onCardDrag, onCardClick, selectedCards = [] }) => {
+const Hand: React.FC<HandProps> = ({ cards, isOwnHand, onCardDrag, onCardClick, selectedCards = [], canSelectAddOneCards = false }) => {
   const getCardDisplayState = (card: Card): CardDisplayState => {
     return isOwnHand ? 'face_up' : 'face_down';
   };
@@ -56,10 +63,23 @@ const Hand: React.FC<HandProps> = ({ cards, isOwnHand, onCardDrag, onCardClick, 
     return selectedCards.some(c => c.id === card.id)
   }
 
+  const handleCardClick = (card: Card) => {
+    if (canSelectAddOneCards && isOwnHand) {
+      // For Add One effect, clicking selects the card
+      onCardClick?.(card)
+    } else {
+      // Normal card click behavior
+      onCardClick?.(card)
+    }
+  }
+
   return (
-    <div className="hand">
+    <div className={`hand ${canSelectAddOneCards && isOwnHand ? 'hand--add-one-selectable' : ''}`}>
       <div className="hand__header">
         <h4 className="hand__title">Hand ({cards.length})</h4>
+        {canSelectAddOneCards && isOwnHand && (
+          <div className="hand__add-one-hint">Click a card to add to an offer</div>
+        )}
       </div>
       <div className="hand__cards">
         {cards.map((card, index) => (
@@ -67,10 +87,10 @@ const Hand: React.FC<HandProps> = ({ cards, isOwnHand, onCardDrag, onCardClick, 
             key={`${card.id}-${index}`}
             card={card}
             displayState={getCardDisplayState(card)}
-            draggable={isOwnHand}
+            draggable={isOwnHand && !canSelectAddOneCards}
             onDragStart={onCardDrag}
-            onClick={() => onCardClick?.(card)}
-            className={`hand__card ${isCardSelected(card) ? 'hand__card--selected' : ''}`}
+            onClick={() => handleCardClick(card)}
+            className={`hand__card ${isCardSelected(card) ? 'hand__card--selected' : ''} ${canSelectAddOneCards && isOwnHand ? 'hand__card--add-one-selectable' : ''}`}
           />
         ))}
         {cards.length === 0 && (
@@ -82,7 +102,7 @@ const Hand: React.FC<HandProps> = ({ cards, isOwnHand, onCardDrag, onCardClick, 
 };
 
 // OfferArea sub-component
-const OfferArea: React.FC<OfferAreaProps> = ({ offer, isOwnOffer, canFlipCards, canSelectFlipOneCards = false, onCardClick, onDrop, onStartOfferSelection }) => {
+const OfferArea: React.FC<OfferAreaProps> = ({ offer, isOwnOffer, canFlipCards, canSelectFlipOneCards = false, canSelectAddOneOffers = false, onCardClick, onOfferClick, onDrop, onStartOfferSelection }) => {
   const [isDragOver, setIsDragOver] = React.useState(false)
 
   const getCardDisplayState = (offerCard: OfferCard): CardDisplayState => {
@@ -126,10 +146,18 @@ const OfferArea: React.FC<OfferAreaProps> = ({ offer, isOwnOffer, canFlipCards, 
     }
   };
 
+  const handleOfferAreaClick = () => {
+    if (canSelectAddOneOffers && offer.length > 0) {
+      // For Add One effect, clicking the offer area selects this offer
+      onOfferClick?.()
+    }
+  }
+
   const offerAreaClasses = [
     'offer-area',
     isDragOver ? 'offer-area--drag-over' : '',
-    isOwnOffer ? 'offer-area--own' : ''
+    isOwnOffer ? 'offer-area--own' : '',
+    canSelectAddOneOffers && offer.length > 0 ? 'offer-area--add-one-selectable' : ''
   ].filter(Boolean).join(' ')
 
   return (
@@ -138,12 +166,16 @@ const OfferArea: React.FC<OfferAreaProps> = ({ offer, isOwnOffer, canFlipCards, 
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
+      onClick={handleOfferAreaClick}
     >
       <div className="offer-area__header">
         <h4 className="offer-area__title">
           Offer Area
           {canSelectFlipOneCards && (
             <span className="offer-area__flip-one-hint"> (Click face-down card to flip)</span>
+          )}
+          {canSelectAddOneOffers && offer.length > 0 && (
+            <span className="offer-area__add-one-hint"> (Click to add card here)</span>
           )}
         </h4>
       </div>
@@ -251,10 +283,14 @@ export const PlayerArea: React.FC<PlayerAreaProps> = ({
   onOfferSelect,
   onGotchaCardSelect,
   onFlipOneCardSelect,
+  onAddOneHandCardSelect,
+  onAddOneOfferSelect,
   canFlipCards,
   canSelectOffer,
   canSelectGotchaCards = false,
-  canSelectFlipOneCards = false
+  canSelectFlipOneCards = false,
+  canSelectAddOneHandCards = false,
+  canSelectAddOneOffers = false
 }) => {
   const isOwnPerspective = player.id === perspective;
   const [selectedCards, setSelectedCards] = React.useState<Card[]>([])
@@ -274,6 +310,12 @@ export const PlayerArea: React.FC<PlayerAreaProps> = ({
   };
 
   const handleCardClick = (card: Card) => {
+    // Handle Add One hand card selection during action phase
+    if (canSelectAddOneHandCards && onAddOneHandCardSelect) {
+      onAddOneHandCardSelect(card.id);
+      return;
+    }
+
     // Handle card selection for offers during offer phase
     if (phase === GamePhase.OFFER_PHASE && isOwnPerspective && !isBuyer && player.offer.length === 0) {
       if (isSelectingOffer) {
@@ -320,6 +362,13 @@ export const PlayerArea: React.FC<PlayerAreaProps> = ({
     if (canFlipCards && !offerCard.faceUp) {
       console.log('Buyer attempting to flip card:', offerCard.name);
       onCardFlip(index);
+    }
+  };
+
+  const handleAddOneOfferClick = () => {
+    // Handle Add One offer selection during action phase
+    if (canSelectAddOneOffers && onAddOneOfferSelect) {
+      onAddOneOfferSelect();
     }
   };
 
@@ -442,6 +491,7 @@ export const PlayerArea: React.FC<PlayerAreaProps> = ({
             onCardDrag={handleCardDrag}
             onCardClick={handleCardClick}
             selectedCards={isSelectingOffer ? selectedCards : []}
+            canSelectAddOneCards={canSelectAddOneHandCards}
           />
         </div>
 
@@ -451,7 +501,9 @@ export const PlayerArea: React.FC<PlayerAreaProps> = ({
             isOwnOffer={isOwnPerspective}
             canFlipCards={canFlipCards}
             canSelectFlipOneCards={canSelectFlipOneCards}
+            canSelectAddOneOffers={canSelectAddOneOffers}
             onCardClick={handleOfferCardClick}
+            onOfferClick={handleAddOneOfferClick}
             onDrop={handleOfferDrop}
             onStartOfferSelection={handleStartOfferSelection}
           />
