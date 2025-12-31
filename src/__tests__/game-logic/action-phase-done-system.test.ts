@@ -2,6 +2,7 @@ import {
   gameReducer, 
   createInitialGameState,
   initializeActionPhaseDoneSystem,
+  initializeActionPhase,
   resetDoneStates,
   markPlayerAsDone,
   shouldEndActionPhase,
@@ -349,6 +350,56 @@ describe('Action Phase Done System', () => {
       
       // Should continue with Charlie
       expect(state.currentPlayerIndex).toBe(2)
+    })
+  })
+
+  describe('Action Phase Auto-Advancement', () => {
+    test('automatically advances to next phase when no players have action cards at start', () => {
+      // Create a state where no players have action cards
+      const state: GameState = {
+        ...createInitialGameState(),
+        players: [
+          { id: 0, name: 'Alice', hand: [], offer: [], collection: [], points: 0, hasMoney: true },
+          { id: 1, name: 'Bob', hand: [], offer: [], collection: [], points: 0, hasMoney: false },
+          { id: 2, name: 'Charlie', hand: [], offer: [], collection: [], points: 0, hasMoney: false }
+        ],
+        currentPhase: GamePhase.ACTION_PHASE,
+        currentBuyerIndex: 0,
+        currentPlayerIndex: 0,
+        gameStarted: true
+      }
+
+      // Initialize the action phase
+      const newState = initializeActionPhase(state)
+
+      // Should automatically advance to offer selection phase since no one has action cards
+      expect(newState.currentPhase).toBe(GamePhase.OFFER_SELECTION)
+      expect(newState.actionPhaseDoneStates).toEqual([]) // Should be cleared when advancing
+    })
+
+    test('stays in action phase when some players have action cards at start', () => {
+      // Create a state where some players have action cards
+      const state: GameState = {
+        ...createInitialGameState(),
+        players: [
+          { id: 0, name: 'Alice', hand: [], offer: [], collection: [
+            { id: 'action1', type: 'action', subtype: 'flip_one', name: 'Flip One', setSize: 1, effect: 'flip_one' }
+          ], points: 0, hasMoney: true },
+          { id: 1, name: 'Bob', hand: [], offer: [], collection: [], points: 0, hasMoney: false },
+          { id: 2, name: 'Charlie', hand: [], offer: [], collection: [], points: 0, hasMoney: false }
+        ],
+        currentPhase: GamePhase.ACTION_PHASE,
+        currentBuyerIndex: 0,
+        currentPlayerIndex: 0,
+        gameStarted: true
+      }
+
+      // Initialize the action phase
+      const newState = initializeActionPhase(state)
+
+      // Should stay in action phase since Alice has an action card
+      expect(newState.currentPhase).toBe(GamePhase.ACTION_PHASE)
+      expect(newState.actionPhaseDoneStates).toEqual([false, true, true]) // Alice not done, others done
     })
   })
 })

@@ -2117,7 +2117,7 @@ export function advanceToNextPhaseWithInitialization(state: GameState): GameStat
 /**
  * Initializes the action phase with proper done system setup
  * @param state Current game state that should be in action phase
- * @returns Updated state with done system initialized
+ * @returns Updated state with done system initialized, or advanced to next phase if action phase should end immediately
  */
 export function initializeActionPhase(state: GameState): GameState {
   if (state.currentPhase !== GamePhase.ACTION_PHASE) {
@@ -2125,7 +2125,14 @@ export function initializeActionPhase(state: GameState): GameState {
   }
   
   // Initialize the done system immediately when entering action phase
-  return initializeActionPhaseDoneSystem(state)
+  const stateWithDoneSystem = initializeActionPhaseDoneSystem(state)
+  
+  // Check if action phase should end immediately (e.g., no players have action cards)
+  if (shouldEndActionPhase(stateWithDoneSystem)) {
+    return endActionPhaseAndAdvance(stateWithDoneSystem)
+  }
+  
+  return stateWithDoneSystem
 }
 
 /**

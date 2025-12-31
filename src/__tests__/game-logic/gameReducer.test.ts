@@ -16,7 +16,7 @@ import {
   handleWinnerDeterminationPhase
 } from '../../game-logic/gameReducer'
 import { GamePhase } from '../../types'
-import { createThingCard, createGotchaCard } from '../../game-logic/cards'
+import { createThingCard, createGotchaCard, createActionCard } from '../../game-logic/cards'
 
 describe('Game Reducer', () => {
   describe('createInitialGameState', () => {
@@ -443,9 +443,10 @@ describe('Game Reducer', () => {
 
     describe('ADVANCE_PHASE action', () => {
       test('advances through phases in correct order', () => {
-        let state = { ...initialState, currentPhase: GamePhase.BUYER_ASSIGNMENT }
-        
+        // This test verifies the basic phase order using the advanceToNextPhase function
+        // It doesn't test the full game logic with auto-advancement
         const phases = [
+          GamePhase.BUYER_ASSIGNMENT,
           GamePhase.DEAL,
           GamePhase.OFFER_PHASE,
           GamePhase.BUYER_FLIP,
@@ -454,14 +455,34 @@ describe('Game Reducer', () => {
           GamePhase.OFFER_DISTRIBUTION,
           GamePhase.GOTCHA_TRADEINS,
           GamePhase.THING_TRADEINS,
-          GamePhase.WINNER_DETERMINATION,
-          GamePhase.BUYER_ASSIGNMENT // Back to start
+          GamePhase.WINNER_DETERMINATION
         ]
         
-        for (const expectedPhase of phases) {
-          state = gameReducer(state, { type: 'ADVANCE_PHASE' })
-          expect(state.currentPhase).toBe(expectedPhase)
+        for (let i = 0; i < phases.length; i++) {
+          const currentPhase = phases[i]
+          const expectedNextPhase = phases[(i + 1) % phases.length]
+          
+          const result = advanceToNextPhase(currentPhase, 1)
+          expect(result.nextPhase).toBe(expectedNextPhase)
         }
+      })
+
+      test('action phase auto-advances when no players have action cards', () => {
+        let state = { ...initialState, currentPhase: GamePhase.BUYER_FLIP }
+        
+        // Add players to the state with no action cards
+        state.players = [
+          createPlayer(0, 'Alice'),
+          createPlayer(1, 'Bob'),
+          createPlayer(2, 'Charlie')
+        ]
+        state.currentBuyerIndex = 0
+        
+        // Advance from buyer-flip to action phase
+        state = gameReducer(state, { type: 'ADVANCE_PHASE' })
+        
+        // Should auto-advance to offer selection since no players have action cards
+        expect(state.currentPhase).toBe(GamePhase.OFFER_SELECTION)
       })
 
       test('increments round when returning to buyer assignment', () => {
@@ -798,6 +819,11 @@ describe('Game Reducer', () => {
         // Create a game state with 3 players in buyer-flip phase
         gameState = gameReducer(initialState, { type: 'START_GAME', players: ['Alice', 'Bob', 'Charlie'] })
         gameState = { ...gameState, currentPhase: GamePhase.BUYER_FLIP, currentBuyerIndex: 0 }
+        
+        // Give players some action cards so action phase doesn't auto-advance
+        gameState.players[0].collection = [createActionCard('flip-one', 0)]
+        gameState.players[1].collection = [createActionCard('add-one', 0)]
+        gameState.players[2].collection = [createActionCard('remove-one', 0)]
         
         // Set up offers for sellers (Bob and Charlie)
         const testCards = [
