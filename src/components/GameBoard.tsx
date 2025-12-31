@@ -95,6 +95,16 @@ export const GameBoard: React.FC = () => {
     }
   }
 
+  const handleFlipOneCardSelect = (offerId: number, cardIndex: number) => {
+    const action: GameAction = { type: 'SELECT_FLIP_ONE_CARD', offerId, cardIndex }
+    try {
+      dispatch(action)
+    } catch (error) {
+      console.error('Error selecting card for Flip One:', error)
+      // In a real app, you'd show this error to the user
+    }
+  }
+
   const formatPhaseName = (phase: GamePhase): string => {
     return phase.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
   }
@@ -240,6 +250,31 @@ export const GameBoard: React.FC = () => {
           )
         }
       
+      case GamePhase.ACTION_PHASE:
+        // Check if there's a pending Flip One effect
+        if (gameState.flipOneEffectState && gameState.flipOneEffectState.awaitingCardSelection) {
+          const flipOnePlayer = gameState.players[gameState.flipOneEffectState.playerId]
+          return (
+            <div className="flip-one-effect-controls">
+              <div className="flip-one-effect-header">
+                <strong>{flipOnePlayer?.name}</strong> played Flip One: Select a face-down card from any offer to flip
+              </div>
+              <div className="flip-one-selection-info">
+                <span>Click on any face-down card in the offers below</span>
+              </div>
+            </div>
+          )
+        }
+        
+        return (
+          <div className="phase-waiting">
+            <span>Players can play action cards from their collections...</span>
+            <button onClick={handleAdvancePhase} className="action-button secondary">
+              Skip Phase (Debug)
+            </button>
+          </div>
+        )
+      
       default:
         return (
           <div className="phase-waiting">
@@ -341,6 +376,7 @@ export const GameBoard: React.FC = () => {
             onCardFlip={(cardIndex) => handleCardFlip(index, cardIndex)} // index is the player index (offerId)
             onOfferSelect={() => handleOfferSelect(player.id)}
             onGotchaCardSelect={handleGotchaCardSelect}
+            onFlipOneCardSelect={(cardIndex) => handleFlipOneCardSelect(index, cardIndex)} // New handler for Flip One
             canFlipCards={gameState.currentPhase === GamePhase.BUYER_FLIP && gameState.selectedPerspective === gameState.currentBuyerIndex}
             canSelectOffer={gameState.currentPhase === GamePhase.OFFER_SELECTION && gameState.selectedPerspective === gameState.currentBuyerIndex && index !== gameState.currentBuyerIndex && player.offer.length > 0}
             canSelectGotchaCards={
@@ -349,6 +385,13 @@ export const GameBoard: React.FC = () => {
               !gameState.gotchaEffectState.awaitingBuyerChoice &&
               gameState.gotchaEffectState.affectedPlayerIndex === index &&
               gameState.selectedPerspective === gameState.currentBuyerIndex
+            }
+            canSelectFlipOneCards={
+              gameState.currentPhase === GamePhase.ACTION_PHASE &&
+              gameState.flipOneEffectState !== null &&
+              gameState.flipOneEffectState.awaitingCardSelection &&
+              index !== gameState.currentBuyerIndex && // Can't flip buyer's cards (buyer has no offer)
+              player.offer.length > 0 // Player must have an offer
             }
           />
         ))}

@@ -474,3 +474,23 @@
   color: #6c757d;
   font-size: 0.9rem;
 }
+/* Flip One Effect Controls */
+.flip-one-effect-controls {
+  background-color: #fff3cd;
+  border: 2px solid #ff6b35;
+  border-radius: 8px;
+  padding: 16px;
+  margin: 8px 0;
+}
+
+.flip-one-effect-header {
+  font-size: 1.1em;
+  margin-bottom: 8px;
+  color: #d63384;
+}
+
+.flip-one-selection-info {
+  font-size: 0.9em;
+  color: #6c757d;
+  font-style: italic;
+}

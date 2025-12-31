@@ -455,3 +455,31 @@
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(255, 193, 7, 0.3);
 }
+/* Flip One Effect Styles */
+.offer-area__card--flip-one-selectable {
+  border: 2px solid #ff6b35;
+  box-shadow: 0 0 8px rgba(255, 107, 53, 0.3);
+  cursor: pointer;
+  animation: flip-one-pulse 2s infinite;
+}
+
+.offer-area__card--flip-one-selectable:hover {
+  border-color: #ff4500;
+  box-shadow: 0 0 12px rgba(255, 107, 53, 0.5);
+  transform: translateY(-2px);
+}
+
+.offer-area__flip-one-hint {
+  font-size: 0.8em;
+  color: #ff6b35;
+  font-weight: normal;
+}
+
+@keyframes flip-one-pulse {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(255, 107, 53, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 16px rgba(255, 107, 53, 0.6);
+  }
+}
