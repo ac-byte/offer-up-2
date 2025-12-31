@@ -312,7 +312,7 @@ export const GameBoard: React.FC = () => {
       
       case GamePhase.ACTION_PHASE:
         // Check if there's a pending Flip One effect
-        if (gameState.flipOneEffectState && gameState.flipOneEffectState.awaitingCardSelection) {
+        if (gameState.flipOneEffectState && gameState.flipOneEffectState?.awaitingCardSelection === true) {
           const flipOnePlayer = gameState.players[gameState.flipOneEffectState.playerId]
           return (
             <div className="flip-one-effect-controls">
@@ -330,7 +330,7 @@ export const GameBoard: React.FC = () => {
         if (gameState.addOneEffectState) {
           const addOnePlayer = gameState.players[gameState.addOneEffectState.playerId]
           
-          if (gameState.addOneEffectState.awaitingHandCardSelection) {
+          if (gameState.addOneEffectState?.awaitingHandCardSelection === true) {
             return (
               <div className="add-one-effect-controls">
                 <div className="add-one-effect-header">
@@ -343,8 +343,8 @@ export const GameBoard: React.FC = () => {
             )
           }
           
-          if (gameState.addOneEffectState.awaitingOfferSelection) {
-            const selectedCard = gameState.addOneEffectState.selectedHandCard
+          if (gameState.addOneEffectState?.awaitingOfferSelection === true) {
+            const selectedCard = gameState.addOneEffectState?.selectedHandCard
             return (
               <div className="add-one-effect-controls">
                 <div className="add-one-effect-header">
@@ -359,7 +359,7 @@ export const GameBoard: React.FC = () => {
         }
         
         // Check if there's a pending Remove One effect
-        if (gameState.removeOneEffectState && gameState.removeOneEffectState.awaitingCardSelection) {
+        if (gameState.removeOneEffectState && gameState.removeOneEffectState?.awaitingCardSelection === true) {
           const removeOnePlayer = gameState.players[gameState.removeOneEffectState.playerId]
           return (
             <div className="remove-one-effect-controls">
@@ -374,7 +374,7 @@ export const GameBoard: React.FC = () => {
         }
         
         // Check if there's a pending Steal A Point effect
-        if (gameState.stealAPointEffectState && gameState.stealAPointEffectState.awaitingTargetSelection) {
+        if (gameState.stealAPointEffectState && gameState.stealAPointEffectState?.awaitingTargetSelection === true) {
           const stealAPointPlayer = gameState.players[gameState.stealAPointEffectState.playerId]
           const validTargets = gameState.players.filter((player, index) => 
             index !== gameState.stealAPointEffectState!.playerId && 
@@ -540,28 +540,28 @@ export const GameBoard: React.FC = () => {
             canSelectGotchaCards={
               gameState.currentPhase === GamePhase.GOTCHA_TRADEINS &&
               gameState.gotchaEffectState !== null &&
-              !gameState.gotchaEffectState.awaitingBuyerChoice &&
+              !gameState.gotchaEffectState?.awaitingBuyerChoice &&
               gameState.gotchaEffectState.affectedPlayerIndex === index &&
               gameState.selectedPerspective === gameState.currentBuyerIndex
             }
             canSelectFlipOneCards={
               gameState.currentPhase === GamePhase.ACTION_PHASE &&
               gameState.flipOneEffectState !== null &&
-              gameState.flipOneEffectState.awaitingCardSelection &&
+              gameState.flipOneEffectState?.awaitingCardSelection === true &&
               index !== gameState.currentBuyerIndex && // Can't flip buyer's cards (buyer has no offer)
               player.offer.length > 0 // Player must have an offer
             }
             canSelectAddOneHandCards={
               gameState.currentPhase === GamePhase.ACTION_PHASE &&
               gameState.addOneEffectState !== null &&
-              gameState.addOneEffectState.awaitingHandCardSelection &&
+              gameState.addOneEffectState?.awaitingHandCardSelection === true &&
               index === gameState.addOneEffectState.playerId && // Only the player who played Add One can select from their hand
               gameState.selectedPerspective === gameState.addOneEffectState.playerId
             }
             canSelectAddOneOffers={
               gameState.currentPhase === GamePhase.ACTION_PHASE &&
               gameState.addOneEffectState !== null &&
-              gameState.addOneEffectState.awaitingOfferSelection &&
+              gameState.addOneEffectState?.awaitingOfferSelection === true &&
               index !== gameState.currentBuyerIndex && // Can't add to buyer's offer (buyer has no offer)
               player.offer.length > 0 // Player must have an offer
             }
@@ -569,7 +569,7 @@ export const GameBoard: React.FC = () => {
             canSelectRemoveOneCards={
               gameState.currentPhase === GamePhase.ACTION_PHASE &&
               gameState.removeOneEffectState !== null &&
-              gameState.removeOneEffectState.awaitingCardSelection &&
+              gameState.removeOneEffectState?.awaitingCardSelection === true &&
               index !== gameState.currentBuyerIndex && // Can't remove from buyer's offer (buyer has no offer)
               player.offer.length > 0 // Player must have an offer
             }
@@ -577,7 +577,7 @@ export const GameBoard: React.FC = () => {
             canSelectRemoveTwoCards={
               gameState.currentPhase === GamePhase.ACTION_PHASE &&
               gameState.removeTwoEffectState !== null &&
-              gameState.removeTwoEffectState.awaitingCardSelection &&
+              gameState.removeTwoEffectState?.awaitingCardSelection === true &&
               index !== gameState.currentBuyerIndex && // Can't remove from buyer's offer (buyer has no offer)
               player.offer.length > 0 // Player must have an offer
             }
