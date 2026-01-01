@@ -74,23 +74,26 @@ describe('Trade-in Processing', () => {
 
       const player1 = createMockPlayer(0, player1Collection)
       const player2 = createMockPlayer(1, player2Collection)
+      player2.points = 1 // Give Player 2 a point so Gotcha Bad effect can be applied
       const state = createMockGameState([player1, player2])
 
       const newState = processGotchaTradeins(state)
 
-      // Player 1 should have a pending Gotcha Once effect (processing stopped here)
+      // Player 2's Gotcha Bad set should be processed first (higher priority)
+      // Then Player 1's Gotcha Once effect should create a pending effect
       expect(newState.gotchaEffectState).not.toBeNull()
       expect(newState.gotchaEffectState?.type).toBe('once')
       expect(newState.gotchaEffectState?.affectedPlayerIndex).toBe(0)
       
-      // Player 1 should have 1 card left (the Thing card, auto-selected for Gotcha effect)
+      // Player 1 should have 1 card left (the Thing card, available for Gotcha effect)
       expect(newState.players[0].collection).toHaveLength(1)
       
-      // Player 2 should still have all cards (processing stopped before reaching them)
-      expect(newState.players[1].collection).toHaveLength(3)
+      // Player 2's Gotcha Bad set should be processed and removed
+      expect(newState.players[1].collection).toHaveLength(0)
+      expect(newState.players[1].points).toBe(0) // Lost 1 point from Gotcha Bad
       
-      // Should add only the Gotcha Once cards to discard pile
-      expect(newState.discardPile).toHaveLength(2) // 2 Once cards
+      // Should add both Gotcha sets to discard pile (2 Once + 3 Bad = 5 cards)
+      expect(newState.discardPile).toHaveLength(5)
     })
 
     it('leaves incomplete sets in collections', () => {

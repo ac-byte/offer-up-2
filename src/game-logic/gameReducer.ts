@@ -1409,47 +1409,69 @@ export function processGotchaTradeins(state: GameState): GameState {
   newState.players = state.players.map(player => ({ ...player, collection: [...player.collection] }))
   newState.discardPile = [...state.discardPile]
   
-  // Process each player's Gotcha sets in the correct order
-  for (let playerIndex = 0; playerIndex < newState.players.length; playerIndex++) {
-    const player = newState.players[playerIndex]
-    const setsBySubtype = identifyGotchaSetsInOrder(player.collection)
+  // Continue processing iteratively until no complete Gotcha sets remain
+  while (true) {
+    let foundGotchaSet = false
     
-    // Process in order: Bad, Twice, Once
+    // Process in priority order: Bad, Twice, Once (across all players)
     for (const subtype of ['bad', 'twice', 'once']) {
-      const completeSets = setsBySubtype[subtype]
-      
-      for (const set of completeSets) {
-        // Remove the set from player's collection
-        const tradedInCardIds = new Set(set.map(card => card.id))
-        newState.players[playerIndex].collection = newState.players[playerIndex].collection.filter(
-          card => !tradedInCardIds.has(card.id)
-        )
+      // Check all players for this subtype
+      for (let playerIndex = 0; playerIndex < newState.players.length; playerIndex++) {
+        const player = newState.players[playerIndex]
+        const setsBySubtype = identifyGotchaSetsInOrder(player.collection)
+        const completeSets = setsBySubtype[subtype]
         
-        // Add traded-in cards to discard pile
-        newState.discardPile.push(...set)
-        
-        // Apply Gotcha effects based on subtype
-        if (subtype === 'bad') {
-          // Apply Gotcha Bad effect: point penalty and transfer
-          newState = applyGotchaBadEffect(newState, playerIndex)
-        } else if (subtype === 'twice') {
-          // Apply Gotcha Twice effect: buyer selects 2 cards to steal/discard
-          newState = applyGotchaTwiceEffect(newState, playerIndex)
+        if (completeSets.length > 0) {
+          // Found a Gotcha set of this subtype - process the first one
+          const set = completeSets[0]
+          foundGotchaSet = true
           
-          // If buyer interaction is needed, return state with pending effect
-          if (newState.gotchaEffectState !== null) {
-            return newState
-          }
-        } else if (subtype === 'once') {
-          // Apply Gotcha Once effect: buyer selects 1 card to steal/discard
-          newState = applyGotchaOnceEffect(newState, playerIndex)
+          // Remove the set from player's collection
+          const tradedInCardIds = new Set(set.map(card => card.id))
+          newState.players[playerIndex].collection = newState.players[playerIndex].collection.filter(
+            card => !tradedInCardIds.has(card.id)
+          )
           
-          // If buyer interaction is needed, return state with pending effect
-          if (newState.gotchaEffectState !== null) {
-            return newState
+          // Add traded-in cards to discard pile
+          newState.discardPile.push(...set)
+          
+          // Apply Gotcha effects based on subtype
+          if (subtype === 'bad') {
+            // Apply Gotcha Bad effect: point penalty and transfer
+            newState = applyGotchaBadEffect(newState, playerIndex)
+          } else if (subtype === 'twice') {
+            // Apply Gotcha Twice effect: buyer selects 2 cards to steal/discard
+            newState = applyGotchaTwiceEffect(newState, playerIndex)
+            
+            // If buyer interaction is needed, return state with pending effect
+            if (newState.gotchaEffectState !== null) {
+              return newState
+            }
+          } else if (subtype === 'once') {
+            // Apply Gotcha Once effect: buyer selects 1 card to steal/discard
+            newState = applyGotchaOnceEffect(newState, playerIndex)
+            
+            // If buyer interaction is needed, return state with pending effect
+            if (newState.gotchaEffectState !== null) {
+              return newState
+            }
           }
+          
+          // Break out of both loops to restart checking from the beginning
+          // This ensures we always process in priority order after each set
+          break
         }
       }
+      
+      // If we found a set, break out of subtype loop to restart from 'bad'
+      if (foundGotchaSet) {
+        break
+      }
+    }
+    
+    // If no Gotcha sets were found in any player's collection, we're done
+    if (!foundGotchaSet) {
+      break
     }
   }
   
