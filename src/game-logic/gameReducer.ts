@@ -485,9 +485,18 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       if (state.currentPhase === GamePhase.ACTION_PHASE) {
         return handleActionPhaseAdvancement(state)
       } else if (state.currentPhase === GamePhase.GOTCHA_TRADEINS) {
-        return handleGotchaTradeinsPhase(state)
+        const stateAfterGotcha = handleGotchaTradeinsPhase(state)
+        // If there's a pending Gotcha effect, wait for buyer interaction
+        if (stateAfterGotcha.gotchaEffectState !== null) {
+          return stateAfterGotcha
+        } else {
+          // No pending effects - automatically advance to next phase
+          return advanceToNextPhaseWithInitialization(stateAfterGotcha)
+        }
       } else if (state.currentPhase === GamePhase.THING_TRADEINS) {
-        return handleThingTradeinsPhase(state)
+        const stateAfterThings = handleThingTradeinsPhase(state)
+        // Automatically advance to next phase after Thing trade-ins
+        return advanceToNextPhaseWithInitialization(stateAfterThings)
       } else if (state.currentPhase === GamePhase.WINNER_DETERMINATION) {
         return handleWinnerDeterminationPhase(state)
       }
@@ -1781,8 +1790,9 @@ export function handleGotchaTradeinsPhase(state: GameState): GameState {
     return newState
   }
   
-  // Automatically advance to next phase after trade-ins
-  return advanceToNextPhaseWithInitialization(newState)
+  // No pending effects - processing is complete, but don't auto-advance
+  // Let the caller (advanceToNextPhaseWithInitialization) handle phase advancement
+  return newState
 }
 
 /**
@@ -1796,8 +1806,9 @@ export function handleThingTradeinsPhase(state: GameState): GameState {
   // Process Thing trade-ins for all players
   const newState = processThingTradeins(state)
   
-  // Automatically advance to next phase after trade-ins
-  return advanceToNextPhaseWithInitialization(newState)
+  // Processing is complete, but don't auto-advance
+  // Let the caller (advanceToNextPhaseWithInitialization) handle phase advancement
+  return newState
 }
 
 /**
@@ -2167,22 +2178,20 @@ export function advanceToNextPhaseWithInitialization(state: GameState): GameStat
     // Automatically handle deal phase
     stateWithInitializedPhase = handleDealPhase(stateWithNewPhase)
   } else if (nextPhase === GamePhase.GOTCHA_TRADEINS) {
-    // Check if there are any Gotcha sets to process
-    const hasGotchaSets = stateWithNewPhase.players.some(player => {
-      const { bad, twice, once } = identifyGotchaSetsInOrder(player.collection)
-      return bad.length > 0 || twice.length > 0 || once.length > 0
-    })
+    // Process Gotcha trade-ins
+    const stateAfterGotcha = handleGotchaTradeinsPhase(stateWithNewPhase)
     
-    if (hasGotchaSets) {
-      // Automatically start processing Gotcha trade-ins
-      stateWithInitializedPhase = handleGotchaTradeinsPhase(stateWithNewPhase)
+    // If there's a pending Gotcha effect, wait for buyer interaction
+    if (stateAfterGotcha.gotchaEffectState !== null) {
+      stateWithInitializedPhase = stateAfterGotcha
     } else {
-      // No Gotcha sets to process - automatically advance to next phase
-      stateWithInitializedPhase = handleGotchaTradeinsPhase(stateWithNewPhase)
+      // No pending effects - automatically advance to Thing trade-ins
+      stateWithInitializedPhase = advanceToNextPhaseWithInitialization(stateAfterGotcha)
     }
   } else if (nextPhase === GamePhase.THING_TRADEINS) {
-    // Automatically start processing Thing trade-ins
-    stateWithInitializedPhase = handleThingTradeinsPhase(stateWithNewPhase)
+    // Process Thing trade-ins and automatically advance to next phase
+    const stateAfterThings = handleThingTradeinsPhase(stateWithNewPhase)
+    stateWithInitializedPhase = advanceToNextPhaseWithInitialization(stateAfterThings)
   } else if (nextPhase === GamePhase.WINNER_DETERMINATION) {
     // Automatically handle winner determination
     stateWithInitializedPhase = handleWinnerDeterminationPhase(stateWithNewPhase)
