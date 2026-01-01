@@ -199,8 +199,8 @@ describe('Iterative Gotcha Processing', () => {
     expect(remainingGotchaCards.every(card => card.subtype === 'once')).toBe(true)
   })
 
-  it('automatically advances to Thing trade-ins after all Gotcha effects are processed', () => {
-    // Create a scenario where a Gotcha Once effect completes and should advance to Thing trade-ins
+  it('automatically advances to Offer phase after all Gotcha effects are processed', () => {
+    // Create a scenario where a Gotcha Once effect completes and should advance through all administrative phases to Offer phase
     const player1 = createPlayer(0, 'Alice')
     const player2 = createPlayer(1, 'Bob')
     
@@ -233,15 +233,20 @@ describe('Iterative Gotcha Processing', () => {
     
     // After the Gotcha effect is complete, the game should automatically:
     // 1. Process any remaining Gotcha sets (there are none)
-    // 2. Advance to Thing trade-ins phase (but not automatically process Thing sets)
-    expect(stateAfterChoice.currentPhase).toBe(GamePhase.THING_TRADEINS)
+    // 2. Advance through Thing trade-ins (processing Player 2's Giant set)
+    // 3. Advance through Winner determination (no winner yet)
+    // 4. Advance through Buyer assignment and Deal phases
+    // 5. End up at Offer phase for the next round
+    expect(stateAfterChoice.currentPhase).toBe(GamePhase.OFFER_PHASE)
     
-    // Player 2's Giant Thing set should NOT be processed yet (manual phase advancement needed)
-    expect(stateAfterChoice.players[1].points).toBe(0) // No points awarded yet
+    // Player 2's Giant Thing set should be automatically processed and points awarded
+    expect(stateAfterChoice.players[1].points).toBe(1) // Points awarded for Giant set
     
-    // The Giant Thing card should still be in Player 2's collection
-    const player2ThingCards = stateAfterChoice.players[1].collection.filter(card => card.type === 'thing' && card.subtype === 'giant')
-    expect(player2ThingCards).toHaveLength(1) // Giant card still there
+    // Should be in the next round
+    expect(stateAfterChoice.round).toBe(2)
+    
+    // All players should have 5 cards dealt for the new round
+    expect(stateAfterChoice.players.every(p => p.hand.length === 5)).toBe(true)
   })
 
   it('processes newly formed Gotcha sets when buyer steals Gotcha cards during effects', () => {
