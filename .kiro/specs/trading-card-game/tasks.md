@@ -456,6 +456,38 @@ This implementation plan breaks down the trading card game into discrete, testab
   - Validate UI and game logic integration
   - _Requirements: All requirements_
 
+- [ ] 18.1 Implement User Action Simulation Testing Framework
+  - [ ] 18.1.1 Create simulation utilities and helpers
+    - Implement `simulateActionsWithLogging` utility for detailed action tracing
+    - Create helper functions for common user workflows (game start, perspective changes, etc.)
+    - Add state verification utilities for intermediate assertions
+    - _Requirements: 42.1, 42.2, 42.5_
+
+  - [ ] 18.1.2 Create comprehensive user workflow simulations
+    - Implement complete game flow simulations from start to winner determination
+    - Create perspective management and auto-follow behavior simulations
+    - Add Gotcha effect user interaction simulations
+    - Test Action card targeting and effect simulations
+    - _Requirements: 42.1, 42.3, 42.4_
+
+  - [ ] 18.1.3 Add error handling and edge case simulations
+    - Test invalid user action handling through simulation
+    - Create edge case scenarios (empty collections, insufficient cards, etc.)
+    - Validate error messages and recovery behavior
+    - _Requirements: 42.7_
+
+  - [ ] 18.1.4 Create multi-step user flow tests
+    - Implement realistic user journey simulations with intermediate state checks
+    - Add complex scenario testing (multiple rounds, various player counts)
+    - Create regression test scenarios for critical user paths
+    - _Requirements: 42.6, 42.8_
+
+  - [ ]* 18.1.5 Write property tests for user simulation framework
+    - **Property 100: User simulation consistency**
+    - **Property 101: Simulation error handling**
+    - **Property 102: Multi-step flow validation**
+    - **Validates: Requirements 42.6, 42.7, 42.8**
+
 - [ ] 19. Final integration and testing
   - [ ] 19.1 Connect all components
     - Wire together all game phases and UI components

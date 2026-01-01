@@ -1,0 +1,338 @@
+import { gameReducer, createInitialGameState, createPlayer } from '../../game-logic/gameReducer'
+import { GameState, GamePhase, Player, Card, GameAction } from '../../types'
+
+describe('User Action Simulation Tests', () => {
+  /**
+   * Helper function to create a mock game state with specific setup
+   */
+  const createGameState = (players: Player[], phase: GamePhase = GamePhase.OFFER_PHASE): GameState => ({
+    players,
+    currentBuyerIndex: 0,
+    nextBuyerIndex: 0,
+    currentPhase: phase,
+    currentPlayerIndex: 1, // Start with first seller
+    round: 1,
+    drawPile: Array.from({ length: 50 }, (_, i) => ({
+      id: `draw-${i}`,
+      type: 'thing' as const,
+      subtype: 'medium' as const,
+      name: `Draw Card ${i}`,
+      setSize: 3
+    })),
+    discardPile: [],
+    actionPhaseDoneStates: [],
+    gotchaEffectState: null,
+    flipOneEffectState: null,
+    addOneEffectState: null,
+    removeOneEffectState: null,
+    removeTwoEffectState: null,
+    stealAPointEffectState: null,
+    selectedPerspective: 0,
+    phaseInstructions: '',
+    autoFollowPerspective: true,
+    winner: null,
+    gameStarted: true
+  })
+
+  /**
+   * Helper function to simulate a sequence of user actions
+   */
+  const simulateActions = (initialState: GameState, actions: GameAction[]): GameState => {
+    return actions.reduce((state, action) => {
+      try {
+        return gameReducer(state, action)
+      } catch (error) {
+        throw new Error(`Action ${action.type} failed: ${error.message}`)
+      }
+    }, initialState)
+  }
+
+  /**
+   * Helper to create cards for testing
+   */
+  const createCards = (prefix: string, count: number, type: 'thing' | 'gotcha' | 'action' = 'thing'): Card[] => {
+    return Array.from({ length: count }, (_, i) => ({
+      id: `${prefix}-${i}`,
+      type,
+      subtype: type === 'thing' ? 'medium' : (type === 'gotcha' ? 'once' : 'flip-one'),
+      name: `${prefix} Card ${i}`,
+      setSize: type === 'thing' ? 3 : 2,
+      ...(type !== 'thing' && { effect: 'This card has an effect' })
+    }))
+  }
+
+  describe('Complete Round Simulation', () => {
+    it('should simulate a complete round from offer phase to next round', () => {
+      // Setup: 3 players, buyer has money, sellers have cards in hand
+      const buyer = createPlayer(0, 'Alice')
+      buyer.hasMoney = true
+      buyer.hand = [] // Buyer doesn't place offers
+
+      const seller1 = createPlayer(1, 'Bob')
+      seller1.hand = createCards('bob', 5)
+
+      const seller2 = createPlayer(2, 'Charlie')
+      seller2.hand = createCards('charlie', 5)
+
+      const initialState = createGameState([buyer, seller1, seller2])
+
+      // Simulate user actions for a complete round
+      const actions: GameAction[] = [
+        // Seller 1 places offer
+        {
+          type: 'PLACE_OFFER',
+          playerId: 1,
+          cards: seller1.hand.slice(0, 3),
+          faceUpIndex: 1
+        },
+        // Seller 2 places offer  
+        {
+          type: 'PLACE_OFFER',
+          playerId: 2,
+          cards: seller2.hand.slice(0, 3),
+          faceUpIndex: 0
+        },
+        // Buyer flips a card (automatically advances to action phase)
+        {
+          type: 'FLIP_CARD',
+          offerId: 1, // Flip from seller 1's offer
+          cardIndex: 0
+        },
+        // Skip action phase (no action cards) - advance to offer selection
+        {
+          type: 'ADVANCE_PHASE'
+        },
+        // Buyer selects seller 2's offer
+        {
+          type: 'SELECT_OFFER',
+          buyerId: 0,
+          sellerId: 2
+        }
+      ]
+
+      const finalState = simulateActions(initialState, actions)
+
+      // Verify the complete round simulation
+      expect(finalState.currentPhase).toBe(GamePhase.OFFER_PHASE) // Should be in next round
+      expect(finalState.round).toBe(2) // Round should increment
+      expect(finalState.currentBuyerIndex).toBe(2) // Charlie is now buyer
+      expect(finalState.players[2].hasMoney).toBe(true) // Charlie has money bag
+      expect(finalState.players[0].hasMoney).toBe(false) // Alice no longer has money
+      
+      // Buyer should have received the selected offer
+      expect(finalState.players[0].collection).toHaveLength(3)
+      
+      // All players should have 5 cards in hand for next round
+      expect(finalState.players.every(p => p.hand.length === 5)).toBe(true)
+    })
+  })
+
+  describe('Action Phase Simulation', () => {
+    it('should simulate action card usage and player interactions', () => {
+      // Setup: Action phase with players having action cards
+      const player1 = createPlayer(0, 'Alice')
+      player1.collection = [
+        ...createCards('alice-action', 2, 'action'),
+        ...createCards('alice-thing', 3)
+      ]
+
+      const player2 = createPlayer(1, 'Bob')
+      player2.collection = createCards('bob-thing', 4)
+
+      const initialState = createGameState([player1, player2], GamePhase.ACTION_PHASE)
+      initialState.currentPlayerIndex = 0 // Alice's turn
+      initialState.actionPhaseDoneStates = [false, false] // Initialize done states
+
+      const actions: GameAction[] = [
+        // Alice plays an action card
+        {
+          type: 'PLAY_ACTION_CARD',
+          playerId: 0,
+          cardId: 'alice-action-0'
+        },
+        // Alice declares done (no more actions)
+        {
+          type: 'DECLARE_DONE',
+          playerId: 0
+        },
+        // Bob declares done (no action cards)
+        {
+          type: 'DECLARE_DONE',
+          playerId: 1
+        }
+      ]
+
+      const finalState = simulateActions(initialState, actions)
+
+      // Verify action phase completion
+      expect(finalState.currentPhase).toBe(GamePhase.OFFER_SELECTION) // Should advance to next phase
+      expect(finalState.players[0].collection).toHaveLength(4) // Alice used 1 action card
+      expect(finalState.discardPile).toHaveLength(1) // Action card in discard
+    })
+  })
+
+  describe('Gotcha Effect Simulation', () => {
+    it('should simulate Gotcha Once effect with buyer interaction', () => {
+      // Setup: Player with Gotcha Once set
+      const affectedPlayer = createPlayer(0, 'Alice')
+      affectedPlayer.collection = [
+        { id: 'gotcha-once-1', type: 'gotcha', subtype: 'once', name: 'Gotcha Once', setSize: 2, effect: 'Effect' },
+        { id: 'gotcha-once-2', type: 'gotcha', subtype: 'once', name: 'Gotcha Once', setSize: 2, effect: 'Effect' },
+        { id: 'target-card', type: 'thing', subtype: 'giant', name: 'Target Card', setSize: 1 }
+      ]
+
+      const buyer = createPlayer(1, 'Bob')
+      buyer.collection = []
+
+      const initialState = createGameState([affectedPlayer, buyer], GamePhase.GOTCHA_TRADEINS)
+      initialState.currentBuyerIndex = 1
+
+      const actions: GameAction[] = [
+        // Trigger Gotcha processing
+        {
+          type: 'ADVANCE_PHASE'
+        },
+        // Buyer chooses to steal the card
+        {
+          type: 'CHOOSE_GOTCHA_ACTION',
+          action: 'steal'
+        }
+      ]
+
+      const finalState = simulateActions(initialState, actions)
+
+      // Verify Gotcha effect completion - should stay in THING_TRADEINS since no Thing sets to process
+      expect(finalState.currentPhase).toBe(GamePhase.THING_TRADEINS)
+      expect(finalState.gotchaEffectState).toBeNull() // Effect should be complete
+      expect(finalState.players[1].collection).toHaveLength(1) // Buyer stole the card
+      expect(finalState.players[0].collection).toHaveLength(0) // Alice lost all cards
+    })
+  })
+
+  describe('Error Handling in User Actions', () => {
+    it('should handle invalid user actions gracefully', () => {
+      const seller1 = createPlayer(1, 'Bob')
+      seller1.hand = createCards('bob', 3)
+
+      const buyer = createPlayer(0, 'Alice')
+      buyer.hasMoney = true
+
+      const initialState = createGameState([buyer, seller1], GamePhase.OFFER_PHASE)
+
+      // Test invalid action - not enough cards for offer
+      expect(() => {
+        simulateActions(initialState, [{
+          type: 'PLACE_OFFER',
+          playerId: 1,
+          cards: seller1.hand.slice(0, 2), // Only 2 cards instead of 3
+          faceUpIndex: 0
+        }])
+      }).toThrow('Offer must contain exactly 3 cards')
+
+      // Test invalid action - wrong phase
+      expect(() => {
+        simulateActions(initialState, [{
+          type: 'FLIP_CARD',
+          offerId: 0,
+          cardIndex: 0
+        }])
+      }).toThrow('Card flipping is only allowed during buyer-flip phase')
+    })
+  })
+
+  describe('Multi-Player Interaction Simulation', () => {
+    it('should simulate complex multi-player interactions', () => {
+      // Setup: 4 players in action phase with various cards
+      const players = [
+        createPlayer(0, 'Alice'),
+        createPlayer(1, 'Bob'), 
+        createPlayer(2, 'Charlie'),
+        createPlayer(3, 'Diana')
+      ]
+
+      // Give players different types of cards
+      players[0].collection = [...createCards('alice-action', 1, 'action'), ...createCards('alice-thing', 2)]
+      players[1].collection = createCards('bob-thing', 3)
+      players[2].collection = [...createCards('charlie-action', 1, 'action'), ...createCards('charlie-thing', 1)]
+      players[3].collection = createCards('diana-thing', 2)
+
+      const initialState = createGameState(players, GamePhase.ACTION_PHASE)
+      initialState.currentPlayerIndex = 0
+      initialState.actionPhaseDoneStates = [false, false, false, false]
+
+      // Simulate the action phase with proper turn order
+      let currentState = initialState
+
+      // Alice plays action card
+      currentState = gameReducer(currentState, { type: 'PLAY_ACTION_CARD', playerId: 0, cardId: 'alice-action-0' })
+      
+      // Alice declares done (should advance to next player)
+      currentState = gameReducer(currentState, { type: 'DECLARE_DONE', playerId: 0 })
+      
+      // Bob declares done (no actions, should advance to next player)
+      currentState = gameReducer(currentState, { type: 'DECLARE_DONE', playerId: 1 })
+      
+      // Charlie plays action card
+      currentState = gameReducer(currentState, { type: 'PLAY_ACTION_CARD', playerId: 2, cardId: 'charlie-action-0' })
+      
+      // Charlie declares done (should advance to next player)
+      currentState = gameReducer(currentState, { type: 'DECLARE_DONE', playerId: 2 })
+      
+      // Diana declares done (no actions, should advance to next player)
+      currentState = gameReducer(currentState, { type: 'DECLARE_DONE', playerId: 3 })
+
+      // Verify multi-player action phase completion
+      expect(currentState.currentPhase).toBe(GamePhase.OFFER_SELECTION)
+      expect(currentState.discardPile).toHaveLength(2) // 2 action cards played
+      expect(currentState.players[0].collection).toHaveLength(2) // Alice used 1 action
+      expect(currentState.players[2].collection).toHaveLength(1) // Charlie used 1 action
+    })
+  })
+
+  describe('Perspective and UI State Simulation', () => {
+    it('should simulate perspective changes and UI interactions', () => {
+      const players = [createPlayer(0, 'Alice'), createPlayer(1, 'Bob')]
+      const initialState = createGameState(players)
+
+      const actions: GameAction[] = [
+        // Change perspective to Bob
+        { type: 'CHANGE_PERSPECTIVE', playerId: 1 },
+        // Toggle auto-follow off
+        { type: 'TOGGLE_AUTO_FOLLOW' },
+        // Change perspective back to Alice
+        { type: 'CHANGE_PERSPECTIVE', playerId: 0 },
+        // Toggle auto-follow back on
+        { type: 'TOGGLE_AUTO_FOLLOW' }
+      ]
+
+      const finalState = simulateActions(initialState, actions)
+
+      // Verify UI state changes
+      expect(finalState.selectedPerspective).toBe(1) // Should follow current player when auto-follow enabled
+      expect(finalState.autoFollowPerspective).toBe(true)
+    })
+  })
+
+  describe('Game Start Simulation', () => {
+    it('should simulate starting a new game with user actions', () => {
+      const initialState = createInitialGameState()
+
+      const actions: GameAction[] = [
+        // Start game with 3 players
+        {
+          type: 'START_GAME',
+          players: ['Alice', 'Bob', 'Charlie']
+        }
+      ]
+
+      const finalState = simulateActions(initialState, actions)
+
+      // Verify game initialization
+      expect(finalState.gameStarted).toBe(true)
+      expect(finalState.players).toHaveLength(3)
+      expect(finalState.currentPhase).toBe(GamePhase.OFFER_PHASE) // Should auto-progress through initial phases
+      expect(finalState.players.some(p => p.hasMoney)).toBe(true) // Someone should have money bag
+      expect(finalState.players.every(p => p.hand.length === 5)).toBe(true) // All should have 5 cards
+    })
+  })
+})
