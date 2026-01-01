@@ -142,6 +142,18 @@ A digital trading card game implemented as a React application featuring a fixed
 4. THE Game_System SHALL automatically trade in complete Thing sets for points (1 Giant=1pt, 2 Big=1pt, 3 Medium=1pt, 4 Tiny=1pt)
 5. THE Game_System SHALL update each player's point total after trade-ins
 
+### Requirement 42: Automatic Phase Progression
+
+**User Story:** As a player, I want administrative phases to progress automatically without manual intervention, so that gameplay flows smoothly through phases that require no strategic decisions.
+
+#### Acceptance Criteria
+
+1. WHEN the game starts or ADVANCE_PHASE is called from BUYER_ASSIGNMENT, THE Game_System SHALL automatically progress through BUYER_ASSIGNMENT → DEAL → OFFER_PHASE in all rounds
+2. WHEN ADVANCE_PHASE is called from DEAL phase, THE Game_System SHALL automatically progress to OFFER_PHASE with cards dealt
+3. WHEN an offer is selected via SELECT_OFFER, THE Game_System SHALL automatically progress through OFFER_DISTRIBUTION to GOTCHA_TRADEINS
+4. WHEN ADVANCE_PHASE is called from OFFER_DISTRIBUTION, THE Game_System SHALL automatically progress to GOTCHA_TRADEINS
+5. THE Game_System SHALL ensure automatic progression works consistently in first round and all subsequent rounds
+
 ### Requirement 21: Gotcha Once Card Effects
 
 **User Story:** As a buyer, I want to benefit from other players' Gotcha Once sets, so that I can strategically acquire or remove cards from their collections.

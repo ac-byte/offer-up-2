@@ -149,14 +149,29 @@ enum GamePhase {
 ```typescript
 type GameAction = 
   | { type: 'START_GAME'; players: string[] }
-  | { type: 'ADVANCE_PHASE' }
+  | { type: 'ADVANCE_PHASE' } // Now handles automatic progression through administrative phases
   | { type: 'PLACE_OFFER'; playerId: number; cards: Card[]; faceUpIndex: number }
   | { type: 'FLIP_CARD'; offerId: number; cardIndex: number }
   | { type: 'PLAY_ACTION_CARD'; playerId: number; cardId: string }
-  | { type: 'SELECT_OFFER'; buyerId: number; sellerId: number }
+  | { type: 'SELECT_OFFER'; buyerId: number; sellerId: number } // Now automatically progresses through offer distribution
   | { type: 'CHANGE_PERSPECTIVE'; playerId: number }
   | { type: 'DECLARE_DONE'; playerId: number }
 ```
+
+### Automatic Phase Progression
+
+The game implements intelligent automatic progression through administrative phases that require no strategic player decisions:
+
+**Automatic Transitions:**
+1. **BUYER_ASSIGNMENT → DEAL → OFFER_PHASE**: Automatic in all rounds (first and subsequent)
+2. **OFFER_DISTRIBUTION → GOTCHA_TRADEINS**: Automatic always
+3. **SELECT_OFFER action**: Automatically handles offer distribution phase
+
+**Implementation Details:**
+- **ADVANCE_PHASE action**: Enhanced to handle automatic progression chains
+- **SELECT_OFFER action**: Modified to automatically progress through offer distribution
+- **Consistent behavior**: Works the same way in first round and all subsequent rounds
+- **No manual intervention**: Players never need to click through administrative phases
 
 ### Card Component Interface
 
@@ -498,6 +513,26 @@ Based on the prework analysis, the following properties have been identified as 
 **Property 60: Gotcha processing order**
 *For any* Gotcha processing iteration, Gotcha sets should be processed in the order: Gotcha Bad first, then Gotcha Twice, then Gotcha Once
 **Validates: Requirements 26.6**
+
+**Property 81: Automatic buyer assignment to offer phase progression**
+*For any* ADVANCE_PHASE action from BUYER_ASSIGNMENT phase, the game should automatically progress through DEAL to OFFER_PHASE in all rounds
+**Validates: Requirements 42.1**
+
+**Property 82: Automatic deal to offer phase progression**
+*For any* ADVANCE_PHASE action from DEAL phase, the game should automatically progress to OFFER_PHASE with cards dealt
+**Validates: Requirements 42.2**
+
+**Property 83: Automatic offer distribution progression**
+*For any* SELECT_OFFER action, the game should automatically progress through OFFER_DISTRIBUTION to GOTCHA_TRADEINS
+**Validates: Requirements 42.3**
+
+**Property 84: Automatic offer distribution phase advancement**
+*For any* ADVANCE_PHASE action from OFFER_DISTRIBUTION phase, the game should automatically progress to GOTCHA_TRADEINS
+**Validates: Requirements 42.4**
+
+**Property 85: Consistent automatic progression across rounds**
+*For any* round (first or subsequent), automatic phase progression should work identically
+**Validates: Requirements 42.5**
 
 ### Winner Determination Properties
 
