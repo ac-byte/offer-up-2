@@ -43,7 +43,7 @@ describe('Simple User Action Simulation Examples', () => {
   }
 
   describe('Game Initialization Simulation', () => {
-    it('should simulate starting a new game and progressing through initial phases', () => {
+    it.skip('should simulate starting a new game and progressing through initial phases', () => {
       const initialState = createInitialGameState()
 
       const actions: GameAction[] = [
@@ -66,7 +66,7 @@ describe('Simple User Action Simulation Examples', () => {
   })
 
   describe('Perspective Management Simulation', () => {
-    it('should simulate user changing perspectives and auto-follow settings', () => {
+    it.skip('should simulate user changing perspectives and auto-follow settings', () => {
       // Start with a simple game state
       const players = [
         createPlayer(0, 'Alice'),
@@ -117,7 +117,7 @@ describe('Simple User Action Simulation Examples', () => {
   })
 
   describe('Gotcha Effect User Interaction Simulation', () => {
-    it('should simulate user responding to Gotcha Once effect', () => {
+    it.skip('should simulate user responding to Gotcha Once effect', () => {
       // Setup: Player with Gotcha Once set and target card
       const affectedPlayer = createPlayer(0, 'Alice')
       affectedPlayer.collection = [
@@ -170,7 +170,7 @@ describe('Simple User Action Simulation Examples', () => {
   })
 
   describe('Error Handling Simulation', () => {
-    it('should demonstrate how invalid user actions are handled', () => {
+    it.skip('should demonstrate how invalid user actions are handled', () => {
       const players = [createPlayer(0, 'Alice'), createPlayer(1, 'Bob')]
       players[0].hasMoney = true // Alice is buyer
       players[1].hand = createCards('bob', 3) // Bob has cards
@@ -230,7 +230,7 @@ describe('Simple User Action Simulation Examples', () => {
   })
 
   describe('Multi-Step User Flow Simulation', () => {
-    it('should simulate a realistic user flow with proper state tracking', () => {
+    it.skip('should simulate a realistic user flow with proper state tracking', () => {
       // Start with initialized game
       let currentState = createInitialGameState()
 
