@@ -1,4 +1,5 @@
 import { processGotchaTradeins, createInitialGameState, createPlayer, handleGotchaActionChoice, handleGotchaCardSelection } from '../../game-logic/gameReducer'
+import { createDeck } from '../../game-logic/cards'
 import { GameState, GamePhase, Player, Card } from '../../types'
 
 /**
@@ -12,7 +13,8 @@ describe('Iterative Gotcha Processing', () => {
       players,
       currentBuyerIndex: 0,
       currentPhase: GamePhase.GOTCHA_TRADEINS,
-      gameStarted: true
+      gameStarted: true,
+      drawPile: createDeck() // Add a full deck for dealing cards
     }
   }
 
