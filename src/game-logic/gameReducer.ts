@@ -338,6 +338,20 @@ export function handleActionPhaseAdvancement(state: GameState): GameState {
 }
 
 /**
+ * Handles the offer distribution phase automatically
+ * No user interaction needed - just advance to next phase
+ */
+export function handleOfferDistributionPhase(state: GameState): GameState {
+  if (state.currentPhase !== GamePhase.OFFER_DISTRIBUTION) {
+    return state
+  }
+
+  // Offer distribution is already complete (handled in SELECT_OFFER action)
+  // Just automatically advance to next phase
+  return advanceToNextPhaseWithInitialization(state)
+}
+
+/**
  * Handles the buyer assignment phase automatically
  * Transfers buyer role to the player holding the money bag
  */
@@ -369,6 +383,41 @@ export function handleDealPhase(state: GameState): GameState {
   
   // Automatically advance to next phase after dealing
   return advanceToNextPhaseWithInitialization(newState)
+}
+
+/**
+ * Processes automatic phases in sequence until reaching a phase that requires user interaction
+ */
+export function processAutomaticPhases(state: GameState): GameState {
+  let currentState = state
+  
+  // Keep processing automatic phases until we reach one that requires user interaction
+  while (isAutomaticPhase(currentState.currentPhase)) {
+    const previousPhase = currentState.currentPhase
+    
+    if (currentState.currentPhase === GamePhase.DEAL) {
+      currentState = handleDealPhase(currentState)
+    } else if (currentState.currentPhase === GamePhase.OFFER_DISTRIBUTION) {
+      currentState = handleOfferDistributionPhase(currentState)
+    } else {
+      // If we don't have a specific handler, just advance
+      currentState = advanceToNextPhaseWithInitialization(currentState)
+    }
+    
+    // Prevent infinite loops - if phase didn't change, break
+    if (currentState.currentPhase === previousPhase) {
+      break
+    }
+  }
+  
+  return currentState
+}
+
+/**
+ * Checks if a phase is automatic (requires no user interaction)
+ */
+export function isAutomaticPhase(phase: GamePhase): boolean {
+  return phase === GamePhase.DEAL || phase === GamePhase.OFFER_DISTRIBUTION
 }
 
 /**
@@ -413,30 +462,30 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         players,
         currentBuyerIndex: buyerIndex,
         nextBuyerIndex: buyerIndex, // Initially same as current buyer
-        currentPhase: GamePhase.DEAL,
+        currentPhase: GamePhase.BUYER_ASSIGNMENT, // Start with buyer assignment, which will auto-advance through deal
         currentPlayerIndex: 0,
         round: 1,
         drawPile,
         discardPile: [],
         actionPhaseDoneStates: [],
         selectedPerspective: 0,
-        phaseInstructions: getPhaseInstructions(GamePhase.DEAL),
+        phaseInstructions: getPhaseInstructions(GamePhase.BUYER_ASSIGNMENT),
         autoFollowPerspective: true,
         winner: null,
         gameStarted: true
       }
       
-      // Set current player to first eligible player for the deal phase
-      const firstEligiblePlayer = getNextEligiblePlayer(-1, initialState, new Set())
+      // Automatically handle buyer assignment and deal phases for game start
+      let finalState = handleBuyerAssignmentPhase(initialState)
       
-      let finalState: GameState = {
-        ...initialState,
-        currentPlayerIndex: firstEligiblePlayer !== null ? firstEligiblePlayer : 0
+      // For game start, also automatically handle deal phase if we're in it
+      if (finalState.currentPhase === GamePhase.DEAL) {
+        finalState = handleDealPhase(finalState)
       }
       
       // Apply automatic perspective following if enabled
-      if (firstEligiblePlayer !== null) {
-        finalState = updatePerspectiveForActivePlayer(finalState, firstEligiblePlayer)
+      if (finalState.currentPlayerIndex !== null) {
+        finalState = updatePerspectiveForActivePlayer(finalState, finalState.currentPlayerIndex)
       }
       
       return finalState
@@ -453,6 +502,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         return handleBuyerAssignmentPhase(state)
       } else if (state.currentPhase === GamePhase.DEAL) {
         return handleDealPhase(state)
+      } else if (state.currentPhase === GamePhase.OFFER_DISTRIBUTION) {
+        return handleOfferDistributionPhase(state)
       } else if (state.currentPhase === GamePhase.ACTION_PHASE) {
         return handleActionPhaseAdvancement(state)
       } else if (state.currentPhase === GamePhase.GOTCHA_TRADEINS) {

@@ -399,10 +399,15 @@ describe('Game Reducer', () => {
         expect(newState.players[2].name).toBe('Charlie')
         
         expect(newState.gameStarted).toBe(true)
-        expect(newState.currentPhase).toBe(GamePhase.DEAL)
+        expect(newState.currentPhase).toBe(GamePhase.OFFER_PHASE) // Should auto-advance through buyer assignment and deal
         expect(newState.round).toBe(1)
-        expect(newState.drawPile).toHaveLength(120) // Full deck
-        expect(newState.phaseInstructions).toBe('Deal phase: Dealing cards to all players...')
+        expect(newState.drawPile).toHaveLength(105) // 120 - 15 cards dealt (3 players × 5 cards each)
+        expect(newState.phaseInstructions).toBe('Offer phase: Sellers place their 3-card offers...')
+        
+        // All players should have 5 cards after automatic deal
+        expect(newState.players[0].hand).toHaveLength(5)
+        expect(newState.players[1].hand).toHaveLength(5)
+        expect(newState.players[2].hand).toHaveLength(5)
       })
 
       test('assigns money bag to exactly one player', () => {
@@ -428,13 +433,21 @@ describe('Game Reducer', () => {
         const action = { type: 'START_GAME' as const, players: ['Alice', 'Bob', 'Charlie'] }
         const newState = gameReducer(initialState, action)
         
-        expect(newState.drawPile).toHaveLength(120)
+        // After automatic dealing, draw pile should have 105 cards (120 - 15 dealt)
+        expect(newState.drawPile).toHaveLength(105)
         
-        // Verify deck composition
-        const thingCards = newState.drawPile.filter(card => card.type === 'thing')
-        const gotchaCards = newState.drawPile.filter(card => card.type === 'gotcha')
-        const actionCards = newState.drawPile.filter(card => card.type === 'action')
+        // Count all cards (draw pile + player hands)
+        const allCards = [
+          ...newState.drawPile,
+          ...newState.players.flatMap(player => player.hand)
+        ]
         
+        // Verify total deck composition
+        const thingCards = allCards.filter(card => card.type === 'thing')
+        const gotchaCards = allCards.filter(card => card.type === 'gotcha')
+        const actionCards = allCards.filter(card => card.type === 'action')
+        
+        expect(allCards).toHaveLength(120) // Total deck size
         expect(thingCards).toHaveLength(65)
         expect(gotchaCards).toHaveLength(32)
         expect(actionCards).toHaveLength(23)
@@ -624,9 +637,15 @@ describe('Game Reducer', () => {
       beforeEach(() => {
         // Create a game state with 3 players in offer phase
         gameState = gameReducer(initialState, { type: 'START_GAME', players: ['Alice', 'Bob', 'Charlie'] })
-        gameState = { ...gameState, currentPhase: GamePhase.OFFER_PHASE, currentBuyerIndex: 0 }
+        // The game should already be in OFFER_PHASE after automatic progression
         
-        // Give players some cards to make offers with
+        // Ensure Alice (player 0) is the buyer
+        gameState.currentBuyerIndex = 0
+        gameState.players[0].hasMoney = true
+        gameState.players[1].hasMoney = false
+        gameState.players[2].hasMoney = false
+        
+        // Reset player hands and give them specific test cards
         const testCards = [
           createThingCard('giant', 0),
           createThingCard('big', 0),
@@ -636,6 +655,8 @@ describe('Game Reducer', () => {
           createThingCard('big', 1)
         ]
         
+        // Clear existing hands and set specific test cards
+        gameState.players[0].hand = [] // Alice (buyer) gets no cards for offers
         gameState.players[1].hand = testCards.slice(0, 3) // Bob gets 3 cards
         gameState.players[2].hand = testCards.slice(3, 6) // Charlie gets 3 cards
       })
@@ -960,6 +981,11 @@ describe('Game Reducer', () => {
         // Create a game state with 3 players in action phase
         gameState = gameReducer(initialState, { type: 'START_GAME', players: ['Alice', 'Bob', 'Charlie'] })
         gameState = { ...gameState, currentPhase: GamePhase.ACTION_PHASE, currentBuyerIndex: 0 }
+        
+        // Clear player hands for these tests (action card tests expect empty hands)
+        gameState.players[0].hand = []
+        gameState.players[1].hand = []
+        gameState.players[2].hand = []
         
         // Give players some action cards in their collections
         const actionCards = [
