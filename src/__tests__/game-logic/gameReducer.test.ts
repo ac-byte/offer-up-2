@@ -531,19 +531,23 @@ describe('Game Reducer', () => {
         let gameState = gameReducer(initialState, { type: 'START_GAME', players: ['Alice', 'Bob', 'Charlie'] })
         gameState.currentPhase = GamePhase.OFFER_DISTRIBUTION
         
-        // Advance phase should automatically go to GOTCHA_TRADEINS
-        // Since there are no Gotcha sets in a fresh game, it should automatically advance to THING_TRADEINS
+        // Advance phase should automatically go through all administrative phases to OFFER_PHASE
+        // OFFER_DISTRIBUTION → GOTCHA_TRADEINS → THING_TRADEINS → WINNER_DETERMINATION → BUYER_ASSIGNMENT → DEAL → OFFER_PHASE
         const newState = gameReducer(gameState, { type: 'ADVANCE_PHASE' })
         
-        expect(newState.currentPhase).toBe(GamePhase.THING_TRADEINS)
+        expect(newState.currentPhase).toBe(GamePhase.OFFER_PHASE)
       })
 
       test('increments round when returning to buyer assignment', () => {
         let state = { ...initialState, currentPhase: GamePhase.WINNER_DETERMINATION, round: 1 }
+        state.players = [createPlayer(0, 'Alice'), createPlayer(1, 'Bob')]
+        state.players[0].points = 3 // No winner
+        state.players[1].points = 2
         
         state = gameReducer(state, { type: 'ADVANCE_PHASE' })
         
-        expect(state.currentPhase).toBe(GamePhase.BUYER_ASSIGNMENT)
+        // Should automatically progress through all administrative phases to OFFER_PHASE
+        expect(state.currentPhase).toBe(GamePhase.OFFER_PHASE)
         expect(state.round).toBe(2)
       })
 
@@ -1284,11 +1288,14 @@ describe('Game Reducer', () => {
         expect(newState.players[1].hasMoney).toBe(true)  // Bob (selected seller) gets money
         expect(newState.players[2].hasMoney).toBe(false) // Charlie (non-selected seller) no money
         
-        // Current buyer index should remain unchanged (buyer role continuity)
-        expect(newState.currentBuyerIndex).toBe(0)
+        // Due to automatic phase progression, buyer role should now be transferred to Bob
+        expect(newState.currentBuyerIndex).toBe(1) // Bob is now the buyer
         
         // Next buyer index should be set to selected seller (money bag holder)
         expect(newState.nextBuyerIndex).toBe(1)
+        
+        // Should automatically progress to OFFER_PHASE for next round
+        expect(newState.currentPhase).toBe(GamePhase.OFFER_PHASE)
       })
 
       test('moves selected offer to buyer collection', () => {
@@ -1296,11 +1303,21 @@ describe('Game Reducer', () => {
         
         const newState = gameReducer(gameState, action)
         
-        // Buyer should have selected offer in collection
-        expect(newState.players[0].collection).toHaveLength(3)
-        expect(newState.players[0].collection.map(card => card.id)).toEqual([
-          'giant-0', 'big-0', 'medium-0'
-        ])
+        // Due to automatic phase progression, cards are dealt to all players
+        // Alice (original buyer) should have the selected offer in collection plus dealt cards
+        const aliceCollection = newState.players[0].collection
+        expect(aliceCollection.length).toBeGreaterThan(0) // Should have cards from offer and dealing
+        
+        // The giant-0 card forms a complete set (setSize 1) and gets automatically traded in for points
+        // So we should only expect to find big-0 and medium-0 in the collection
+        const expectedCardIds = ['big-0', 'medium-0'] // giant-0 was traded in for 1 point
+        const hasExpectedCards = expectedCardIds.every(cardId => 
+          aliceCollection.some(card => card.id === cardId)
+        )
+        expect(hasExpectedCards).toBe(true)
+        
+        // Alice should have gained 1 point from the giant-0 card that was traded in
+        expect(newState.players[0].points).toBe(1)
         
         // Selected seller should have empty offer
         expect(newState.players[1].offer).toHaveLength(0)
@@ -1311,11 +1328,21 @@ describe('Game Reducer', () => {
         
         const newState = gameReducer(gameState, action)
         
-        // Non-selected seller (Charlie) should have offer returned to collection
-        expect(newState.players[2].collection).toHaveLength(3)
-        expect(newState.players[2].collection.map(card => card.id)).toEqual([
-          'tiny-0', 'giant-1', 'big-1'
-        ])
+        // Due to automatic phase progression, cards are dealt to all players
+        // Non-selected seller (Charlie) should have offer returned to collection plus dealt cards
+        const charlieCollection = newState.players[2].collection
+        expect(charlieCollection.length).toBeGreaterThan(0) // Should have cards from offer and dealing
+        
+        // The giant-1 card forms a complete set (setSize 1) and gets automatically traded in for points
+        // So we should only expect to find tiny-0 and big-1 in the collection
+        const expectedCardIds = ['tiny-0', 'big-1'] // giant-1 was traded in for 1 point
+        const hasExpectedCards = expectedCardIds.every(cardId => 
+          charlieCollection.some(card => card.id === cardId)
+        )
+        expect(hasExpectedCards).toBe(true)
+        
+        // Charlie should have gained 1 point from the giant-1 card that was traded in
+        expect(newState.players[2].points).toBe(1)
         
         // Non-selected seller should have empty offer
         expect(newState.players[2].offer).toHaveLength(0)
@@ -1337,9 +1364,9 @@ describe('Game Reducer', () => {
         
         const newState = gameReducer(gameState, action)
         
-        // Should automatically progress through OFFER_DISTRIBUTION to GOTCHA_TRADEINS
-        // Since there are no Gotcha sets in a fresh game, it should automatically advance to THING_TRADEINS
-        expect(newState.currentPhase).toBe(GamePhase.THING_TRADEINS)
+        // Should automatically progress through all administrative phases to OFFER_PHASE
+        // OFFER_DISTRIBUTION → GOTCHA_TRADEINS → THING_TRADEINS → WINNER_DETERMINATION → BUYER_ASSIGNMENT → DEAL → OFFER_PHASE
+        expect(newState.currentPhase).toBe(GamePhase.OFFER_PHASE)
         expect(newState.nextBuyerIndex).toBe(1) // Bob should get the money bag for next round
       })
 
@@ -1354,18 +1381,32 @@ describe('Game Reducer', () => {
         expect(newState.players[1].hasMoney).toBe(false) // Bob gets nothing
         expect(newState.players[2].hasMoney).toBe(true)  // Charlie gets money
         
-        // Buyer should get Charlie's offer
-        expect(newState.players[0].collection.map(card => card.id)).toEqual([
-          'tiny-0', 'giant-1', 'big-1'
-        ])
+        // Due to automatic phase progression, Alice should have Charlie's offer plus dealt cards
+        // The giant-1 card forms a complete set and gets traded in for points
+        const aliceCollection = newState.players[0].collection
+        const expectedAliceCards = ['tiny-0', 'big-1'] // giant-1 was traded in for 1 point
+        const hasExpectedAliceCards = expectedAliceCards.every(cardId => 
+          aliceCollection.some(card => card.id === cardId)
+        )
+        expect(hasExpectedAliceCards).toBe(true)
         
-        // Bob's offer should return to his collection
-        expect(newState.players[1].collection.map(card => card.id)).toEqual([
-          'giant-0', 'big-0', 'medium-0'
-        ])
+        // Alice should have gained 1 point from the giant-1 card that was traded in
+        expect(newState.players[0].points).toBe(1)
         
-        // Current buyer should remain unchanged (buyer role continuity)
-        expect(newState.currentBuyerIndex).toBe(0)
+        // Due to automatic phase progression, Bob should have his offer returned plus dealt cards
+        // The giant-0 card forms a complete set and gets traded in for points
+        const bobCollection = newState.players[1].collection
+        const expectedBobCards = ['big-0', 'medium-0'] // giant-0 was traded in for 1 point
+        const hasExpectedBobCards = expectedBobCards.every(cardId => 
+          bobCollection.some(card => card.id === cardId)
+        )
+        expect(hasExpectedBobCards).toBe(true)
+        
+        // Bob should have gained 1 point from the giant-0 card that was traded in
+        expect(newState.players[1].points).toBe(1)
+        
+        // Current buyer should now be Charlie (money bag holder) due to automatic progression
+        expect(newState.currentBuyerIndex).toBe(2)
         
         // Next buyer should be Charlie (money bag holder)
         expect(newState.nextBuyerIndex).toBe(2)
@@ -1425,24 +1466,33 @@ describe('Game Reducer', () => {
         
         const newState = gameReducer(gameState, action)
         
-        // Check that card properties are preserved (no faceUp/position properties)
+        // Due to automatic phase progression, cards are dealt to all players
+        // Check that the selected offer cards are in Alice's collection with proper properties
+        // Note: giant-0 was traded in for points, so we check the remaining cards
         const buyerCards = newState.players[0].collection
-        expect(buyerCards[0]).toEqual({
-          id: 'giant-0',
+        const bigCard = buyerCards.find(card => card.id === 'big-0')
+        expect(bigCard).toBeDefined()
+        expect(bigCard).toEqual({
+          id: 'big-0',
           type: 'thing',
-          subtype: 'giant',
-          name: 'Giant Thing',
-          setSize: 1
+          subtype: 'big',
+          name: 'Big Thing',
+          setSize: 2,
+          effect: undefined
         })
         
         // Check non-selected seller's returned cards
+        // Note: giant-1 was traded in for points, so we check the remaining cards
         const charlieCards = newState.players[2].collection
-        expect(charlieCards[0]).toEqual({
+        const tinyCard = charlieCards.find(card => card.id === 'tiny-0')
+        expect(tinyCard).toBeDefined()
+        expect(tinyCard).toEqual({
           id: 'tiny-0',
           type: 'thing',
           subtype: 'tiny',
           name: 'Tiny Thing',
-          setSize: 4
+          setSize: 4,
+          effect: undefined
         })
       })
 
@@ -1502,8 +1552,8 @@ describe('Game Reducer', () => {
         expect(newState.players[1].hasMoney).toBe(true)  // Bob gets money bag
         expect(newState.players[2].hasMoney).toBe(false) // Charlie has no money bag
         
-        // Current buyer should remain Alice (buyer role continuity)
-        expect(newState.currentBuyerIndex).toBe(0)
+        // Current buyer should now be Bob (money bag holder) due to automatic progression
+        expect(newState.currentBuyerIndex).toBe(1)
         
         // Next buyer should be Bob (money bag holder)
         expect(newState.nextBuyerIndex).toBe(1)
@@ -1718,7 +1768,7 @@ describe('Game Reducer', () => {
       const result = handleWinnerDeterminationPhase(state)
       
       expect(result.winner).toBeNull()
-      expect(result.currentPhase).toBe(GamePhase.BUYER_ASSIGNMENT)
+      expect(result.currentPhase).toBe(GamePhase.OFFER_PHASE)
       expect(result.round).toBe(3)
     })
 
@@ -1738,7 +1788,7 @@ describe('Game Reducer', () => {
       const result = handleWinnerDeterminationPhase(state)
       
       expect(result.winner).toBeNull()
-      expect(result.currentPhase).toBe(GamePhase.BUYER_ASSIGNMENT)
+      expect(result.currentPhase).toBe(GamePhase.OFFER_PHASE)
       expect(result.round).toBe(4)
     })
 
