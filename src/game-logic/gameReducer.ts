@@ -627,9 +627,25 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         
         return finalState
       } else {
-        // Not all offers complete yet - stay in offer phase, don't advance player
-        // In offer phase, any seller can place offers at any time, no strict turn order
-        return newState
+        // Not all offers complete yet - advance to next eligible seller
+        const nextEligiblePlayer = getNextEligiblePlayer(playerId, newState, new Set())
+        
+        if (nextEligiblePlayer !== null) {
+          // Found next eligible seller - advance to them
+          let stateWithNextPlayer = {
+            ...newState,
+            currentPlayerIndex: nextEligiblePlayer
+          }
+          
+          // Apply automatic perspective following if enabled
+          stateWithNextPlayer = updatePerspectiveForActivePlayer(stateWithNextPlayer, nextEligiblePlayer)
+          
+          return stateWithNextPlayer
+        } else {
+          // No more eligible sellers - stay in offer phase without changing current player
+          // This shouldn't happen if areAllOffersComplete check is correct, but handle gracefully
+          return newState
+        }
       }
     }
     
