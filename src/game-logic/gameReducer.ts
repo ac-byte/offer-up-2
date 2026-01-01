@@ -386,41 +386,6 @@ export function handleDealPhase(state: GameState): GameState {
 }
 
 /**
- * Processes automatic phases in sequence until reaching a phase that requires user interaction
- */
-export function processAutomaticPhases(state: GameState): GameState {
-  let currentState = state
-  
-  // Keep processing automatic phases until we reach one that requires user interaction
-  while (isAutomaticPhase(currentState.currentPhase)) {
-    const previousPhase = currentState.currentPhase
-    
-    if (currentState.currentPhase === GamePhase.DEAL) {
-      currentState = handleDealPhase(currentState)
-    } else if (currentState.currentPhase === GamePhase.OFFER_DISTRIBUTION) {
-      currentState = handleOfferDistributionPhase(currentState)
-    } else {
-      // If we don't have a specific handler, just advance
-      currentState = advanceToNextPhaseWithInitialization(currentState)
-    }
-    
-    // Prevent infinite loops - if phase didn't change, break
-    if (currentState.currentPhase === previousPhase) {
-      break
-    }
-  }
-  
-  return currentState
-}
-
-/**
- * Checks if a phase is automatic (requires no user interaction)
- */
-export function isAutomaticPhase(phase: GamePhase): boolean {
-  return phase === GamePhase.DEAL || phase === GamePhase.OFFER_DISTRIBUTION
-}
-
-/**
  * Game reducer function
  */
 export function gameReducer(state: GameState, action: GameAction): GameState {
