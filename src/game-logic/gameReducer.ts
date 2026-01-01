@@ -2163,6 +2163,9 @@ export function advanceToNextPhaseWithInitialization(state: GameState): GameStat
   let stateWithInitializedPhase = stateWithNewPhase
   if (nextPhase === GamePhase.ACTION_PHASE) {
     stateWithInitializedPhase = initializeActionPhase(stateWithNewPhase)
+  } else if (nextPhase === GamePhase.DEAL) {
+    // Automatically handle deal phase
+    stateWithInitializedPhase = handleDealPhase(stateWithNewPhase)
   } else if (nextPhase === GamePhase.GOTCHA_TRADEINS) {
     // Check if there are any Gotcha sets to process
     const hasGotchaSets = stateWithNewPhase.players.some(player => {
@@ -2180,6 +2183,12 @@ export function advanceToNextPhaseWithInitialization(state: GameState): GameStat
   } else if (nextPhase === GamePhase.THING_TRADEINS) {
     // Automatically start processing Thing trade-ins
     stateWithInitializedPhase = handleThingTradeinsPhase(stateWithNewPhase)
+  } else if (nextPhase === GamePhase.WINNER_DETERMINATION) {
+    // Automatically handle winner determination
+    stateWithInitializedPhase = handleWinnerDeterminationPhase(stateWithNewPhase)
+  } else if (nextPhase === GamePhase.BUYER_ASSIGNMENT) {
+    // Automatically handle buyer assignment
+    stateWithInitializedPhase = handleBuyerAssignmentPhase(stateWithNewPhase)
   }
   
   // Set current player to first eligible player for the new phase
