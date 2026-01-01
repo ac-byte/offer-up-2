@@ -377,6 +377,13 @@ This implementation plan breaks down the trading card game into discrete, testab
     - Support different player perspectives
     - _Requirements: 2.3, 16.2, 16.3, 16.4, 16.5_
 
+  - [x] 14.2.1 Streamline offer phase UI interaction
+    - Remove redundant "Make Offer" button click requirement
+    - Automatically initialize sellers in card selection mode during offer phase
+    - Maintain existing 3-card selection and face-up choice functionality
+    - Preserve drag-and-drop and cancel capabilities
+    - _Requirements: 43.1, 43.2, 43.3, 43.4, 43.5_
+
   - [x] 14.3 Create perspective selector
     - Add dropdown for choosing player perspective
     - Maintain independence from current acting player

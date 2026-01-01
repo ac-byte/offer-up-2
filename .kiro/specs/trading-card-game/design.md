@@ -200,6 +200,42 @@ interface PlayerAreaProps {
 }
 ```
 
+### Streamlined Offer Phase UI Design
+
+**Problem**: The current offer phase requires sellers to perform a redundant initial action (clicking "Make Offer" or dragging a card) before they can select cards for their offer. Since making an offer is the only action available in the offer phase, this extra step creates unnecessary friction.
+
+**Solution**: Automatically place sellers in card selection mode when the offer phase begins.
+
+**Implementation Details**:
+
+1. **Automatic State Initialization**: When the offer phase begins, sellers are immediately placed in `isSelectingOffer: true` state
+2. **Visual Indicators**: Cards in the seller's hand display selection affordances (highlighting, cursor changes, instructional text)
+3. **Direct Card Selection**: Sellers can immediately click cards in their hand to toggle selection
+4. **Preserved Functionality**: All existing features remain:
+   - 3-card selection limit
+   - Face-up card choice
+   - Cancel/reset capability
+   - Drag-and-drop as alternative interaction method
+
+**UI State Changes**:
+```typescript
+// Current flow: OFFER_PHASE → Click "Make Offer" → Select cards → Choose face-up → Confirm
+// New flow: OFFER_PHASE → Select cards → Choose face-up → Confirm
+
+// Component state automatically initializes to selection mode for sellers
+useEffect(() => {
+  if (phase === GamePhase.OFFER_PHASE && isOwnPerspective && !isBuyer && player.offer.length === 0) {
+    setIsSelectingOffer(true) // Automatic initialization
+  }
+}, [phase, isOwnPerspective, isBuyer, player.offer.length])
+```
+
+**Benefits**:
+- Reduces interaction steps from 4 to 3
+- Eliminates cognitive load of redundant "Make Offer" decision
+- Maintains all existing functionality and accessibility
+- Provides clearer visual feedback about available actions
+
 ## Data Models
 
 ### Deck Composition
@@ -339,6 +375,10 @@ Based on the prework analysis, the following properties have been identified as 
 **Property 19: Phase advancement condition**
 *For any* offer phase, advancement to buyer-flip should occur only when all sellers have completed offers
 **Validates: Requirements 5.5**
+
+**Property 100: Streamlined offer phase UI initialization**
+*For any* seller entering the offer phase, they should be automatically placed in card selection mode without requiring additional UI interactions
+**Validates: Requirements 43.1, 43.2**
 
 ### Buyer-Flip Phase Properties
 

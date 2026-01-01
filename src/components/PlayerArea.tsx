@@ -83,11 +83,16 @@ const Hand: React.FC<HandProps> = ({ cards, isOwnHand, onCardDrag, onCardClick, 
   }
 
   return (
-    <div className={`hand ${canSelectAddOneCards && isOwnHand ? 'hand--add-one-selectable' : ''}`}>
+    <div className={`hand ${canSelectAddOneCards && isOwnHand ? 'hand--add-one-selectable' : ''} ${selectedCards.length > 0 ? 'hand--selecting-offer' : ''}`}>
       <div className="hand__header">
         <h4 className="hand__title">Hand ({cards.length})</h4>
         {canSelectAddOneCards && isOwnHand && (
           <div className="hand__add-one-hint">Click a card to add to an offer</div>
+        )}
+        {selectedCards.length > 0 && (
+          <div className="hand__offer-selection-hint">
+            Click cards to select for offer ({selectedCards.length}/3 selected)
+          </div>
         )}
       </div>
       <div className="hand__cards">
@@ -220,7 +225,7 @@ const OfferArea: React.FC<OfferAreaProps> = ({ offer, isOwnOffer, canFlipCards, 
             {isOwnOffer ? (
               isDragOver ? 
                 'Drop card to start offer selection' : 
-                'Click "Make Offer" or drag a card here'
+                'Click cards in your hand to select for offer'
             ) : 'No offer placed'}
           </div>
         )}
@@ -330,6 +335,13 @@ export const PlayerArea: React.FC<PlayerAreaProps> = ({
     }
   }, [phase, player.offer.length])
 
+  // Automatically initialize sellers in card selection mode during offer phase
+  React.useEffect(() => {
+    if (phase === GamePhase.OFFER_PHASE && isOwnPerspective && !isBuyer && player.offer.length === 0) {
+      setIsSelectingOffer(true)
+    }
+  }, [phase, isOwnPerspective, isBuyer, player.offer.length])
+
   const handleCardDrag = (card: Card) => {
     // Card drag started - this will be used for offer placement
     console.log('Card drag started:', card.name);
@@ -344,14 +356,12 @@ export const PlayerArea: React.FC<PlayerAreaProps> = ({
 
     // Handle card selection for offers during offer phase
     if (phase === GamePhase.OFFER_PHASE && isOwnPerspective && !isBuyer && player.offer.length === 0) {
-      if (isSelectingOffer) {
-        // Toggle card selection
-        const isSelected = selectedCards.some(c => c.id === card.id)
-        if (isSelected) {
-          setSelectedCards(prev => prev.filter(c => c.id !== card.id))
-        } else if (selectedCards.length < 3) {
-          setSelectedCards(prev => [...prev, card])
-        }
+      // Sellers are automatically in selection mode, so handle card selection
+      const isSelected = selectedCards.some(c => c.id === card.id)
+      if (isSelected) {
+        setSelectedCards(prev => prev.filter(c => c.id !== card.id))
+      } else if (selectedCards.length < 3) {
+        setSelectedCards(prev => [...prev, card])
       }
       return
     }
@@ -493,8 +503,8 @@ export const PlayerArea: React.FC<PlayerAreaProps> = ({
           </div>
         )}
         
-        {/* Offer selection controls */}
-        {canMakeOffer && !isSelectingOffer && (
+        {/* Offer selection controls - Make Offer button is no longer needed since sellers are automatically in selection mode */}
+        {canMakeOffer && !isSelectingOffer && false && (
           <button 
             className="player-area__offer-button"
             onClick={() => handleStartOfferSelection()}

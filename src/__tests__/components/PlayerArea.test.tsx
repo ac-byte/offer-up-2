@@ -144,7 +144,7 @@ describe('PlayerArea Component', () => {
     );
     
     expect(screen.getByText('No cards in hand')).toBeInTheDocument();
-    expect(screen.getByText('Click "Make Offer" or drag a card here')).toBeInTheDocument(); // Own perspective shows drag instruction
+    expect(screen.getByText('Click cards in your hand to select for offer')).toBeInTheDocument(); // Updated text for streamlined UI
     expect(screen.getByText('No cards in collection')).toBeInTheDocument();
   });
 
@@ -195,7 +195,40 @@ describe('PlayerArea Component', () => {
       />
     );
     
-    // Should show drag instruction for own offer area
-    expect(screen.getByText('Click "Make Offer" or drag a card here')).toBeInTheDocument();
+    // Should show streamlined instruction for own offer area
+    expect(screen.getByText('Click cards in your hand to select for offer')).toBeInTheDocument();
+  });
+
+  it('automatically initializes sellers in card selection mode during offer phase', () => {
+    render(
+      <PlayerArea 
+        {...defaultProps} 
+        perspective={0} // Own perspective (seller)
+        phase={GamePhase.OFFER_PHASE}
+        isBuyer={false}
+      />
+    );
+    
+    // Should automatically be in selection mode - no "Make Offer" button needed
+    expect(screen.queryByText('Make Offer')).not.toBeInTheDocument();
+    
+    // Should show selection controls
+    expect(screen.getByText('Select 3 cards (0/3)')).toBeInTheDocument();
+    expect(screen.getByText('Cancel')).toBeInTheDocument();
+  });
+
+  it('does not show selection mode for buyers during offer phase', () => {
+    render(
+      <PlayerArea 
+        {...defaultProps} 
+        perspective={1} // Buyer perspective
+        phase={GamePhase.OFFER_PHASE}
+        isBuyer={true}
+      />
+    );
+    
+    // Buyers should not see selection controls
+    expect(screen.queryByText('Select 3 cards')).not.toBeInTheDocument();
+    expect(screen.queryByText('Make Offer')).not.toBeInTheDocument();
   });
 });

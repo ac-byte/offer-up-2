@@ -421,3 +421,15 @@ A digital trading card game implemented as a React application featuring a fixed
 6. THE Game_System SHALL validate that simulated user actions produce the same results as actual user interactions
 7. THE Game_System SHALL support testing of error conditions and invalid user actions through simulation
 8. THE Game_System SHALL enable multi-step user flow testing with intermediate state assertions
+
+### Requirement 43: Streamlined Offer Phase User Interface
+
+**User Story:** As a Seller, I want to immediately start selecting cards for my offer when the offer phase begins, so that I can create offers efficiently without redundant UI interactions.
+
+#### Acceptance Criteria
+
+1. WHEN the Offer phase begins, THE Game_System SHALL automatically place Sellers in card selection mode without requiring them to click "Make Offer" or drag cards first
+2. THE Game_System SHALL display visual indicators showing that Sellers can click cards in their hand to select them for offers
+3. THE Game_System SHALL allow Sellers to click cards in their hand to toggle selection for their offer
+4. THE Game_System SHALL maintain the existing 3-card selection limit and face-up card choice functionality
+5. THE Game_System SHALL preserve the ability to cancel offer selection and return to the initial state if needed
