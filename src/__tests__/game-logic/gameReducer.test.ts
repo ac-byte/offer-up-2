@@ -454,6 +454,64 @@ describe('Game Reducer', () => {
       })
     })
 
+    describe('RESET_GAME action', () => {
+      test('resets game to initial state', () => {
+        // First start a game
+        const startAction = { type: 'START_GAME' as const, players: ['Alice', 'Bob', 'Charlie'] }
+        const startedState = gameReducer(initialState, startAction)
+        
+        // Verify game is started
+        expect(startedState.gameStarted).toBe(true)
+        expect(startedState.players).toHaveLength(3)
+        expect(startedState.currentPhase).toBe(GamePhase.OFFER_PHASE)
+        
+        // Reset the game
+        const resetAction = { type: 'RESET_GAME' as const }
+        const resetState = gameReducer(startedState, resetAction)
+        
+        // Verify game is reset to initial state
+        expect(resetState.gameStarted).toBe(false)
+        expect(resetState.players).toHaveLength(0)
+        expect(resetState.currentPhase).toBe(GamePhase.BUYER_ASSIGNMENT)
+        expect(resetState.round).toBe(1)
+        expect(resetState.winner).toBeNull()
+        expect(resetState.drawPile).toHaveLength(0)
+        expect(resetState.discardPile).toHaveLength(0)
+      })
+
+      test('can reset game from any phase', () => {
+        // Start a game and advance to different phase
+        const startAction = { type: 'START_GAME' as const, players: ['Alice', 'Bob', 'Charlie'] }
+        let gameState = gameReducer(initialState, startAction)
+        
+        // Advance to action phase (just as an example)
+        gameState = { ...gameState, currentPhase: GamePhase.ACTION_PHASE }
+        
+        // Reset should work from any phase
+        const resetAction = { type: 'RESET_GAME' as const }
+        const resetState = gameReducer(gameState, resetAction)
+        
+        expect(resetState.gameStarted).toBe(false)
+        expect(resetState.currentPhase).toBe(GamePhase.BUYER_ASSIGNMENT)
+      })
+
+      test('can reset game when winner is declared', () => {
+        // Start a game
+        const startAction = { type: 'START_GAME' as const, players: ['Alice', 'Bob', 'Charlie'] }
+        let gameState = gameReducer(initialState, startAction)
+        
+        // Simulate a winner being declared
+        gameState = { ...gameState, winner: 0 }
+        
+        // Reset should work even with winner declared
+        const resetAction = { type: 'RESET_GAME' as const }
+        const resetState = gameReducer(gameState, resetAction)
+        
+        expect(resetState.gameStarted).toBe(false)
+        expect(resetState.winner).toBeNull()
+      })
+    })
+
     describe('ADVANCE_PHASE action', () => {
       test('advances through phases in correct order', () => {
         // This test verifies the basic phase order using the advanceToNextPhase function

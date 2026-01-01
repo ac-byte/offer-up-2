@@ -85,6 +85,10 @@ export function validatePhaseAction(phase: GamePhase, action: GameAction): boole
       // Can only start game when not started
       return true
     
+    case 'RESET_GAME':
+      // Can reset game at any time
+      return true
+    
     case 'ADVANCE_PHASE':
       // Phase advancement is always allowed (controlled by game logic)
       return true
@@ -389,9 +393,9 @@ export function handleDealPhase(state: GameState): GameState {
  * Game reducer function
  */
 export function gameReducer(state: GameState, action: GameAction): GameState {
-  // Prevent any actions if game is over (winner declared)
-  if (state.winner !== null && action.type !== 'CHANGE_PERSPECTIVE') {
-    // Only allow perspective changes after game ends
+  // Prevent any actions if game is over (winner declared), except perspective changes and reset
+  if (state.winner !== null && action.type !== 'CHANGE_PERSPECTIVE' && action.type !== 'RESET_GAME') {
+    // Only allow perspective changes and reset after game ends
     return state
   }
 
@@ -454,6 +458,11 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       }
       
       return finalState
+    }
+    
+    case 'RESET_GAME': {
+      // Reset to initial game state (back to home screen)
+      return createInitialGameState()
     }
     
     case 'ADVANCE_PHASE': {

@@ -24,6 +24,11 @@ export const GameBoard: React.FC = () => {
     dispatch(action)
   }
 
+  const handleResetGame = () => {
+    const action: GameAction = { type: 'RESET_GAME' }
+    dispatch(action)
+  }
+
   const handleAdvancePhase = () => {
     const action: GameAction = { type: 'ADVANCE_PHASE' }
     dispatch(action)
@@ -478,6 +483,37 @@ export const GameBoard: React.FC = () => {
           {getGameStatus()}
         </div>
       </div>
+
+      {/* Winner Display */}
+      {gameState.winner !== null && (
+        <div className="winner-display">
+          <div className="winner-announcement">
+            <h2>🏆 Game Over! 🏆</h2>
+            <div className="winner-info">
+              <strong>{gameState.players[gameState.winner].name}</strong> wins with <strong>{gameState.players[gameState.winner].points} points!</strong>
+            </div>
+            <div className="final-scores">
+              <h3>Final Scores:</h3>
+              <div className="score-list">
+                {gameState.players
+                  .map((player, index) => ({ ...player, originalIndex: index }))
+                  .sort((a, b) => b.points - a.points)
+                  .map((player, rank) => (
+                    <div key={player.id} className={`score-item ${player.originalIndex === gameState.winner ? 'winner' : ''}`}>
+                      <span className="rank">#{rank + 1}</span>
+                      <span className="player-name">{player.name}</span>
+                      <span className="player-points">{player.points} points</span>
+                      {player.originalIndex === gameState.winner && <span className="crown">👑</span>}
+                    </div>
+                  ))}
+              </div>
+            </div>
+            <button onClick={handleResetGame} className="new-game-button">
+              Start a New Game
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Phase Display and Instructions */}
       <div className="phase-display">

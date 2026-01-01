@@ -114,6 +114,7 @@ export enum GamePhase {
 
 export type GameAction = 
   | { type: 'START_GAME'; players: string[] }
+  | { type: 'RESET_GAME' }
   | { type: 'ADVANCE_PHASE' }
   | { type: 'ADVANCE_PLAYER' }
   | { type: 'DEAL_CARDS' }
