@@ -1696,7 +1696,22 @@ export function handleGotchaActionChoice(state: GameState, action: 'steal' | 'di
   }
   
   // Effect is complete - continue processing any remaining Gotcha sets
-  return processGotchaTradeins(newState)
+  const stateAfterProcessing = processGotchaTradeins(newState)
+  
+  // If there's still a pending Gotcha effect, wait for buyer interaction
+  if (stateAfterProcessing.gotchaEffectState !== null) {
+    return stateAfterProcessing
+  }
+  
+  // No more Gotcha effects - advance to next phase but don't auto-process it
+  const { nextPhase, nextRound } = advanceToNextPhase(stateAfterProcessing.currentPhase, stateAfterProcessing.round)
+  
+  return {
+    ...stateAfterProcessing,
+    currentPhase: nextPhase,
+    round: nextRound,
+    phaseInstructions: getPhaseInstructions(nextPhase)
+  }
 }
 
 /**
@@ -2162,6 +2177,9 @@ export function advanceToNextPhaseWithInitialization(state: GameState): GameStat
       // No Gotcha sets to process - automatically advance to next phase
       stateWithInitializedPhase = handleGotchaTradeinsPhase(stateWithNewPhase)
     }
+  } else if (nextPhase === GamePhase.THING_TRADEINS) {
+    // Automatically start processing Thing trade-ins
+    stateWithInitializedPhase = handleThingTradeinsPhase(stateWithNewPhase)
   }
   
   // Set current player to first eligible player for the new phase

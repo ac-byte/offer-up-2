@@ -1,4 +1,4 @@
-import { processGotchaTradeins, createInitialGameState, createPlayer } from '../../game-logic/gameReducer'
+import { processGotchaTradeins, createInitialGameState, createPlayer, handleGotchaActionChoice } from '../../game-logic/gameReducer'
 import { GameState, GamePhase, Player, Card } from '../../types'
 
 /**
@@ -197,5 +197,50 @@ describe('Iterative Gotcha Processing', () => {
     const remainingGotchaCards = newState.players[0].collection.filter(card => card.type === 'gotcha')
     expect(remainingGotchaCards).toHaveLength(2) // Only Gotcha Once set remains
     expect(remainingGotchaCards.every(card => card.subtype === 'once')).toBe(true)
+  })
+
+  it('automatically advances to Thing trade-ins after all Gotcha effects are processed', () => {
+    // Create a scenario where a Gotcha Once effect completes and should advance to Thing trade-ins
+    const player1 = createPlayer(0, 'Alice')
+    const player2 = createPlayer(1, 'Bob')
+    
+    // Player 1 has a complete Gotcha Once set and exactly one other card (so it gets auto-selected)
+    player1.collection = [
+      createGotchaCard('gotcha-once-1', 'once'),
+      createGotchaCard('gotcha-once-2', 'once'),
+      createThingCard('thing-1', 'giant') // Only 1 card, so it will be auto-selected
+    ]
+    
+    // Player 2 has some Thing cards that will form a complete set after processing
+    player2.collection = [
+      createThingCard('thing-2', 'giant'), // Complete Giant set (1 card = 1 point)
+      createThingCard('thing-3', 'big')
+    ]
+    
+    const state = createMockGameState([player1, player2])
+    
+    // Process Gotcha trade-ins - this should create a pending Gotcha Once effect
+    const stateAfterGotcha = processGotchaTradeins(state)
+    
+    // Should have a pending Gotcha Once effect with the card auto-selected (since player1 has only 1 non-Gotcha card)
+    expect(stateAfterGotcha.gotchaEffectState).not.toBeNull()
+    expect(stateAfterGotcha.gotchaEffectState?.type).toBe('once')
+    expect(stateAfterGotcha.gotchaEffectState?.awaitingBuyerChoice).toBe(true) // Should be awaiting choice since card was auto-selected
+    expect(stateAfterGotcha.gotchaEffectState?.affectedPlayerIndex).toBe(0) // Player 1 is affected
+    
+    // Simulate buyer completing the Gotcha Once effect by choosing to discard
+    const stateAfterChoice = handleGotchaActionChoice(stateAfterGotcha, 'discard')
+    
+    // After the Gotcha effect is complete, the game should automatically:
+    // 1. Process any remaining Gotcha sets (there are none)
+    // 2. Advance to Thing trade-ins phase (but not automatically process Thing sets)
+    expect(stateAfterChoice.currentPhase).toBe(GamePhase.THING_TRADEINS)
+    
+    // Player 2's Giant Thing set should NOT be processed yet (manual phase advancement needed)
+    expect(stateAfterChoice.players[1].points).toBe(0) // No points awarded yet
+    
+    // The Giant Thing card should still be in Player 2's collection
+    const player2ThingCards = stateAfterChoice.players[1].collection.filter(card => card.type === 'thing' && card.subtype === 'giant')
+    expect(player2ThingCards).toHaveLength(1) // Giant card still there
   })
 })
