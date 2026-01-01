@@ -1,4 +1,4 @@
-import { processGotchaTradeins, createInitialGameState, createPlayer, handleGotchaActionChoice } from '../../game-logic/gameReducer'
+import { processGotchaTradeins, createInitialGameState, createPlayer, handleGotchaActionChoice, handleGotchaCardSelection } from '../../game-logic/gameReducer'
 import { GameState, GamePhase, Player, Card } from '../../types'
 
 /**
@@ -242,5 +242,142 @@ describe('Iterative Gotcha Processing', () => {
     // The Giant Thing card should still be in Player 2's collection
     const player2ThingCards = stateAfterChoice.players[1].collection.filter(card => card.type === 'thing' && card.subtype === 'giant')
     expect(player2ThingCards).toHaveLength(1) // Giant card still there
+  })
+
+  it('processes newly formed Gotcha sets when buyer steals Gotcha cards during effects', () => {
+    // Integration test: Gotcha effect creates new Gotcha set that needs immediate processing
+    const player1 = createPlayer(0, 'Alice')
+    const player2 = createPlayer(1, 'Bob')
+    
+    // Player 1 (buyer) has one Gotcha Once card (incomplete set)
+    player1.collection = [
+      createGotchaCard('gotcha-once-1', 'once'),
+      createThingCard('thing-1', 'big')
+    ]
+    
+    // Player 2 has a complete Gotcha Once set and another Gotcha Once card
+    player2.collection = [
+      createGotchaCard('gotcha-once-2', 'once'),
+      createGotchaCard('gotcha-once-3', 'once'), // Complete set
+      createGotchaCard('gotcha-once-4', 'once'), // This will complete buyer's set when stolen
+      createThingCard('thing-2', 'medium')
+    ]
+    
+    const state = createMockGameState([player1, player2])
+    state.currentBuyerIndex = 0 // Player 1 is the buyer
+    
+    // Process Gotcha trade-ins - Player 2's Gotcha Once set should be processed first
+    const stateAfterFirstGotcha = processGotchaTradeins(state)
+    
+    // Should have a pending Gotcha Once effect for Player 2's set
+    expect(stateAfterFirstGotcha.gotchaEffectState).not.toBeNull()
+    expect(stateAfterFirstGotcha.gotchaEffectState?.type).toBe('once')
+    expect(stateAfterFirstGotcha.gotchaEffectState?.affectedPlayerIndex).toBe(1) // Player 2
+    
+    // Player 2's Gotcha Once set should be removed, leaving 2 cards
+    expect(stateAfterFirstGotcha.players[1].collection).toHaveLength(2) // gotcha-once-4 + thing-2
+    
+    // Simulate buyer choosing to steal the remaining Gotcha Once card from Player 2
+    // First, we need to select the card (gotcha-once-4)
+    const stateAfterCardSelection = handleGotchaCardSelection(stateAfterFirstGotcha, 'gotcha-once-4')
+    
+    // Should now be awaiting buyer choice
+    expect(stateAfterCardSelection.gotchaEffectState?.awaitingBuyerChoice).toBe(true)
+    expect(stateAfterCardSelection.gotchaEffectState?.selectedCards).toHaveLength(1)
+    expect(stateAfterCardSelection.gotchaEffectState?.selectedCards[0].id).toBe('gotcha-once-4')
+    
+    // Buyer chooses to steal the Gotcha Once card
+    const stateAfterSteal = handleGotchaActionChoice(stateAfterCardSelection, 'steal')
+    
+    // This should trigger iterative processing:
+    // 1. The stolen Gotcha Once card completes the buyer's Gotcha Once set
+    // 2. The system should detect this new set and process it automatically
+    // 3. This creates another Gotcha Once effect that needs buyer interaction
+    
+    // Should have a NEW pending Gotcha Once effect for the buyer's newly formed set
+    expect(stateAfterSteal.gotchaEffectState).not.toBeNull()
+    expect(stateAfterSteal.gotchaEffectState?.type).toBe('once')
+    expect(stateAfterSteal.gotchaEffectState?.affectedPlayerIndex).toBe(0) // Player 1 (buyer)
+    
+    // Player 1 should now have the stolen card, but their Gotcha Once set should be removed
+    // (because it was processed in the iterative step)
+    const player1GotchaCards = stateAfterSteal.players[0].collection.filter(card => card.type === 'gotcha')
+    expect(player1GotchaCards).toHaveLength(0) // Gotcha set was processed
+    
+    // Player 2 should have lost the stolen card
+    expect(stateAfterSteal.players[1].collection).toHaveLength(1) // Only thing-2 remains
+    expect(stateAfterSteal.players[1].collection[0].id).toBe('thing-2')
+    
+    // The discard pile should contain both processed Gotcha Once sets (4 cards total)
+    const discardedGotchaCards = stateAfterSteal.discardPile.filter(card => card.type === 'gotcha')
+    expect(discardedGotchaCards).toHaveLength(4) // 2 from first set + 2 from buyer's new set
+    
+    // Should still be in Gotcha trade-ins phase awaiting the second buyer interaction
+    expect(stateAfterSteal.currentPhase).toBe(GamePhase.GOTCHA_TRADEINS)
+  })
+
+  it('processes newly formed Gotcha sets when buyer steals Gotcha cards during Gotcha Twice effects', () => {
+    // Integration test: Gotcha Twice effect creates new Gotcha set that needs immediate processing
+    const player1 = createPlayer(0, 'Alice')
+    const player2 = createPlayer(1, 'Bob')
+    
+    // Player 1 (buyer) has one Gotcha Twice card (incomplete set)
+    player1.collection = [
+      createGotchaCard('gotcha-twice-1', 'twice'),
+      createThingCard('thing-1', 'big')
+    ]
+    
+    // Player 2 has a complete Gotcha Twice set and another Gotcha Twice card
+    player2.collection = [
+      createGotchaCard('gotcha-twice-2', 'twice'),
+      createGotchaCard('gotcha-twice-3', 'twice'), // Complete set
+      createGotchaCard('gotcha-twice-4', 'twice'), // This will complete buyer's set when stolen
+      createThingCard('thing-2', 'medium')
+    ]
+    
+    const state = createMockGameState([player1, player2])
+    state.currentBuyerIndex = 0 // Player 1 is the buyer
+    
+    // Process Gotcha trade-ins - Player 2's Gotcha Twice set should be processed first
+    const stateAfterFirstGotcha = processGotchaTradeins(state)
+    
+    // Should have a pending Gotcha Twice effect for Player 2's set
+    expect(stateAfterFirstGotcha.gotchaEffectState).not.toBeNull()
+    expect(stateAfterFirstGotcha.gotchaEffectState?.type).toBe('twice')
+    expect(stateAfterFirstGotcha.gotchaEffectState?.affectedPlayerIndex).toBe(1) // Player 2
+    
+    // Simulate buyer selecting and stealing the remaining Gotcha Twice card from Player 2
+    const stateAfterCardSelection = handleGotchaCardSelection(stateAfterFirstGotcha, 'gotcha-twice-4')
+    const stateAfterFirstSteal = handleGotchaActionChoice(stateAfterCardSelection, 'steal')
+    
+    // This should start the second iteration of Gotcha Twice
+    expect(stateAfterFirstSteal.gotchaEffectState?.type).toBe('twice')
+    expect(stateAfterFirstSteal.gotchaEffectState?.twiceIteration).toBe(2)
+    
+    // Complete the second iteration by selecting and discarding the remaining card
+    const stateAfterSecondSelection = handleGotchaCardSelection(stateAfterFirstSteal, 'thing-2')
+    const stateAfterSecondChoice = handleGotchaActionChoice(stateAfterSecondSelection, 'discard')
+    
+    // This should trigger iterative processing:
+    // 1. The stolen Gotcha Twice card completes the buyer's Gotcha Twice set
+    // 2. The system should detect this new set and process it automatically
+    // 3. This creates another Gotcha Twice effect that needs buyer interaction
+    
+    // Should have a NEW pending Gotcha Twice effect for the buyer's newly formed set
+    expect(stateAfterSecondChoice.gotchaEffectState).not.toBeNull()
+    expect(stateAfterSecondChoice.gotchaEffectState?.type).toBe('twice')
+    expect(stateAfterSecondChoice.gotchaEffectState?.affectedPlayerIndex).toBe(0) // Player 1 (buyer)
+    expect(stateAfterSecondChoice.gotchaEffectState?.twiceIteration).toBe(1) // New effect, first iteration
+    
+    // Player 1 should now have the stolen card, but their Gotcha Twice set should be removed
+    const player1GotchaCards = stateAfterSecondChoice.players[0].collection.filter(card => card.type === 'gotcha')
+    expect(player1GotchaCards).toHaveLength(0) // Gotcha set was processed
+    
+    // The discard pile should contain both processed Gotcha Twice sets (4 cards total)
+    const discardedGotchaCards = stateAfterSecondChoice.discardPile.filter(card => card.type === 'gotcha')
+    expect(discardedGotchaCards).toHaveLength(4) // 2 from first set + 2 from buyer's new set
+    
+    // Should still be in Gotcha trade-ins phase awaiting the new buyer interaction
+    expect(stateAfterSecondChoice.currentPhase).toBe(GamePhase.GOTCHA_TRADEINS)
   })
 })
