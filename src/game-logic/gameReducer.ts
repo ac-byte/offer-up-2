@@ -462,14 +462,27 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         return state
       }
       
-      // Handle automatic phases
       if (state.currentPhase === GamePhase.BUYER_ASSIGNMENT) {
-        return handleBuyerAssignmentPhase(state)
-      } else if (state.currentPhase === GamePhase.DEAL) {
+        // Automatically progress through BUYER_ASSIGNMENT → DEAL → OFFER_PHASE
+        let newState = handleBuyerAssignmentPhase(state)
+        if (newState.currentPhase === GamePhase.DEAL) {
+          newState = handleDealPhase(newState)
+        }
+        return newState
+      }
+      
+      if (state.currentPhase === GamePhase.DEAL) {
+        // Automatically handle deal phase
         return handleDealPhase(state)
-      } else if (state.currentPhase === GamePhase.OFFER_DISTRIBUTION) {
+      }
+      
+      if (state.currentPhase === GamePhase.OFFER_DISTRIBUTION) {
+        // Automatically advance from offer distribution to Gotcha trade-ins
         return handleOfferDistributionPhase(state)
-      } else if (state.currentPhase === GamePhase.ACTION_PHASE) {
+      }
+      
+      // Handle other phases normally
+      if (state.currentPhase === GamePhase.ACTION_PHASE) {
         return handleActionPhaseAdvancement(state)
       } else if (state.currentPhase === GamePhase.GOTCHA_TRADEINS) {
         return handleGotchaTradeinsPhase(state)
@@ -614,8 +627,9 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         
         return finalState
       } else {
-        // Not all offers complete yet - advance to next eligible player
-        return advanceToNextEligiblePlayer(newState)
+        // Not all offers complete yet - stay in offer phase, don't advance player
+        // In offer phase, any seller can place offers at any time, no strict turn order
+        return newState
       }
     }
     
@@ -818,31 +832,15 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       // But keep current buyer index unchanged for this round
       newState.nextBuyerIndex = sellerId
       
-      // Automatically advance to offer distribution phase
-      const { nextPhase, nextRound } = advanceToNextPhase(newState.currentPhase, newState.round)
+      // Advance to offer distribution phase and automatically handle it
+      const stateAfterPhaseAdvance = advanceToNextPhaseWithInitialization(newState)
       
-      // Create state with advanced phase
-      const stateWithNewPhase = {
-        ...newState,
-        currentPhase: nextPhase,
-        round: nextRound,
-        phaseInstructions: getPhaseInstructions(nextPhase)
+      // Automatically handle offer distribution phase since it requires no user interaction
+      if (stateAfterPhaseAdvance.currentPhase === GamePhase.OFFER_DISTRIBUTION) {
+        return handleOfferDistributionPhase(stateAfterPhaseAdvance)
       }
       
-      // Set current player to first eligible player for the new phase
-      const firstEligiblePlayer = getNextEligiblePlayer(-1, stateWithNewPhase, new Set())
-      
-      let finalState = {
-        ...stateWithNewPhase,
-        currentPlayerIndex: firstEligiblePlayer !== null ? firstEligiblePlayer : 0
-      }
-      
-      // Apply automatic perspective following if enabled
-      if (firstEligiblePlayer !== null) {
-        finalState = updatePerspectiveForActivePlayer(finalState, firstEligiblePlayer)
-      }
-      
-      return finalState
+      return stateAfterPhaseAdvance
     }
     
     case 'DECLARE_DONE': {

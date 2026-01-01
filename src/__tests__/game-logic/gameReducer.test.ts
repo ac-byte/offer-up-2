@@ -498,6 +498,45 @@ describe('Game Reducer', () => {
         expect(state.currentPhase).toBe(GamePhase.OFFER_SELECTION)
       })
 
+      test('automatically progresses through buyer assignment and deal phases in subsequent rounds', () => {
+        // Start with a game in BUYER_ASSIGNMENT phase (simulating a subsequent round)
+        let gameState = gameReducer(initialState, { type: 'START_GAME', players: ['Alice', 'Bob', 'Charlie'] })
+        
+        // Simulate end of round - go back to BUYER_ASSIGNMENT
+        gameState = {
+          ...gameState,
+          currentPhase: GamePhase.BUYER_ASSIGNMENT,
+          nextBuyerIndex: 1, // Bob will be the next buyer
+          players: gameState.players.map((player, index) => ({
+            ...player,
+            hand: [], // Clear hands for new round
+            hasMoney: index === 1 // Bob has the money bag
+          }))
+        }
+        
+        // Advance phase should automatically go through BUYER_ASSIGNMENT → DEAL → OFFER_PHASE
+        const newState = gameReducer(gameState, { type: 'ADVANCE_PHASE' })
+        
+        expect(newState.currentPhase).toBe(GamePhase.OFFER_PHASE)
+        expect(newState.currentBuyerIndex).toBe(1) // Bob should be the buyer
+        
+        // Cards should be dealt automatically
+        newState.players.forEach(player => {
+          expect(player.hand).toHaveLength(5)
+        })
+      })
+
+      test('automatically progresses from offer distribution to Gotcha trade-ins', () => {
+        // Set up a game state in OFFER_DISTRIBUTION phase
+        let gameState = gameReducer(initialState, { type: 'START_GAME', players: ['Alice', 'Bob', 'Charlie'] })
+        gameState.currentPhase = GamePhase.OFFER_DISTRIBUTION
+        
+        // Advance phase should automatically go to GOTCHA_TRADEINS
+        const newState = gameReducer(gameState, { type: 'ADVANCE_PHASE' })
+        
+        expect(newState.currentPhase).toBe(GamePhase.GOTCHA_TRADEINS)
+      })
+
       test('increments round when returning to buyer assignment', () => {
         let state = { ...initialState, currentPhase: GamePhase.WINNER_DETERMINATION, round: 1 }
         
@@ -512,7 +551,8 @@ describe('Game Reducer', () => {
         
         state = gameReducer(state, { type: 'ADVANCE_PHASE' })
         
-        expect(state.phaseInstructions).toBe('Deal phase: Dealing cards to all players...')
+        // Should automatically progress through BUYER_ASSIGNMENT → DEAL → OFFER_PHASE
+        expect(state.phaseInstructions).toBe('Offer phase: Sellers place their 3-card offers...')
       })
 
       test('does not advance when game is over', () => {
@@ -659,6 +699,11 @@ describe('Game Reducer', () => {
         gameState.players[0].hand = [] // Alice (buyer) gets no cards for offers
         gameState.players[1].hand = testCards.slice(0, 3) // Bob gets 3 cards
         gameState.players[2].hand = testCards.slice(3, 6) // Charlie gets 3 cards
+        
+        // Ensure all offers are empty
+        gameState.players[0].offer = []
+        gameState.players[1].offer = []
+        gameState.players[2].offer = []
       })
 
       test('successfully places offer with valid parameters', () => {
@@ -1286,13 +1331,14 @@ describe('Game Reducer', () => {
         expect(newState.players[2].offer).toHaveLength(0) // Selected seller
       })
 
-      test('automatically advances to offer distribution phase', () => {
+      test('automatically progresses through offer distribution to Gotcha trade-ins', () => {
         const action = { type: 'SELECT_OFFER' as const, buyerId: 0, sellerId: 1 }
         
         const newState = gameReducer(gameState, action)
         
-        expect(newState.currentPhase).toBe(GamePhase.OFFER_DISTRIBUTION)
-        expect(newState.phaseInstructions).toBe('Offer distribution: Distributing cards and money bag...')
+        // Should automatically progress through OFFER_DISTRIBUTION to GOTCHA_TRADEINS
+        expect(newState.currentPhase).toBe(GamePhase.GOTCHA_TRADEINS)
+        expect(newState.nextBuyerIndex).toBe(1) // Bob should get the money bag for next round
       })
 
       test('can select different sellers', () => {
@@ -1485,8 +1531,8 @@ describe('Game Reducer', () => {
         expect(newState.currentBuyerIndex).toBe(1)
         expect(newState.nextBuyerIndex).toBe(1) // Should remain the same
         
-        // Phase should advance to DEAL
-        expect(newState.currentPhase).toBe(GamePhase.DEAL)
+        // Phase should automatically advance through BUYER_ASSIGNMENT → DEAL → OFFER_PHASE
+        expect(newState.currentPhase).toBe(GamePhase.OFFER_PHASE)
       })
     })
   })
