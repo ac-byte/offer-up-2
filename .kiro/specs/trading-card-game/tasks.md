@@ -51,7 +51,7 @@ This implementation plan breaks down the trading card game into discrete, testab
     - **Property 8: Player area initialization**
     - **Validates: Requirements 2.1, 2.2, 2.3, 2.4**
 
-  - [x] 3.3 Implement phase management system
+  - [ ] 3.3 Implement phase management system
     - Add phase transitions and validation
     - Implement 10-phase round system
     - Add phase-specific action validation

@@ -2122,10 +2122,24 @@ export function advanceToNextPhaseWithInitialization(state: GameState): GameStat
     phaseInstructions: getPhaseInstructions(nextPhase)
   }
   
-  // Initialize action phase if we're entering it
+  // Initialize special phases if we're entering them
   let stateWithInitializedPhase = stateWithNewPhase
   if (nextPhase === GamePhase.ACTION_PHASE) {
     stateWithInitializedPhase = initializeActionPhase(stateWithNewPhase)
+  } else if (nextPhase === GamePhase.GOTCHA_TRADEINS) {
+    // Check if there are any Gotcha sets to process
+    const hasGotchaSets = stateWithNewPhase.players.some(player => {
+      const { bad, twice, once } = identifyGotchaSetsInOrder(player.collection)
+      return bad.length > 0 || twice.length > 0 || once.length > 0
+    })
+    
+    if (hasGotchaSets) {
+      // Automatically start processing Gotcha trade-ins
+      stateWithInitializedPhase = handleGotchaTradeinsPhase(stateWithNewPhase)
+    } else {
+      // No Gotcha sets to process - automatically advance to next phase
+      stateWithInitializedPhase = handleGotchaTradeinsPhase(stateWithNewPhase)
+    }
   }
   
   // Set current player to first eligible player for the new phase

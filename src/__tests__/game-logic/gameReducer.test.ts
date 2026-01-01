@@ -532,9 +532,10 @@ describe('Game Reducer', () => {
         gameState.currentPhase = GamePhase.OFFER_DISTRIBUTION
         
         // Advance phase should automatically go to GOTCHA_TRADEINS
+        // Since there are no Gotcha sets in a fresh game, it should automatically advance to THING_TRADEINS
         const newState = gameReducer(gameState, { type: 'ADVANCE_PHASE' })
         
-        expect(newState.currentPhase).toBe(GamePhase.GOTCHA_TRADEINS)
+        expect(newState.currentPhase).toBe(GamePhase.THING_TRADEINS)
       })
 
       test('increments round when returning to buyer assignment', () => {
@@ -1337,7 +1338,8 @@ describe('Game Reducer', () => {
         const newState = gameReducer(gameState, action)
         
         // Should automatically progress through OFFER_DISTRIBUTION to GOTCHA_TRADEINS
-        expect(newState.currentPhase).toBe(GamePhase.GOTCHA_TRADEINS)
+        // Since there are no Gotcha sets in a fresh game, it should automatically advance to THING_TRADEINS
+        expect(newState.currentPhase).toBe(GamePhase.THING_TRADEINS)
         expect(newState.nextBuyerIndex).toBe(1) // Bob should get the money bag for next round
       })
 
