@@ -38,7 +38,7 @@ This implementation plan breaks down the trading card game into discrete, testab
     - **Property 5: Deck shuffling**
     - **Validates: Requirements 1.5**
 
-- [ ] 3. Implement game state management with reducer
+- [x] 3. Implement game state management with reducer
   - [x] 3.1 Create game reducer with initial state
     - Implement useReducer-based state management
     - Handle game initialization actions
@@ -114,7 +114,7 @@ This implementation plan breaks down the trading card game into discrete, testab
     - Implement immediate effect execution
     - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5_
 
-  - [ ] 8.2 Implement action phase done system
+  - [x] 8.2 Implement action phase done system
     - Replace pass counter system with "I'm done" checkbox system
     - Initialize done states based on action card availability
     - Reset done states when action cards are played
@@ -265,6 +265,7 @@ This implementation plan breaks down the trading card game into discrete, testab
   - Implement Gotcha processing order (Bad first, then Twice, then Once)
   - Create Gotcha Bad effect logic (point loss and transfer mechanics)
   - Handle point transfers between players and buyer
+  - **COMPLETED**: Fixed conditional logic order in processGotchaTradeins function
   - _Requirements: 23.1, 23.2, 23.3, 23.4, 23.5, 26.6_
 
 - [ ]* 10.5.1 Write property tests for Gotcha Bad effects
@@ -301,7 +302,7 @@ This implementation plan breaks down the trading card game into discrete, testab
   - **Property 46: Gotcha Twice independent choices**
   - **Validates: Requirements 22.1, 22.2, 22.3, 22.4, 22.5**
 
-- [ ] 10.8 Implement iterative Gotcha processing mechanics
+- [x] 10.8 Implement iterative Gotcha processing mechanics
   - Implement iterative Gotcha processing (continue until no sets remain)
   - Add checks for newly formed Gotcha sets after each round of effects
   - Ensure completion verification before advancing to Thing trade-ins
@@ -378,7 +379,7 @@ This implementation plan breaks down the trading card game into discrete, testab
     - Provide visual indication of auto-follow vs manual mode
     - _Requirements: 20.1, 20.2, 20.3, 20.4, 20.5_
 
-  - [ ] 14.5 Add "I'm done" checkbox to PlayerArea
+  - [x] 14.5 Add "I'm done" checkbox to PlayerArea
     - Add checkbox to each player area during action phase
     - Show checked and disabled for players with no action cards
     - Show unchecked and enabled for players with action cards
@@ -420,7 +421,7 @@ This implementation plan breaks down the trading card game into discrete, testab
     - Provide visual feedback during drag
     - _Requirements: 5.1, 5.2, 19.4_
 
-  - [ ] 16.2 Add action card interactions
+  - [x] 16.2 Add action card interactions
     - Enable playing action cards from collection
     - Handle click interactions for card flipping
     - _Requirements: 6.1, 7.1, 19.4_
