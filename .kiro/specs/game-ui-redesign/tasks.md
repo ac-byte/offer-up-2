@@ -12,7 +12,7 @@ Transform the main game page UI by consolidating information into a comprehensiv
   - _Requirements: 1.1, 1.2, 1.3_
 
 - [ ] 2. Enhance game header with consolidated information
-  - [ ] 2.1 Restructure header with two-row layout
+  - [x] 2.1 Restructure header with two-row layout
     - **Top row**: "Offer Up" (left) | Phase name (center) | Draw/discard counts (right)
     - **Bottom row**: Round number (left) | Buyer/player status (center) | Cards in play + highest score (right)
     - Remove phase info from phase-display area

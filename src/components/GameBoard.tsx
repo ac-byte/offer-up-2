@@ -482,24 +482,20 @@ export const GameBoard: React.FC = () => {
         <div className="header-right-column">
           <div className="header-card-counts">
             <div className="count-item">
-              <span className="count-label">Draw Pile</span>
-              <span className="count-value">{gameState.drawPile.length}</span>
+              <span>Draw Pile: {gameState.drawPile.length}</span>
             </div>
             <div className="count-item">
-              <span className="count-label">Discard Pile</span>
-              <span className="count-value">{gameState.discardPile.length}</span>
+              <span>Discard Pile: {gameState.discardPile.length}</span>
             </div>
           </div>
           <div className="header-game-stats">
             <div className="stat-item">
-              <span className="stat-label">Cards in Play</span>
-              <span className="stat-value">{gameState.players.reduce((total, player) => 
+              <span>Cards in Play: {gameState.players.reduce((total, player) => 
                 total + player.hand.length + player.collection.length + player.offer.length, 0
               )}</span>
             </div>
             <div className="stat-item">
-              <span className="stat-label">Highest Score</span>
-              <span className="stat-value">{Math.max(...gameState.players.map(p => p.points), 0)}</span>
+              <span>Highest Score: {Math.max(...gameState.players.map(p => p.points), 0)}</span>
             </div>
           </div>
         </div>

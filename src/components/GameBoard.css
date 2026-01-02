@@ -140,26 +140,13 @@
 }
 
 .count-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   padding: 8px 12px;
   background-color: #f8f9fa;
   border-radius: 6px;
   border: 1px solid #dee2e6;
-  min-width: 80px;
-}
-
-.count-label {
-  font-size: 0.8rem;
-  color: #666;
-  margin-bottom: 2px;
-}
-
-.count-value {
-  font-size: 1.1rem;
-  font-weight: 600;
+  font-size: 0.9rem;
   color: #333;
+  white-space: nowrap;
 }
 
 .header-game-stats {
@@ -168,27 +155,13 @@
 }
 
 .stat-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   padding: 8px 12px;
   background-color: #f8f9fa;
   border-radius: 6px;
   border: 1px solid #dee2e6;
-  min-width: 80px;
-}
-
-.stat-label {
-  font-size: 0.8rem;
-  color: #666;
-  margin-bottom: 2px;
-  text-align: center;
-}
-
-.stat-value {
-  font-size: 1.1rem;
-  font-weight: 600;
+  font-size: 0.9rem;
   color: #333;
+  white-space: nowrap;
 }
 
 /* Phase Display Styles */
