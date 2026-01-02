@@ -163,12 +163,14 @@ describe('Action Phase Done System', () => {
       expect(newState.actionPhaseDoneStates).toEqual([true, false, false])
     })
 
-    test('playing action card advances to next eligible player', () => {
+    test('playing interactive action card does NOT advance player immediately', () => {
       const action = { type: 'PLAY_ACTION_CARD' as const, playerId: 0, cardId: 'add-one-0' }
       const newState = gameReducer(gameState, action)
       
-      // Should advance to next player (Bob)
-      expect(newState.currentPlayerIndex).toBe(1)
+      // Should NOT advance player immediately for interactive action cards
+      // Player advancement happens only after the Add One effect is complete
+      expect(newState.currentPlayerIndex).toBe(0) // Alice should still be current player
+      expect(newState.addOneEffectState).not.toBeNull() // Add One effect should be active
     })
 
     test('action phase ends when no players have action cards after play', () => {
@@ -348,8 +350,10 @@ describe('Action Phase Done System', () => {
       expect(state.actionPhaseDoneStates[0]).toBe(false) // Alice reset to not done
       expect(state.actionPhaseDoneStates[1]).toBe(true) // Bob now done (no more action cards)
       
-      // Should continue with Charlie
-      expect(state.currentPlayerIndex).toBe(2)
+      // Should NOT advance player immediately for interactive action cards (Add One)
+      // Player advancement happens only after the Add One effect is complete
+      expect(state.currentPlayerIndex).toBe(1) // Bob should still be current player
+      expect(state.addOneEffectState).not.toBeNull() // Add One effect should be active
     })
   })
 
