@@ -16,7 +16,7 @@ Fix the premature player advancement issue by standardizing the action card exec
   - **Property 1: Player advancement only after effect completion**
   - **Validates: Requirements 1.1, 1.2, 1.4, 2.1, 2.2, 2.3, 2.4, 2.5, 3.2, 3.3**
 
-- [ ] 2. Verify existing interactive effect completion handlers
+- [x] 2. Verify existing interactive effect completion handlers
   - Review all SELECT_* action handlers (SELECT_ADD_ONE_OFFER, SELECT_FLIP_ONE_CARD, etc.)
   - Confirm they all call `advanceToNextEligiblePlayerInActionPhase()` when effects complete
   - Document any missing advancement calls
