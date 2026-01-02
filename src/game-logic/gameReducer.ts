@@ -836,8 +836,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         return endActionPhaseAndAdvance(stateWithResetDoneStates)
       }
       
-      // Advance to next eligible player for action phase
-      return advanceToNextEligiblePlayerInActionPhase(stateWithResetDoneStates)
+      // Return state without advancing player - let effect completion handle advancement
+      return stateWithResetDoneStates
     }
     
     case 'SELECT_OFFER': {
