@@ -14,25 +14,14 @@ describe('HomeScreen', () => {
     it('renders the game title and description', () => {
       render(<HomeScreen onStartGame={mockOnStartGame} />)
       
-      expect(screen.getByText('Trading Card Game')).toBeInTheDocument()
-      expect(screen.getByText(/A strategic card game for 3-6 players/)).toBeInTheDocument()
+      expect(screen.getByText('Offer Up')).toBeInTheDocument()
+      expect(screen.getByText(/A game of trades and hidden information/)).toBeInTheDocument()
     })
 
-    it('renders game features list', () => {
-      render(<HomeScreen onStartGame={mockOnStartGame} />)
-      
-      expect(screen.getByText('Game Features:')).toBeInTheDocument()
-      expect(screen.getByText(/10-phase round system/)).toBeInTheDocument()
-      expect(screen.getByText(/Strategic offers with hidden information/)).toBeInTheDocument()
-      expect(screen.getByText(/Action cards for dynamic gameplay/)).toBeInTheDocument()
-      expect(screen.getByText(/Set collection and point scoring/)).toBeInTheDocument()
-    })
 
     it('renders player configuration section', () => {
       render(<HomeScreen onStartGame={mockOnStartGame} />)
       
-      expect(screen.getByText('Game Setup')).toBeInTheDocument()
-      expect(screen.getByText('Number of Players')).toBeInTheDocument()
       expect(screen.getByText('Player Names')).toBeInTheDocument()
     })
 
@@ -47,7 +36,6 @@ describe('HomeScreen', () => {
       
       expect(screen.getByText('Quick Rules:')).toBeInTheDocument()
       expect(screen.getByText(/Objective:/)).toBeInTheDocument()
-      expect(screen.getByText(/Rounds:/)).toBeInTheDocument()
       expect(screen.getByText(/Strategy:/)).toBeInTheDocument()
     })
   })

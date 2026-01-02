@@ -21,10 +21,9 @@ describe('PlayerCountSlider', () => {
     expect(valueNumber).toBeInTheDocument()
   })
 
-  it('displays correct label and help text', () => {
+  it('displays correct help text', () => {
     render(<PlayerCountSlider playerCount={3} onChange={mockOnChange} />)
     
-    expect(screen.getByText('Number of Players')).toBeInTheDocument()
     expect(screen.getByText('Select between 3 and 6 players for your game')).toBeInTheDocument()
   })
 
@@ -76,14 +75,13 @@ describe('PlayerCountSlider', () => {
   it('shows tick marks for all valid values', () => {
     render(<PlayerCountSlider playerCount={4} onChange={mockOnChange} />)
     
-    // Check that tick labels for 3, 4, 5, 6 are present using more specific selectors
-    const tickLabels = screen.getAllByText(/^[3-6]$/)
-    expect(tickLabels).toHaveLength(5) // 4 tick labels + 1 current value display
+    // Check that tick marks are present (we removed labels, so just check marks exist)
+    const tickMarks = document.querySelectorAll('.tick-mark')
+    expect(tickMarks).toHaveLength(4) // 4 tick marks for values 3, 4, 5, 6
     
-    // Verify specific tick labels exist
-    expect(screen.getByText('3', { selector: '.tick-label' })).toBeInTheDocument()
-    expect(screen.getByText('5', { selector: '.tick-label' })).toBeInTheDocument()
-    expect(screen.getByText('6', { selector: '.tick-label' })).toBeInTheDocument()
+    // Verify the active tick is highlighted
+    const activeTick = document.querySelector('.tick.active')
+    expect(activeTick).toBeInTheDocument()
   })
 
   it('handles edge cases correctly', () => {

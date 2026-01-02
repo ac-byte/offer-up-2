@@ -82,26 +82,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onStartGame }) => {
       <div className="home-screen-container">
         {/* Game Title and Description */}
         <div className="game-header">
-          <h1 className="game-title">Trading Card Game</h1>
+          <h1 className="game-title">Offer Up</h1>
           <p className="game-description">
-            A strategic card game for 3-6 players featuring buying, selling, and set collection mechanics.
+            A game of trades and hidden information.
           </p>
-        </div>
-
-        {/* Game Features */}
-        <div className="game-features">
-          <h3>Game Features:</h3>
-          <ul>
-            <li>10-phase round system with buyer-seller mechanics</li>
-            <li>Strategic offers with hidden information</li>
-            <li>Action cards for dynamic gameplay</li>
-            <li>Set collection and point scoring</li>
-          </ul>
         </div>
 
         {/* Player Configuration */}
         <div className="player-configuration">
-          <h3>Game Setup</h3>
           
           {/* Player Count Slider */}
           <div className="config-section">
@@ -165,10 +153,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onStartGame }) => {
               <strong>Objective:</strong> Collect card sets to earn points. First to 5+ points wins!
             </div>
             <div className="rule-item">
-              <strong>Rounds:</strong> Each round has 10 phases including dealing, offering, and trading.
-            </div>
-            <div className="rule-item">
-              <strong>Strategy:</strong> Create attractive offers, use action cards wisely, and manage your collection.
+              <strong>Strategy:</strong> Create attractive offers and use hidden information to your advantage.
             </div>
           </div>
         </div>

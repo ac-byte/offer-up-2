@@ -56,8 +56,7 @@ describe('Configurable Player Setup Integration', () => {
     render(<TestApp />)
 
     // Verify initial state - should show HomeScreen
-    expect(screen.getByText('Trading Card Game')).toBeInTheDocument()
-    expect(screen.getByText('Game Setup')).toBeInTheDocument()
+    expect(screen.getByText('Offer Up')).toBeInTheDocument()
 
     // Change player count to 5
     const playerCountSlider = screen.getByDisplayValue('4')

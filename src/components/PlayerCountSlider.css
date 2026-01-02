@@ -1,8 +1,8 @@
 .player-count-slider {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 20px;
+  gap: 12px;
+  padding: 16px;
   background-color: #ffffff;
   border-radius: 12px;
   border: 1px solid #dee2e6;
@@ -22,7 +22,7 @@
 .slider-container {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
   align-items: center;
 }
 
@@ -30,7 +30,7 @@
   position: relative;
   width: 100%;
   max-width: 280px;
-  height: 60px;
+  height: 20px;
   display: flex;
   align-items: center;
 }
@@ -108,50 +108,39 @@
 
 .slider-ticks {
   position: absolute;
-  top: 0;
+  top: 50%;
   left: 0;
   right: 0;
-  height: 100%;
+  height: 8px;
+  transform: translateY(-50%);
   pointer-events: none;
 }
 
 .tick {
   position: absolute;
   display: flex;
-  flex-direction: column;
   align-items: center;
+  justify-content: center;
   transform: translateX(-50%);
   transition: all 0.2s ease;
+  height: 100%;
 }
 
 .tick-mark {
   width: 3px;
-  height: 12px;
+  height: 8px;
   background-color: #6c757d;
   border-radius: 2px;
-  margin-bottom: 4px;
   transition: all 0.2s ease;
 }
 
 .tick.active .tick-mark {
   background-color: #007bff;
-  height: 16px;
+  height: 8px;
   width: 4px;
 }
 
-.tick-label {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #6c757d;
-  transition: all 0.2s ease;
-  margin-top: 8px;
-}
 
-.tick.active .tick-label {
-  color: #007bff;
-  font-size: 0.9rem;
-  font-weight: 700;
-}
 
 .current-value {
   display: flex;
@@ -261,14 +250,6 @@
   .player-icon {
     font-size: 1.1rem;
   }
-  
-  .tick-label {
-    font-size: 0.8rem;
-  }
-  
-  .tick.active .tick-label {
-    font-size: 0.85rem;
-  }
 }
 
 /* Accessibility improvements */
@@ -276,7 +257,6 @@
   .slider-input,
   .tick,
   .tick-mark,
-  .tick-label,
   .player-indicator,
   .player-icon {
     transition: none;

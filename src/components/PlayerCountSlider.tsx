@@ -25,10 +25,6 @@ export const PlayerCountSlider: React.FC<PlayerCountSliderProps> = ({
 
   return (
     <div className="player-count-slider">
-      <label htmlFor="player-count-input" className="slider-label">
-        Number of Players
-      </label>
-      
       <div className="slider-container">
         <div className="slider-wrapper">
           <input
@@ -44,16 +40,20 @@ export const PlayerCountSlider: React.FC<PlayerCountSliderProps> = ({
             style={{ background: getSliderBackground() }}
           />
           
-          {/* Tick marks and labels */}
+          {/* Tick marks only (no labels) */}
           <div className="slider-ticks">
-            {[3, 4, 5, 6].map((count) => (
+            {[
+              { count: 3, position: '4.5%' },
+              { count: 4, position: '35%' },
+              { count: 5, position: '64.6%' },
+              { count: 6, position: '94.5%' }
+            ].map(({ count, position }) => (
               <div
                 key={count}
                 className={`tick ${count === playerCount ? 'active' : ''}`}
-                style={{ left: `${((count - 3) / (6 - 3)) * 100}%` }}
+                style={{ left: position }}
               >
                 <div className="tick-mark" />
-                <div className="tick-label">{count}</div>
               </div>
             ))}
           </div>
