@@ -456,7 +456,7 @@ export const GameBoard: React.FC = () => {
       {/* Game Header with Title and Status */}
       <div className="game-header">
         <div className="game-title">
-          <h1>Trading Card Game</h1>
+          <h1>Offer Up</h1>
           <div className="round-info">Round {gameState.round}</div>
         </div>
         <div className="game-status">
