@@ -37,7 +37,7 @@ Fix the premature player advancement issue by standardizing the action card exec
   - Test edge cases with unknown action card subtypes
   - _Requirements: 1.3, 3.1_
 
-- [ ] 4. Checkpoint - Test existing action card functionality
+- [x] 4. Checkpoint - Test existing action card functionality
   - Run all existing action card tests to ensure no regressions
   - Test each interactive action card type (Add One, Remove One, Remove Two, Flip One, Steal A Point)
   - Verify player advancement occurs at correct times
@@ -47,7 +47,7 @@ Fix the premature player advancement issue by standardizing the action card exec
   - **Property 3: Action card functionality preservation**
   - **Validates: Requirements 3.4**
 
-- [ ] 5. Integration testing and validation
+- [x] 5. Integration testing and validation
   - Test complete action phase scenarios with multiple action cards
   - Verify proper player rotation after action card effects
   - Test edge cases like action phase ending during effect resolution
@@ -58,7 +58,7 @@ Fix the premature player advancement issue by standardizing the action card exec
   - Test action phase ending during effect resolution
   - _Requirements: All requirements_
 
-- [ ] 6. Final checkpoint - Comprehensive testing
+- [x] 6. Final checkpoint - Comprehensive testing
   - Ensure all tests pass, ask the user if questions arise
   - Verify the fix resolves the original issue
   - Confirm no existing functionality is broken
