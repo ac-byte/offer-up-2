@@ -15,7 +15,8 @@ import {
   areAllOffersComplete,
   getPlayersWithFiveOrMorePoints,
   determineWinner,
-  handleWinnerDeterminationPhase
+  handleWinnerDeterminationPhase,
+  isInteractiveActionCard
 } from '../../game-logic/gameReducer'
 import { GamePhase } from '../../types'
 import { createThingCard, createGotchaCard, createActionCard } from '../../game-logic/cards'
@@ -1985,6 +1986,35 @@ describe('Game Reducer', () => {
       // Try to deal cards - should be prevented
       const result = gameReducer(state, { type: 'DEAL_CARDS' })
       expect(result).toBe(state)
+    })
+  })
+
+  describe('isInteractiveActionCard', () => {
+    test('returns true for interactive action cards', () => {
+      const flipOneCard = createActionCard('flip-one')
+      const addOneCard = createActionCard('add-one')
+      const removeOneCard = createActionCard('remove-one')
+      const removeTwoCard = createActionCard('remove-two')
+      const stealPointCard = createActionCard('steal-point')
+
+      expect(isInteractiveActionCard(flipOneCard)).toBe(true)
+      expect(isInteractiveActionCard(addOneCard)).toBe(true)
+      expect(isInteractiveActionCard(removeOneCard)).toBe(true)
+      expect(isInteractiveActionCard(removeTwoCard)).toBe(true)
+      expect(isInteractiveActionCard(stealPointCard)).toBe(true)
+    })
+
+    test('returns false for unknown action card subtypes', () => {
+      // Create a mock action card with unknown subtype
+      const unknownCard = {
+        id: 'unknown-0',
+        type: 'action' as const,
+        subtype: 'unknown-effect' as any,
+        name: 'Unknown Effect',
+        setSize: 1
+      }
+
+      expect(isInteractiveActionCard(unknownCard)).toBe(false)
     })
   })
 })

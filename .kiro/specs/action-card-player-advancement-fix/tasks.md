@@ -26,7 +26,7 @@ Fix the premature player advancement issue by standardizing the action card exec
   - **Property 2: Effect state consistency**
   - **Validates: Requirements 1.1, 1.4, 3.3**
 
-- [ ] 3. Add support for immediate action card effects (future-proofing)
+- [x] 3. Add support for immediate action card effects (future-proofing)
   - Modify `executeActionCardEffect` to handle immediate completion
   - Add helper function to determine if an effect should complete immediately
   - For immediate effects, call advancement directly from `executeActionCardEffect`

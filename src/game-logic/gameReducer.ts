@@ -1870,9 +1870,42 @@ export function handleThingTradeinsPhase(state: GameState): GameState {
 }
 
 /**
+ * Determines if an action card requires human interaction to complete
+ * @param actionCard The action card to check
+ * @returns true if the card requires user interaction, false if it completes immediately
+ */
+export function isInteractiveActionCard(actionCard: Card): boolean {
+  switch (actionCard.subtype) {
+    case 'flip-one':
+    case 'add-one':
+    case 'remove-one':
+    case 'remove-two':
+    case 'steal-point':
+      return true
+    default:
+      // Unknown action card subtypes are treated as non-interactive (safe default)
+      return false
+  }
+}
+
+/**
  * Executes the immediate effect of an action card
  */
 function executeActionCardEffect(state: GameState, actionCard: Card, playerId: number): GameState {
+  // Check if this is an interactive action card
+  if (isInteractiveActionCard(actionCard)) {
+    // Interactive cards: set up effect state and wait for user interaction
+    return executeInteractiveActionCardEffect(state, actionCard, playerId)
+  } else {
+    // Non-interactive cards: execute immediately and advance player
+    return executeImmediateActionCardEffect(state, actionCard, playerId)
+  }
+}
+
+/**
+ * Executes interactive action card effects that require user interaction
+ */
+function executeInteractiveActionCardEffect(state: GameState, actionCard: Card, playerId: number): GameState {
   switch (actionCard.subtype) {
     case 'flip-one': {
       // Flip One: Allows player to flip one face-down card in any offer
@@ -1943,9 +1976,29 @@ function executeActionCardEffect(state: GameState, actionCard: Card, playerId: n
     }
     
     default:
-      // Unknown action card subtype - no effect
+      // This shouldn't happen for interactive cards, but return unchanged state as fallback
       return state
   }
+}
+
+/**
+ * Executes immediate action card effects that complete without user interaction
+ */
+function executeImmediateActionCardEffect(state: GameState, actionCard: Card, playerId: number): GameState {
+  // For now, all known action cards are interactive
+  // This function is future-proofing for when non-interactive action cards are added
+  
+  // Execute the immediate effect (none currently exist)
+  let newState = state
+  
+  // Update phase instructions to indicate the effect was completed
+  newState = {
+    ...newState,
+    phaseInstructions: `${state.players[playerId].name} played ${actionCard.name}. Effect completed immediately.`
+  }
+  
+  // Advance to next eligible player since the effect is complete
+  return advanceToNextEligiblePlayerInActionPhase(newState)
 }
 
 /**
