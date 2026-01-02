@@ -68,39 +68,127 @@
   box-shadow: 0 4px 8px rgba(0, 123, 255, 0.4);
 }
 
-/* Game Header Styles */
+/* Enhanced Game Header Styles - Three Column Layout */
 .game-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: stretch;
   margin-bottom: 20px;
-  padding: 20px;
+  padding: 16px 20px;
   background-color: #ffffff;
   border-radius: 12px;
   border: 1px solid #dee2e6;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  gap: 20px;
 }
 
-.game-title h1 {
+/* Left Column: Title + Round */
+.header-left-column {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex: 0 0 auto;
+}
+
+.header-title h1 {
   margin: 0;
   color: #333;
-  font-size: 1.8rem;
+  font-size: 2.2rem;
 }
 
-.round-info {
-  color: #666;
+.header-round {
   font-size: 1rem;
-  margin-top: 4px;
+  color: #666;
+  font-weight: 500;
 }
 
-.game-status {
+/* Center Column: Phase Name + Buyer/Player Status */
+.header-center-column {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  flex: 1;
+  text-align: center;
+}
+
+.header-phase-name strong {
+  font-size: 1.4rem;
+  color: #333;
+  font-weight: 600;
+}
+
+.header-game-status {
   font-size: 1.1rem;
   font-weight: 600;
   color: #333;
-  padding: 8px 16px;
+}
+
+/* Right Column: Draw/Discard Counts + Cards in Play/Highest Score */
+.header-right-column {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex: 0 0 auto;
+}
+
+.header-card-counts {
+  display: flex;
+  gap: 16px;
+}
+
+.count-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 12px;
   background-color: #f8f9fa;
   border-radius: 6px;
   border: 1px solid #dee2e6;
+  min-width: 80px;
+}
+
+.count-label {
+  font-size: 0.8rem;
+  color: #666;
+  margin-bottom: 2px;
+}
+
+.count-value {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.header-game-stats {
+  display: flex;
+  gap: 16px;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 12px;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  border: 1px solid #dee2e6;
+  min-width: 80px;
+}
+
+.stat-label {
+  font-size: 0.8rem;
+  color: #666;
+  margin-bottom: 2px;
+  text-align: center;
+}
+
+.stat-value {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
 }
 
 /* Phase Display Styles */
@@ -343,10 +431,16 @@
     text-align: center;
   }
   
-  .phase-display {
-    flex-direction: column;
-    gap: 12px;
+  .header-left-column,
+  .header-center-column,
+  .header-right-column {
+    align-items: center;
     text-align: center;
+  }
+  
+  .header-card-counts,
+  .header-game-stats {
+    justify-content: center;
   }
   
   .game-controls {

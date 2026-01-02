@@ -170,7 +170,10 @@ export const GameBoard: React.FC = () => {
   }
 
   const formatPhaseName = (phase: GamePhase): string => {
-    return phase.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+    const words = phase.replace(/_/g, ' ').split(' ')
+    return words.map((word, index) => 
+      index === 0 ? word.charAt(0).toUpperCase() + word.slice(1).toLowerCase() : word.toLowerCase()
+    ).join(' ')
   }
 
   const getCurrentBuyer = () => {
@@ -453,14 +456,52 @@ export const GameBoard: React.FC = () => {
 
   return (
     <div className="game-board">
-      {/* Game Header with Title and Status */}
+      {/* Enhanced Game Header with Three-Column Layout */}
       <div className="game-header">
-        <div className="game-title">
-          <h1>Offer Up</h1>
-          <div className="round-info">Round {gameState.round}</div>
+        {/* Left Column: Title + Round */}
+        <div className="header-left-column">
+          <div className="header-title">
+            <h1>Offer Up</h1>
+          </div>
+          <div className="header-round">
+            Round {gameState.round}
+          </div>
         </div>
-        <div className="game-status">
-          {getGameStatus()}
+        
+        {/* Center Column: Phase Name + Buyer/Player Status */}
+        <div className="header-center-column">
+          <div className="header-phase-name">
+            <strong>{formatPhaseName(gameState.currentPhase)}</strong>
+          </div>
+          <div className="header-game-status">
+            {getGameStatus()}
+          </div>
+        </div>
+        
+        {/* Right Column: Draw/Discard Counts + Cards in Play/Highest Score */}
+        <div className="header-right-column">
+          <div className="header-card-counts">
+            <div className="count-item">
+              <span className="count-label">Draw Pile</span>
+              <span className="count-value">{gameState.drawPile.length}</span>
+            </div>
+            <div className="count-item">
+              <span className="count-label">Discard Pile</span>
+              <span className="count-value">{gameState.discardPile.length}</span>
+            </div>
+          </div>
+          <div className="header-game-stats">
+            <div className="stat-item">
+              <span className="stat-label">Cards in Play</span>
+              <span className="stat-value">{gameState.players.reduce((total, player) => 
+                total + player.hand.length + player.collection.length + player.offer.length, 0
+              )}</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-label">Highest Score</span>
+              <span className="stat-value">{Math.max(...gameState.players.map(p => p.points), 0)}</span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -494,23 +535,6 @@ export const GameBoard: React.FC = () => {
           </div>
         </div>
       )}
-
-      {/* Phase Display and Instructions */}
-      <div className="phase-display">
-        <div className="phase-info">
-          <div className="phase-name">
-            <strong>Current Phase:</strong> {formatPhaseName(gameState.currentPhase)}
-          </div>
-          <div className="phase-instructions">
-            {gameState.phaseInstructions}
-          </div>
-        </div>
-        <div className="phase-progress">
-          <div className="phase-indicator">
-            Phase {Object.values(GamePhase).indexOf(gameState.currentPhase) + 1} of 10
-          </div>
-        </div>
-      </div>
 
       {/* Game Controls */}
       <div className="game-controls">
