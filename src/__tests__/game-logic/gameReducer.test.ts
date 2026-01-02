@@ -3,6 +3,8 @@ import {
   createInitialGameState, 
   createPlayer, 
   validatePlayerCount, 
+  validatePlayerNames,
+  validatePlayerConfiguration,
   selectRandomBuyer,
   getPhaseOrder,
   validatePhaseAction,
@@ -64,6 +66,73 @@ describe('Game Reducer', () => {
       expect(validatePlayerCount(7)).toBe(false)
       expect(validatePlayerCount(0)).toBe(false)
       expect(validatePlayerCount(-1)).toBe(false)
+    })
+  })
+
+  describe('validatePlayerNames', () => {
+    test('returns valid for good player names', () => {
+      const result = validatePlayerNames(['Alice', 'Bob', 'Charlie'])
+      expect(result.isValid).toBe(true)
+      expect(result.errors).toEqual([])
+    })
+
+    test('returns invalid for empty names', () => {
+      const result = validatePlayerNames(['Alice', '', 'Charlie'])
+      expect(result.isValid).toBe(false)
+      expect(result.errors).toContain('All player names must be non-empty')
+    })
+
+    test('returns invalid for whitespace-only names', () => {
+      const result = validatePlayerNames(['Alice', '   ', 'Charlie'])
+      expect(result.isValid).toBe(false)
+      expect(result.errors).toContain('All player names must be non-empty')
+    })
+
+    test('returns invalid for duplicate names (case-insensitive)', () => {
+      const result = validatePlayerNames(['Alice', 'bob', 'ALICE'])
+      expect(result.isValid).toBe(false)
+      expect(result.errors).toContain('Player names must be unique')
+    })
+
+    test('returns invalid for excessively long names', () => {
+      const longName = 'A'.repeat(51) // 51 characters
+      const result = validatePlayerNames(['Alice', longName, 'Charlie'])
+      expect(result.isValid).toBe(false)
+      expect(result.errors).toContain('Player names must be 50 characters or less')
+    })
+
+    test('handles mixed validation errors', () => {
+      const result = validatePlayerNames(['Alice', '', 'alice'])
+      expect(result.isValid).toBe(false)
+      expect(result.errors).toContain('All player names must be non-empty')
+      expect(result.errors).toContain('Player names must be unique')
+    })
+  })
+
+  describe('validatePlayerConfiguration', () => {
+    test('returns valid for good configuration', () => {
+      const result = validatePlayerConfiguration(['Alice', 'Bob', 'Charlie'])
+      expect(result.isValid).toBe(true)
+      expect(result.errors).toEqual([])
+    })
+
+    test('returns invalid for bad player count', () => {
+      const result = validatePlayerConfiguration(['Alice', 'Bob'])
+      expect(result.isValid).toBe(false)
+      expect(result.errors).toContain('Invalid player count: 2. Must be between 3 and 6 players.')
+    })
+
+    test('returns invalid for bad player names', () => {
+      const result = validatePlayerConfiguration(['Alice', '', 'Charlie'])
+      expect(result.isValid).toBe(false)
+      expect(result.errors).toContain('All player names must be non-empty')
+    })
+
+    test('returns invalid for both bad count and names', () => {
+      const result = validatePlayerConfiguration(['Alice', 'alice'])
+      expect(result.isValid).toBe(false)
+      expect(result.errors).toContain('Invalid player count: 2. Must be between 3 and 6 players.')
+      expect(result.errors).toContain('Player names must be unique')
     })
   })
 
@@ -425,8 +494,25 @@ describe('Game Reducer', () => {
         const actionTooFew = { type: 'START_GAME' as const, players: ['Alice', 'Bob'] }
         const actionTooMany = { type: 'START_GAME' as const, players: ['A', 'B', 'C', 'D', 'E', 'F', 'G'] }
         
-        expect(() => gameReducer(initialState, actionTooFew)).toThrow('Invalid player count: 2. Must be between 3 and 6 players.')
-        expect(() => gameReducer(initialState, actionTooMany)).toThrow('Invalid player count: 7. Must be between 3 and 6 players.')
+        expect(() => gameReducer(initialState, actionTooFew)).toThrow('Invalid player configuration: Invalid player count: 2. Must be between 3 and 6 players.')
+        expect(() => gameReducer(initialState, actionTooMany)).toThrow('Invalid player configuration: Invalid player count: 7. Must be between 3 and 6 players.')
+      })
+
+      test('throws error for invalid player names', () => {
+        const actionEmptyName = { type: 'START_GAME' as const, players: ['Alice', '', 'Charlie'] }
+        const actionDuplicateNames = { type: 'START_GAME' as const, players: ['Alice', 'Bob', 'alice'] }
+        
+        expect(() => gameReducer(initialState, actionEmptyName)).toThrow('Invalid player configuration: All player names must be non-empty')
+        expect(() => gameReducer(initialState, actionDuplicateNames)).toThrow('Invalid player configuration: Player names must be unique')
+      })
+
+      test('trims whitespace from player names', () => {
+        const action = { type: 'START_GAME' as const, players: ['  Alice  ', ' Bob ', 'Charlie   '] }
+        const newState = gameReducer(initialState, action)
+        
+        expect(newState.players[0].name).toBe('Alice')
+        expect(newState.players[1].name).toBe('Bob')
+        expect(newState.players[2].name).toBe('Charlie')
       })
 
       test('creates shuffled deck', () => {

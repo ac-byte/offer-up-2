@@ -2,6 +2,7 @@ import React from 'react'
 import { useGameContext } from '../contexts'
 import { PerspectiveSelector } from './PerspectiveSelector'
 import { PlayerArea } from './PlayerArea'
+import { HomeScreen } from './HomeScreen'
 import { GameAction, GamePhase, Card } from '../types'
 import './GameBoard.css'
 
@@ -18,9 +19,7 @@ export const GameBoard: React.FC = () => {
     dispatch(action)
   }
 
-  const handleStartGame = () => {
-    const players = ['Alice', 'Bob', 'Charlie', 'Diana'] // Example 4-player game
-    const action: GameAction = { type: 'START_GAME', players }
+  const handleStartGame = (action: GameAction) => {
     dispatch(action)
   }
 
@@ -449,26 +448,7 @@ export const GameBoard: React.FC = () => {
   }
 
   if (!gameState.gameStarted) {
-    return (
-      <div className="game-board">
-        <div className="game-setup">
-          <h1>Trading Card Game</h1>
-          <p>A strategic card game for 3-6 players featuring buying, selling, and set collection mechanics.</p>
-          <div className="setup-info">
-            <h3>Game Features:</h3>
-            <ul>
-              <li>10-phase round system with buyer-seller mechanics</li>
-              <li>Strategic offers with hidden information</li>
-              <li>Action cards for dynamic gameplay</li>
-              <li>Set collection and point scoring</li>
-            </ul>
-          </div>
-          <button onClick={handleStartGame} className="start-button">
-            Start Game (4 Players)
-          </button>
-        </div>
-      </div>
-    )
+    return <HomeScreen onStartGame={handleStartGame} />
   }
 
   return (

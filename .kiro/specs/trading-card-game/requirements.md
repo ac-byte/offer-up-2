@@ -238,6 +238,7 @@ A digital trading card game implemented as a React application featuring a fixed
 3. WHEN one player has at least 5 points and more than any other player, THE Game_System SHALL declare them the winner
 4. THE Game_System SHALL display the winner clearly and end the game
 5. THE Game_System SHALL prevent further gameplay after a winner is declared
+6. WHEN a winner is declared, THE Game_System SHALL display a "Start a New Game" button that resets the game to the initial setup screen
 
 ### Requirement 28: Card Visual Design
 
@@ -433,3 +434,18 @@ A digital trading card game implemented as a React application featuring a fixed
 3. THE Game_System SHALL allow Sellers to click cards in their hand to toggle selection for their offer
 4. THE Game_System SHALL maintain the existing 3-card selection limit and face-up card choice functionality
 5. THE Game_System SHALL preserve the ability to cancel offer selection and return to the initial state if needed
+
+### Requirement 44: Configurable Player Setup Interface
+
+**User Story:** As a player, I want to configure the number of players and their names before starting a game, so that I can customize the game for my specific group of participants.
+
+#### Acceptance Criteria
+
+1. WHEN the game setup screen is displayed, THE Game_System SHALL provide a slider control to select between 3 and 6 players
+2. WHEN the player count slider is adjusted, THE Game_System SHALL dynamically display the corresponding number of name input textboxes
+3. THE Game_System SHALL pre-populate the name textboxes with default names: Alice, Bob, Charlie, Diana, Eric, and Fran in that order
+4. THE Game_System SHALL allow players to edit any of the name textboxes to customize player names
+5. WHEN any name textbox is empty, THE Game_System SHALL disable the "Start Game" button
+6. WHEN all name textboxes contain non-empty values, THE Game_System SHALL enable the "Start Game" button
+7. THE Game_System SHALL validate that all player names are unique before allowing game start
+8. WHEN duplicate names are detected, THE Game_System SHALL display an error message and keep the "Start Game" button disabled

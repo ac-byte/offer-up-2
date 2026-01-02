@@ -52,6 +52,61 @@ export function validatePlayerCount(playerCount: number): boolean {
 }
 
 /**
+ * Validates player names for game initialization
+ */
+export function validatePlayerNames(playerNames: string[]): { isValid: boolean; errors: string[] } {
+  const errors: string[] = []
+  
+  // Check for empty names
+  const nonEmptyNames = playerNames.filter(name => name.trim().length > 0)
+  if (nonEmptyNames.length !== playerNames.length) {
+    errors.push('All player names must be non-empty')
+  }
+  
+  // Check for duplicate names (case-insensitive)
+  const lowerCaseNames = playerNames.map(name => name.trim().toLowerCase())
+  const uniqueNames = new Set(lowerCaseNames)
+  if (uniqueNames.size !== lowerCaseNames.length) {
+    errors.push('Player names must be unique')
+  }
+  
+  // Check for excessively long names (reasonable limit)
+  const maxNameLength = 50
+  const longNames = playerNames.filter(name => name.trim().length > maxNameLength)
+  if (longNames.length > 0) {
+    errors.push(`Player names must be ${maxNameLength} characters or less`)
+  }
+  
+  return {
+    isValid: errors.length === 0,
+    errors
+  }
+}
+
+/**
+ * Validates complete player configuration for game initialization
+ */
+export function validatePlayerConfiguration(playerNames: string[]): { isValid: boolean; errors: string[] } {
+  const errors: string[] = []
+  
+  // Validate player count
+  if (!validatePlayerCount(playerNames.length)) {
+    errors.push(`Invalid player count: ${playerNames.length}. Must be between 3 and 6 players.`)
+  }
+  
+  // Validate player names
+  const nameValidation = validatePlayerNames(playerNames)
+  if (!nameValidation.isValid) {
+    errors.push(...nameValidation.errors)
+  }
+  
+  return {
+    isValid: errors.length === 0,
+    errors
+  }
+}
+
+/**
  * Randomly selects a buyer from the players
  */
 export function selectRandomBuyer(playerCount: number): number {
@@ -408,13 +463,14 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     case 'START_GAME': {
       const playerNames = action.players
       
-      // Validate player count
-      if (!validatePlayerCount(playerNames.length)) {
-        throw new Error(`Invalid player count: ${playerNames.length}. Must be between 3 and 6 players.`)
+      // Validate player configuration (count and names)
+      const validation = validatePlayerConfiguration(playerNames)
+      if (!validation.isValid) {
+        throw new Error(`Invalid player configuration: ${validation.errors.join(', ')}`)
       }
       
       // Create players
-      const players = playerNames.map((name, index) => createPlayer(index, name))
+      const players = playerNames.map((name, index) => createPlayer(index, name.trim()))
       
       // Select random buyer
       const buyerIndex = selectRandomBuyer(players.length)

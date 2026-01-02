@@ -1,4 +1,4 @@
-# Implementation Plan: Trading Card Game
+ # Implementation Plan: Trading Card Game
 
 ## Overview
 
@@ -508,7 +508,56 @@ This implementation plan breaks down the trading card game into discrete, testab
     - Handle edge cases and error recovery
     - _Requirements: 3.4, 18.4_
 
-- [ ] 20. Final checkpoint - Complete game testing
+- [ ] 20. Implement configurable player setup interface
+  - [x] 20.1 Create PlayerCountSlider component
+    - Implement range slider for 3-6 players with visual indicators
+    - Add clear labels and current value display
+    - Handle onChange events to update parent state
+    - Style with consistent design language
+    - _Requirements: 44.1, 44.2_
+
+  - [x] 20.2 Create PlayerNameInputs component
+    - Generate dynamic text inputs based on player count
+    - Implement default name population (Alice, Bob, Charlie, Diana, Eric, Fran)
+    - Add real-time validation for empty and duplicate names
+    - Provide clear visual feedback for validation errors
+    - Handle onChange events for name updates
+    - _Requirements: 44.3, 44.4, 44.5_
+
+  - [x] 20.3 Create enhanced HomeScreen component
+    - Replace existing game start interface with configurable setup
+    - Integrate PlayerCountSlider and PlayerNameInputs components
+    - Implement Start Game button with conditional enabling/disabling
+    - Add validation state management and error display
+    - Handle game initialization with custom player configuration
+    - _Requirements: 44.6, 44.7, 44.8_
+
+  - [x] 20.4 Update game initialization logic
+    - Modify game reducer to accept custom player names and count
+    - Update GameContext to handle configurable player setup
+    - Ensure backward compatibility with existing game logic
+    - Add validation for player configuration before game start
+    - _Requirements: 44.1, 44.3, 44.6_
+
+  - [ ]* 20.5 Write property tests for configurable player setup
+    - **Property 86: Player count slider validation**
+    - **Property 87: Default name assignment correctness**
+    - **Property 88: Name uniqueness validation**
+    - **Property 89: Empty name validation**
+    - **Property 90: Start button state management**
+    - **Property 91: Dynamic input generation**
+    - **Property 92: Game initialization with custom configuration**
+    - **Validates: Requirements 44.1, 44.2, 44.3, 44.4, 44.5, 44.6, 44.7, 44.8**
+
+  - [ ] 20.6 Add styling and responsive design for setup interface
+    - Create CSS modules for new components
+    - Implement responsive layout for different screen sizes
+    - Add hover states and visual feedback for interactive elements
+    - Ensure accessibility compliance (ARIA labels, keyboard navigation)
+    - Style validation error states with clear visual indicators
+    - _Requirements: 44.2, 44.5, 44.7_
+
+- [ ] 21. Final checkpoint - Complete game testing
   - Ensure all tests pass, ask the user if questions arise.
 
 ## Notes

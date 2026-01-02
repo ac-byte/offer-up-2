@@ -236,6 +236,121 @@ useEffect(() => {
 - Maintains all existing functionality and accessibility
 - Provides clearer visual feedback about available actions
 
+### Configurable Player Setup Interface Design
+
+**Overview**: The game setup screen will be enhanced to allow players to configure the number of participants (3-6) and customize their names before starting a game. This replaces the current fixed 4-player setup with a flexible, user-friendly interface.
+
+**Component Architecture**:
+
+```mermaid
+graph TB
+    A[GameBoard] --> B[Game Setup Screen]
+    B --> C[Player Count Slider]
+    B --> D[Player Name Inputs]
+    B --> E[Start Game Button]
+    B --> F[Validation Logic]
+    
+    C --> G[Dynamic Input Generation]
+    D --> H[Name Validation]
+    F --> I[Button State Management]
+```
+
+**State Management**:
+
+```typescript
+interface GameSetupState {
+  playerCount: number // 3-6
+  playerNames: string[] // Dynamic array based on playerCount
+  validationErrors: string[]
+  isStartButtonEnabled: boolean
+}
+
+// Default player names in order
+const DEFAULT_NAMES = ['Alice', 'Bob', 'Charlie', 'Diana', 'Eric', 'Fran']
+```
+
+**Implementation Details**:
+
+1. **Player Count Slider**:
+   - Range: 3-6 players
+   - Visual: Horizontal slider with tick marks and labels
+   - Behavior: Updates playerNames array length dynamically
+   - Default: 4 players (current behavior)
+
+2. **Dynamic Name Input Generation**:
+   ```typescript
+   // Generate inputs based on slider value
+   const generatePlayerInputs = (count: number) => {
+     const names = [...DEFAULT_NAMES.slice(0, count)]
+     return names.map((defaultName, index) => ({
+       id: index,
+       value: defaultName,
+       placeholder: `Player ${index + 1}`
+     }))
+   }
+   ```
+
+3. **Real-time Validation**:
+   - **Empty Name Check**: Any empty input disables start button
+   - **Duplicate Name Check**: Duplicate names show error and disable button
+   - **Visual Feedback**: Invalid inputs highlighted with error styling
+   - **Error Messages**: Clear, specific validation messages displayed
+
+4. **Start Button Logic**:
+   ```typescript
+   const isValidSetup = () => {
+     const nonEmptyNames = playerNames.filter(name => name.trim().length > 0)
+     const uniqueNames = new Set(nonEmptyNames)
+     
+     return nonEmptyNames.length === playerCount && 
+            uniqueNames.size === nonEmptyNames.length
+   }
+   ```
+
+**UI Layout Design**:
+
+```
+┌─────────────────────────────────────────┐
+│           Trading Card Game             │
+│                                         │
+│  Number of Players: [3]──●──[4][5][6]   │
+│                                         │
+│  Player Names:                          │
+│  ┌─────────────┐ ┌─────────────┐       │
+│  │ Alice       │ │ Bob         │       │
+│  └─────────────┘ └─────────────┘       │
+│  ┌─────────────┐ ┌─────────────┐       │
+│  │ Charlie     │ │ Diana       │       │
+│  └─────────────┘ └─────────────┘       │
+│                                         │
+│  ⚠ Error: Player names must be unique   │
+│                                         │
+│         [Start Game] (disabled)         │
+└─────────────────────────────────────────┘
+```
+
+**Responsive Design Considerations**:
+- **Mobile**: Stack inputs vertically, larger touch targets
+- **Desktop**: Grid layout for inputs, horizontal slider
+- **Accessibility**: Proper labels, keyboard navigation, screen reader support
+
+**Integration with Existing Game Logic**:
+- **START_GAME Action**: Modified to accept dynamic player array
+- **Game State**: No changes needed - already supports 3-6 players
+- **Player Creation**: Uses provided names instead of hardcoded defaults
+
+**Error Handling**:
+- **Graceful Degradation**: Fall back to default names if validation fails
+- **User Feedback**: Clear error messages for each validation rule
+- **State Recovery**: Preserve user input during validation errors
+
+**Benefits**:
+- **Flexibility**: Supports all valid player counts (3-6)
+- **Personalization**: Custom player names for better engagement
+- **Usability**: Clear validation feedback and intuitive controls
+- **Accessibility**: Proper form controls and keyboard navigation
+- **Maintainability**: Clean separation of setup logic from game logic
+
 ## Data Models
 
 ### Deck Composition
@@ -573,6 +688,36 @@ Based on the prework analysis, the following properties have been identified as 
 **Property 85: Consistent automatic progression across rounds**
 *For any* round (first or subsequent), automatic phase progression should work identically
 **Validates: Requirements 42.5**
+
+### Configurable Player Setup Properties
+
+**Property 86: Dynamic input generation**
+*For any* player count selection between 3 and 6, the system should display exactly that number of name input textboxes
+**Validates: Requirements 44.2**
+
+**Property 87: Default name population**
+*For any* player count selection, the name textboxes should be pre-populated with the first N default names (Alice, Bob, Charlie, Diana, Eric, Fran) in that order
+**Validates: Requirements 44.3**
+
+**Property 88: Name input editability**
+*For any* name textbox, players should be able to edit the value and have the change reflected in the input
+**Validates: Requirements 44.4**
+
+**Property 89: Empty name validation**
+*For any* combination of name inputs where at least one is empty, the "Start Game" button should be disabled
+**Validates: Requirements 44.5**
+
+**Property 90: Complete name validation**
+*For any* combination of name inputs where all contain non-empty values and are unique, the "Start Game" button should be enabled
+**Validates: Requirements 44.6**
+
+**Property 91: Unique name validation**
+*For any* combination of name inputs, the system should correctly identify whether all names are unique
+**Validates: Requirements 44.7**
+
+**Property 92: Duplicate name error handling**
+*For any* combination of name inputs containing duplicates, the system should display an error message and keep the "Start Game" button disabled
+**Validates: Requirements 44.8**
 
 ### Winner Determination Properties
 
