@@ -150,6 +150,7 @@ export interface ConnectedPlayer {
   connected: boolean
   joinedAt: Date
   lastSeen: Date
+  gamePlayerIndex?: number  // Index in the game's players array (set when game starts)
 }
 
 export enum GameStatus {

@@ -162,6 +162,113 @@ export class GameManager {
   }
 
   /**
+   * Handle player disconnection
+   */
+  handlePlayerDisconnection(gameId: string, playerId: string): { success: boolean; gameEnded?: boolean; error?: string } {
+    const game = this.getGameById(gameId)
+    
+    if (!game) {
+      return { success: false, error: 'Game not found' }
+    }
+    
+    // Update player connection status
+    const player = game.connectedPlayers.find(p => p.playerId === playerId)
+    if (player) {
+      player.connected = false
+      player.lastSeen = new Date()
+    }
+    
+    // Check if game should continue
+    const connectedPlayers = game.connectedPlayers.filter(p => p.connected)
+    
+    if (game.status === 'lobby') {
+      // In lobby, just remove the player
+      game.connectedPlayers = game.connectedPlayers.filter(p => p.playerId !== playerId)
+      
+      // If host disconnected, assign new host
+      if (game.hostPlayerId === playerId && game.connectedPlayers.length > 0) {
+        game.hostPlayerId = game.connectedPlayers[0].playerId
+      }
+      
+      // If no players left, mark game as abandoned
+      if (game.connectedPlayers.length === 0) {
+        game.status = GameStatus.ABANDONED
+        return { success: true, gameEnded: true }
+      }
+      
+      return { success: true }
+    }
+    
+    if (game.status === 'playing') {
+      // Check if we have enough players to continue
+      if (connectedPlayers.length < config.minPlayersPerGame) {
+        // Not enough players, end the game
+        game.status = GameStatus.ABANDONED
+        game.winner = null // No winner due to disconnections
+        return { success: true, gameEnded: true }
+      }
+      
+      // Game can continue with remaining players
+      // Mark disconnected player as "done" in action phase to prevent blocking
+      if (game.currentPhase === GamePhase.ACTION_PHASE) {
+        const gamePlayerIndex = game.players?.findIndex(p => p.id.toString() === playerId)
+        if (gamePlayerIndex !== -1 && game.actionPhaseDoneStates) {
+          game.actionPhaseDoneStates[gamePlayerIndex] = true
+        }
+      }
+      
+      return { success: true }
+    }
+    
+    return { success: true }
+  }
+
+  /**
+   * Handle player reconnection
+   */
+  handlePlayerReconnection(gameId: string, playerId: string): { success: boolean; error?: string } {
+    const game = this.getGameById(gameId)
+    
+    if (!game) {
+      return { success: false, error: 'Game not found' }
+    }
+    
+    // Update player connection status
+    const player = game.connectedPlayers.find(p => p.playerId === playerId)
+    if (player) {
+      player.connected = true
+      player.lastSeen = new Date()
+      return { success: true }
+    }
+    
+    return { success: false, error: 'Player not found in game' }
+  }
+
+  /**
+   * Check for stale games and clean them up
+   */
+  cleanupStaleGames(): number {
+    const now = new Date()
+    const staleThreshold = 30 * 60 * 1000 // 30 minutes
+    let cleanedCount = 0
+    
+    const allGames = this.gameStorage.getAllGames()
+    
+    for (const game of allGames) {
+      const timeSinceActivity = now.getTime() - game.lastActivity.getTime()
+      
+      if (timeSinceActivity > staleThreshold) {
+        // Mark game as abandoned
+        game.status = GameStatus.ABANDONED
+        this.gameStorage.updateGame(game.gameId, game)
+        cleanedCount++
+      }
+    }
+    
+    return cleanedCount
+  }
+
+  /**
    * Get server statistics
    */
   getStats() {
@@ -183,6 +290,13 @@ export class GameManager {
     
     // Set multiplayer-specific properties
     game.status = GameStatus.PLAYING
+    
+    // Create mapping between multiplayer player IDs and game player indices
+    // The game players are created in the same order as connectedPlayers
+    game.connectedPlayers.forEach((connectedPlayer, index) => {
+      // Store the game player index in the connected player object
+      connectedPlayer.gamePlayerIndex = index
+    })
     
     console.log(`🎮 Started game ${game.gameId} with ${playerNames.length} players`)
   }

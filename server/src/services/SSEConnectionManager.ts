@@ -184,10 +184,10 @@ export class SSEConnectionManager {
    * Filter game state to show only what a specific player should see
    */
   private filterGameStateForPlayer(gameState: MultiplayerGameState, playerId: string): any {
-    // Find the player's index in the connected players
-    const playerIndex = gameState.connectedPlayers.findIndex(p => p.playerId === playerId)
+    // Find the connected player
+    const connectedPlayer = gameState.connectedPlayers.find(p => p.playerId === playerId)
     
-    if (playerIndex === -1) {
+    if (!connectedPlayer) {
       // Player not found, return minimal state
       return {
         gameId: gameState.gameId,
@@ -207,14 +207,16 @@ export class SSEConnectionManager {
     }
 
     // For playing games, filter sensitive information
+    const gamePlayerIndex = connectedPlayer.gamePlayerIndex ?? 0
+    
     const filteredState = {
       ...gameState,
-      // Set perspective to this player automatically
-      selectedPerspective: playerIndex,
+      // Set perspective to this player's game index
+      selectedPerspective: gamePlayerIndex,
       // Hide other players' hands (keep only this player's hand visible)
       players: gameState.players?.map((player, index) => ({
         ...player,
-        hand: index === playerIndex ? player.hand : [] // Hide other players' hands
+        hand: index === gamePlayerIndex ? player.hand : [] // Hide other players' hands
       }))
     }
 
