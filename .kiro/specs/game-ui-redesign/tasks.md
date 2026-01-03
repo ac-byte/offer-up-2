@@ -11,7 +11,7 @@ Transform the main game page UI by consolidating information into a comprehensiv
   - Update any related title references for consistency
   - _Requirements: 1.1, 1.2, 1.3_
 
-- [ ] 2. Enhance game header with consolidated information
+- [x] 2. Enhance game header with consolidated information
   - [x] 2.1 Restructure header with two-row layout
     - **Top row**: "Offer Up" (left) | Phase name (center) | Draw/discard counts (right)
     - **Bottom row**: Round number (left) | Buyer/player status (center) | Cards in play + highest score (right)
@@ -19,51 +19,51 @@ Transform the main game page UI by consolidating information into a comprehensiv
     - Style phase name prominently in header center
     - _Requirements: 2.1, 2.2_
 
-  - [ ] 2.2 Move card counts to header right side
+  - [x] 2.2 Move card counts to header right side
     - Move draw pile and discard pile counts from game-controls to header top-right
     - Add cards in play count calculation and display to header bottom-right
     - Style counts vertically within their header sections
     - _Requirements: 2.3_
 
-  - [ ] 2.3 Move additional info to header
+  - [x] 2.3 Move additional info to header
     - Move round number to header bottom-left
     - Move highest score from game-footer to header bottom-right (below cards in play)
     - Move buyer/player status to header bottom-center
     - Style consistently with other header elements
     - _Requirements: 2.4_
 
-  - [ ] 2.4 Remove phase count display
+  - [x] 2.4 Remove phase count display
     - Remove "Phase X of 10" indicator
     - Clean up related styling and logic
     - _Requirements: 2.5_
 
-- [ ] 3. Create admin footer for debug controls
-  - [ ] 3.1 Create AdminFooter component
+- [x] 3. Create admin footer for debug controls
+  - [x] 3.1 Create AdminFooter component
     - Design collapsible footer component
     - Add expand/collapse button and state management
     - Style as subtle administrative interface
     - _Requirements: 3.1, 3.2_
 
-  - [ ] 3.2 Move debug controls to admin footer
+  - [x] 3.2 Move debug controls to admin footer
     - Move PerspectiveSelector to admin footer
     - Move "Continue to next phase" and "Skip Phase (Debug)" buttons
     - Ensure all debug functionality remains accessible
     - _Requirements: 3.3, 3.4, 3.5_
 
-- [ ] 4. Implement contextual game actions
-  - [ ] 4.1 Create conditional game actions visibility
+- [x] 4. Implement contextual game actions
+  - [x] 4.1 Create conditional game actions visibility
     - Add logic to show/hide game actions based on game state
     - Move game actions between header and player areas
     - Hide when no user interaction is required
     - _Requirements: 4.1, 4.2, 4.5_
-
-  - [ ] 4.2 Preserve all interactive game messages
+ 
+  - [x] 4.2 Preserve all interactive game messages
     - Ensure Gotcha card processing messages still appear
     - Ensure action card effect messages still appear
     - Maintain all existing interaction functionality
     - _Requirements: 4.3, 4.4_
 
-- [ ] 5. Remove empty UI sections
+- [x] 5. Remove empty UI sections
   - Remove phase-display area after moving content to header
   - Remove game-controls area after moving content to admin footer
   - Remove game-footer area after moving content to header

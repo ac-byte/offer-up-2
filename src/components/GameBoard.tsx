@@ -3,6 +3,7 @@ import { useGameContext } from '../contexts'
 import { PerspectiveSelector } from './PerspectiveSelector'
 import { PlayerArea } from './PlayerArea'
 import { HomeScreen } from './HomeScreen'
+import { AdminFooter } from './AdminFooter'
 import { GameAction, GamePhase, Card } from '../types'
 import './GameBoard.css'
 
@@ -196,6 +197,45 @@ export const GameBoard: React.FC = () => {
     return `💰 Buyer: ${buyer?.name} | 🎯 Current Player: ${currentPlayer?.name}`
   }
 
+  // Function to determine if game actions should be visible
+  const shouldShowGameActions = (): boolean => {
+    switch (gameState.currentPhase) {
+      case GamePhase.DEAL:
+        return true // Show deal cards button
+      
+      case GamePhase.OFFER_SELECTION:
+        // Show if there are offers to select
+        const sellersWithOffers = gameState.players.filter((player, index) => 
+          index !== gameState.currentBuyerIndex && player.offer.length > 0
+        )
+        return sellersWithOffers.length > 0
+      
+      case GamePhase.GOTCHA_TRADEINS:
+        // Show if there's an active Gotcha effect requiring user input
+        return gameState.gotchaEffectState !== null
+      
+      case GamePhase.ACTION_PHASE:
+        // Show if there's any pending action card effect requiring user input
+        return !!(
+          gameState.flipOneEffectState?.awaitingCardSelection ||
+          gameState.addOneEffectState?.awaitingHandCardSelection ||
+          gameState.addOneEffectState?.awaitingOfferSelection ||
+          gameState.removeOneEffectState?.awaitingCardSelection ||
+          gameState.removeTwoEffectState?.awaitingCardSelection ||
+          gameState.stealAPointEffectState?.awaitingTargetSelection
+        )
+      
+      case GamePhase.BUYER_ASSIGNMENT:
+      case GamePhase.OFFER_DISTRIBUTION:
+      case GamePhase.THING_TRADEINS:
+      case GamePhase.WINNER_DETERMINATION:
+      case GamePhase.OFFER_PHASE:
+      case GamePhase.BUYER_FLIP:
+      default:
+        return false // No user interaction required
+    }
+  }
+
   const getPhaseActions = () => {
     switch (gameState.currentPhase) {
       case GamePhase.DEAL:
@@ -215,9 +255,6 @@ export const GameBoard: React.FC = () => {
           return (
             <div className="phase-waiting">
               <span>No offers available to select</span>
-              <button onClick={handleAdvancePhase} className="action-button secondary">
-                Skip Phase (Debug)
-              </button>
             </div>
           )
         }
@@ -245,11 +282,7 @@ export const GameBoard: React.FC = () => {
       case GamePhase.OFFER_DISTRIBUTION:
       case GamePhase.THING_TRADEINS:
       case GamePhase.WINNER_DETERMINATION:
-        return (
-          <button onClick={handleAdvancePhase} className="action-button">
-            Continue to Next Phase
-          </button>
-        )
+        return null // Debug controls moved to AdminFooter
       
       case GamePhase.GOTCHA_TRADEINS:
         // Check if there's a pending Gotcha effect
@@ -310,11 +343,7 @@ export const GameBoard: React.FC = () => {
           }
         } else {
           // No pending Gotcha effect - continue processing
-          return (
-            <button onClick={handleAdvancePhase} className="action-button">
-              Continue to Next Phase
-            </button>
-          )
+          return null // Debug controls moved to AdminFooter
         }
       
       case GamePhase.ACTION_PHASE:
@@ -380,6 +409,25 @@ export const GameBoard: React.FC = () => {
           )
         }
         
+        // Check if there's a pending Remove Two effect
+        if (gameState.removeTwoEffectState && gameState.removeTwoEffectState?.awaitingCardSelection === true) {
+          const removeTwoPlayer = gameState.players[gameState.removeTwoEffectState.playerId]
+          const cardsRemaining = gameState.removeTwoEffectState.cardsToSelect
+          const cardsSelected = 2 - cardsRemaining
+          
+          return (
+            <div className="remove-two-effect-controls">
+              <div className="remove-two-effect-header">
+                <strong>{removeTwoPlayer?.name}</strong> played Remove Two: Select exactly 2 cards from any offers to remove
+              </div>
+              <div className="remove-two-selection-info">
+                <span>Cards selected: {cardsSelected} / 2</span>
+                <span>Click on cards in the offers below to discard them</span>
+              </div>
+            </div>
+          )
+        }
+        
         // Check if there's a pending Steal A Point effect
         if (gameState.stealAPointEffectState && gameState.stealAPointEffectState?.awaitingTargetSelection === true) {
           const stealAPointPlayer = gameState.players[gameState.stealAPointEffectState.playerId]
@@ -429,25 +477,57 @@ export const GameBoard: React.FC = () => {
           )
         }
         
-        return (
-          <div className="phase-waiting">
-            <span>Players can play action cards from their collections...</span>
-            <button onClick={handleAdvancePhase} className="action-button secondary">
-              Skip Phase (Debug)
-            </button>
-          </div>
-        )
+        return null // No interactive actions needed
       
       default:
-        return (
-          <div className="phase-waiting">
-            <span>Waiting for player actions...</span>
-            <button onClick={handleAdvancePhase} className="action-button secondary">
-              Skip Phase (Debug)
-            </button>
-          </div>
-        )
+        return null // No interactive actions needed
     }
+  }
+
+  const getDebugControls = () => {
+    const needsContinueButton = [
+      GamePhase.BUYER_ASSIGNMENT,
+      GamePhase.OFFER_DISTRIBUTION,
+      GamePhase.THING_TRADEINS,
+      GamePhase.WINNER_DETERMINATION
+    ].includes(gameState.currentPhase)
+
+    const needsSkipButton = [
+      GamePhase.OFFER_SELECTION,
+      GamePhase.ACTION_PHASE
+    ].includes(gameState.currentPhase)
+
+    const needsGotchaContinue = gameState.currentPhase === GamePhase.GOTCHA_TRADEINS && !gameState.gotchaEffectState
+
+    return (
+      <div className="debug-controls">
+        <div className="debug-section">
+          <label>View Perspective:</label>
+          <PerspectiveSelector
+            players={gameState.players}
+            selectedPerspective={gameState.selectedPerspective}
+            autoFollowPerspective={gameState.autoFollowPerspective}
+            onPerspectiveChange={handlePerspectiveChange}
+            onToggleAutoFollow={handleToggleAutoFollow}
+          />
+        </div>
+        
+        <div className="debug-section">
+          <div className="debug-buttons">
+            {(needsContinueButton || needsGotchaContinue) && (
+              <button onClick={handleAdvancePhase} className="action-button debug-button">
+                Continue to Next Phase
+              </button>
+            )}
+            {needsSkipButton && (
+              <button onClick={handleAdvancePhase} className="action-button secondary debug-button">
+                Skip Phase (Debug)
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    )
   }
 
   if (!gameState.gameStarted) {
@@ -532,26 +612,17 @@ export const GameBoard: React.FC = () => {
         </div>
       )}
 
-      {/* Game Controls */}
-      <div className="game-controls">
-        <div className="control-section">
-          <label>View Perspective:</label>
-          <PerspectiveSelector
-            players={gameState.players}
-            selectedPerspective={gameState.selectedPerspective}
-            autoFollowPerspective={gameState.autoFollowPerspective}
-            onPerspectiveChange={handlePerspectiveChange}
-            onToggleAutoFollow={handleToggleAutoFollow}
-          />
-        </div>
-        
-        <div className="control-section">
-          <div className="deck-info">
-            <span>Draw Pile: {gameState.drawPile.length} cards</span>
-            <span>Discard Pile: {gameState.discardPile.length} cards</span>
+      {/* Contextual Game Actions - Only show when user interaction is required */}
+      {shouldShowGameActions() && (
+        <div className="game-actions">
+          <div className="actions-header">
+            <h3>Game Actions</h3>
+          </div>
+          <div className="actions-content">
+            {getPhaseActions()}
           </div>
         </div>
-      </div>
+      )}
 
       {/* Player Areas */}
       <div className="player-areas">
@@ -629,34 +700,12 @@ export const GameBoard: React.FC = () => {
         ))}
       </div>
 
-      {/* Game Actions */}
-      <div className="game-actions">
-        <div className="actions-header">
-          <h3>Game Actions</h3>
-        </div>
-        <div className="actions-content">
-          {getPhaseActions()}
-        </div>
-      </div>
 
-      {/* Game Footer with Additional Info */}
-      {gameState.winner === null && (
-        <div className="game-footer">
-          <div className="game-stats">
-            <div className="stat-item">
-              <strong>Players:</strong> {gameState.players.length}
-            </div>
-            <div className="stat-item">
-              <strong>Cards in Play:</strong> {gameState.players.reduce((total, player) => 
-                total + player.hand.length + player.collection.length + player.offer.length, 0
-              )}
-            </div>
-            <div className="stat-item">
-              <strong>Highest Score:</strong> {Math.max(...gameState.players.map(p => p.points), 0)} points
-            </div>
-          </div>
-        </div>
-      )}
+
+      {/* Admin Footer with Debug Controls */}
+      <AdminFooter>
+        {getDebugControls()}
+      </AdminFooter>
     </div>
   )
 }
