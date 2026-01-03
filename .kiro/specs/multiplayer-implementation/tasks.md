@@ -6,7 +6,7 @@ Transform the single-browser card game into a true multiplayer experience by add
 
 ## Tasks
 
-- [ ] 1. Backend Infrastructure Setup
+- [x] 1. Backend Infrastructure Setup
   - Set up Node.js/Express server with TypeScript
   - Configure development environment and build scripts
   - Add necessary dependencies (express, cors, uuid, etc.)
