@@ -66,21 +66,21 @@ Transform the single-browser card game into a true multiplayer experience by add
     - _Requirements: 4.3, 4.4, 4.5, 5.2, 9.1_
 
 - [ ] 5. Frontend Multiplayer Integration
-  - [ ] 5.1 Enhanced HomeScreen for multiplayer
+  - [x] 5.1 Enhanced HomeScreen for multiplayer
     - Add "Create Multiplayer Game" button and flow
     - Implement "Join Game" form with code input
     - Create shareable URL display for game hosts
     - Preserve existing "Start Local Game" functionality
     - _Requirements: 1.1, 1.3, 2.1_
 
-  - [ ] 5.2 Game Lobby component
+  - [x] 5.2 Game Lobby component
     - Create lobby interface showing joined players
     - Add real-time player list updates via SSE
     - Implement host controls (start game button)
     - Add leave game functionality
     - _Requirements: 3.1, 3.2, 3.4_
 
-  - [ ] 5.3 Multiplayer client state management
+  - [x] 5.3 Multiplayer client state management
     - Add multiplayer mode to existing game context
     - Implement SSE client for real-time updates
     - Create HTTP client for player actions
