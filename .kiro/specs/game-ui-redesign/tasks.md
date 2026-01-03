@@ -121,14 +121,14 @@ Transform the main game page UI by consolidating information into a comprehensiv
   - Maintain visual consistency with existing design system
   - Test layout with different player counts (3-6 players)
 
-- [ ] 11. Integration testing and validation
+- [x] 11. Integration testing and validation
   - Test all game phases with new UI layout
   - Verify all existing functionality works with new design
   - Test admin controls accessibility and functionality
   - Test collapsible sections across different game states
   - Ensure no regressions in game logic or user interactions
 
-- [ ] 12. Final checkpoint - Comprehensive testing
+- [x] 12. Final checkpoint - Comprehensive testing
   - Ensure all tests pass, ask the user if questions arise
   - Verify the redesign improves user experience
   - Confirm all requirements are met

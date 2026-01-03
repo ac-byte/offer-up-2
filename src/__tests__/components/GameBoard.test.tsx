@@ -114,9 +114,10 @@ describe('GameBoard Interactive Messages', () => {
     const gameState = createMockGameStateWithEffects('flipOne')
     renderGameBoardWithState(gameState)
     
-    expect(screen.getByText((content, element) => {
-      return element?.textContent?.includes('Alice played Flip One') || false
-    })).toBeInTheDocument()
+    // Look specifically in the game actions area
+    const gameActions = screen.getByText('Game Actions').closest('.game-actions')
+    expect(gameActions).toBeInTheDocument()
+    expect(gameActions).toHaveTextContent('Alice played Flip One')
     expect(screen.getByText(/Select a face-down card from any offer to flip/)).toBeInTheDocument()
   })
 
@@ -124,9 +125,10 @@ describe('GameBoard Interactive Messages', () => {
     const gameState = createMockGameStateWithEffects('addOne')
     renderGameBoardWithState(gameState)
     
-    expect(screen.getByText((content, element) => {
-      return element?.textContent?.includes('Alice played Add One') || false
-    })).toBeInTheDocument()
+    // Look specifically in the game actions area
+    const gameActions = screen.getByText('Game Actions').closest('.game-actions')
+    expect(gameActions).toBeInTheDocument()
+    expect(gameActions).toHaveTextContent('Alice played Add One')
     expect(screen.getByText(/Select a card from your hand to add to an offer/)).toBeInTheDocument()
   })
 
@@ -134,9 +136,10 @@ describe('GameBoard Interactive Messages', () => {
     const gameState = createMockGameStateWithEffects('removeOne')
     renderGameBoardWithState(gameState)
     
-    expect(screen.getByText((content, element) => {
-      return element?.textContent?.includes('Alice played Remove One') || false
-    })).toBeInTheDocument()
+    // Look specifically in the game actions area
+    const gameActions = screen.getByText('Game Actions').closest('.game-actions')
+    expect(gameActions).toBeInTheDocument()
+    expect(gameActions).toHaveTextContent('Alice played Remove One')
     expect(screen.getByText(/Select a card from any offer to remove/)).toBeInTheDocument()
   })
 
@@ -144,9 +147,10 @@ describe('GameBoard Interactive Messages', () => {
     const gameState = createMockGameStateWithEffects('removeTwo')
     renderGameBoardWithState(gameState)
     
-    expect(screen.getByText((content, element) => {
-      return element?.textContent?.includes('Alice played Remove Two') || false
-    })).toBeInTheDocument()
+    // Look specifically in the game actions area
+    const gameActions = screen.getByText('Game Actions').closest('.game-actions')
+    expect(gameActions).toBeInTheDocument()
+    expect(gameActions).toHaveTextContent('Alice played Remove Two')
     expect(screen.getByText(/Select exactly 2 cards from any offers to remove/)).toBeInTheDocument()
     expect(screen.getByText(/Cards selected: 0 \/ 2/)).toBeInTheDocument()
   })
@@ -155,9 +159,10 @@ describe('GameBoard Interactive Messages', () => {
     const gameState = createMockGameStateWithEffects('stealAPoint')
     renderGameBoardWithState(gameState)
     
-    expect(screen.getByText((content, element) => {
-      return element?.textContent?.includes('Alice played Steal A Point') || false
-    })).toBeInTheDocument()
+    // Look specifically in the game actions area
+    const gameActions = screen.getByText('Game Actions').closest('.game-actions')
+    expect(gameActions).toBeInTheDocument()
+    expect(gameActions).toHaveTextContent('Alice played Steal A Point')
     expect(screen.getByText(/No players have more points than you/)).toBeInTheDocument()
   })
 
