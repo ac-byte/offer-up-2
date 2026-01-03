@@ -32,34 +32,34 @@ Transform the single-browser card game into a true multiplayer experience by add
     - Create game start transition from lobby to playing
     - _Requirements: 1.2, 2.2, 2.3, 3.3_
 
-- [ ] 3. API Endpoints Implementation
-  - [ ] 3.1 Game management endpoints
+- [-] 3. API Endpoints Implementation
+  - [x] 3.1 Game management endpoints
     - POST /api/games - Create new game
     - POST /api/games/:gameId/join - Join existing game
     - POST /api/games/:gameId/start - Start game (host only)
     - GET /api/games/:gameId/status - Get game status
     - _Requirements: 1.1, 2.1, 3.2_
 
-  - [ ] 3.2 Gameplay endpoints
+  - [x] 3.2 Gameplay endpoints
     - POST /api/games/:gameId/actions - Submit player actions
     - GET /api/games/:gameId/events - Server-Sent Events stream
     - Add action validation and processing logic
     - _Requirements: 5.1, 5.4, 6.1, 6.2, 6.3_
 
-  - [ ] 3.3 Error handling and validation
+  - [x] 3.3 Error handling and validation
     - Add request validation middleware
     - Implement proper error responses
     - Add game state validation for all actions
     - _Requirements: 2.5, 5.4_
 
-- [ ] 4. Real-Time Communication
-  - [ ] 4.1 Server-Sent Events implementation
+- [x] 4. Real-Time Communication
+  - [x] 4.1 Server-Sent Events implementation
     - Set up SSE endpoint for game state updates
     - Implement connection management for multiple clients
     - Add automatic cleanup of disconnected clients
     - _Requirements: 5.2, 5.3, 7.1_
 
-  - [ ] 4.2 State broadcasting system
+  - [x] 4.2 State broadcasting system
     - Create game state filtering for player perspectives
     - Implement efficient state update broadcasting
     - Add connection status tracking and notifications

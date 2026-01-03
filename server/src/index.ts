@@ -1,12 +1,14 @@
 import express from 'express'
 import cors from 'cors'
+import { gamesRouter } from './routes/games'
+import config from './config'
 
 const app = express()
-const PORT = process.env.PORT || 3000
+const PORT = config.port
 
 // Middleware
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:3001',
+  origin: config.clientUrl,
   credentials: true
 }))
 app.use(express.json())
@@ -16,9 +18,17 @@ app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'ok', 
     timestamp: new Date().toISOString(),
-    version: '1.0.0'
+    version: '1.0.0',
+    config: {
+      maxGames: config.maxGames,
+      maxPlayersPerGame: config.maxPlayersPerGame,
+      minPlayersPerGame: config.minPlayersPerGame
+    }
   })
 })
+
+// Game management routes
+app.use('/api/games', gamesRouter)
 
 // Basic error handling
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -34,4 +44,6 @@ app.use('*', (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Offer Up server running on port ${PORT}`)
   console.log(`📡 Health check: http://localhost:${PORT}/api/health`)
+  console.log(`🎮 Game API: http://localhost:${PORT}/api/games`)
+  console.log(`🌐 Client URL: ${config.clientUrl}`)
 })
