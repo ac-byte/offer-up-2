@@ -158,6 +158,20 @@
 }
 
 /* Responsive Design */
+@media (max-width: 1200px) {
+  .admin-footer-content {
+    padding: 18px;
+  }
+  
+  .admin-controls {
+    gap: 18px;
+  }
+  
+  .debug-controls {
+    gap: 20px;
+  }
+}
+
 @media (max-width: 768px) {
   .admin-footer-content {
     padding: 16px;
@@ -167,6 +181,21 @@
     flex-direction: column;
     align-items: center;
     gap: 16px;
+  }
+  
+  .debug-controls {
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+  
+  .debug-section {
+    min-width: 180px;
+    text-align: center;
+  }
+  
+  .debug-buttons {
+    justify-content: center;
   }
   
   .admin-toggle-button {
@@ -189,6 +218,27 @@
   
   .admin-content-header p {
     font-size: 0.8rem;
+  }
+  
+  .debug-section {
+    min-width: 160px;
+  }
+  
+  .debug-button {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+  }
+  
+  .admin-toggle-button {
+    padding: 8px 16px;
+  }
+  
+  .admin-toggle-text {
+    font-size: 0.75rem;
+  }
+  
+  .admin-toggle-icon {
+    font-size: 0.7rem;
   }
 }
 

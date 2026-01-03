@@ -422,6 +422,22 @@
 
 /* Responsive Design */
 
+@media (max-width: 1200px) {
+  .player-area {
+    margin: 6px;
+    padding: 14px;
+    min-width: 280px;
+  }
+  
+  .player-area__name {
+    font-size: 1.1em;
+  }
+  
+  .player-area__stats {
+    font-size: 0.85em;
+  }
+}
+
 @media (max-width: 768px) {
   .player-area {
     margin: 4px;
@@ -446,6 +462,16 @@
     flex-direction: row;
     flex-wrap: wrap;
   }
+  
+  /* Improve button layouts on mobile */
+  .offer-controls__buttons {
+    gap: 6px;
+  }
+  
+  .offer-controls__face-up-button {
+    padding: 3px 6px;
+    font-size: 0.75em;
+  }
 }
 
 @media (max-width: 480px) {
@@ -455,7 +481,11 @@
   }
   
   .player-area__name {
-    font-size: 1.1em;
+    font-size: 1em;
+  }
+  
+  .player-area__stats {
+    font-size: 0.8em;
   }
   
   .hand__cards {
@@ -470,6 +500,28 @@
   
   .collection-area__card {
     transform: scale(0.6);
+  }
+  
+  /* Improve mobile interaction areas */
+  .player-area__offer-button,
+  .player-area__select-offer-button {
+    padding: 10px 16px;
+    font-size: 0.85em;
+  }
+  
+  .offer-controls__face-up-button {
+    padding: 6px 8px;
+    margin: 2px;
+  }
+  
+  /* Better mobile layout for done checkbox */
+  .done-checkbox__label {
+    font-size: 13px;
+  }
+  
+  .done-checkbox__input {
+    width: 14px;
+    height: 14px;
   }
 }
 /* Gotcha Card Selection Styles */
@@ -625,4 +677,56 @@
   background-color: #f0f0f0;
   border-radius: 4px;
   padding: 8px;
+}
+/* Container queries for better responsive design (when supported) */
+@container (max-width: 300px) {
+  .player-area__name {
+    font-size: 1em;
+  }
+  
+  .player-area__stats {
+    font-size: 0.75em;
+  }
+}
+
+/* Performance optimizations */
+.player-area {
+  contain: layout style;
+}
+
+.hand__cards,
+.offer-area__cards,
+.collection-area__cards {
+  contain: layout;
+}
+
+/* Improved focus management */
+.player-area:focus-within {
+  outline: 2px solid var(--primary-color, #007bff);
+  outline-offset: 2px;
+}
+
+/* Better support for different player counts */
+@media (min-width: 1600px) {
+  /* For 6 players on very large screens */
+  .player-area {
+    min-width: 280px;
+  }
+}
+
+@media (max-width: 320px) {
+  /* Very small screens */
+  .player-area {
+    min-width: 200px;
+    margin: 2px;
+    padding: 6px;
+  }
+  
+  .player-area__name {
+    font-size: 0.9em;
+  }
+  
+  .player-area__stats {
+    font-size: 0.75em;
+  }
 }

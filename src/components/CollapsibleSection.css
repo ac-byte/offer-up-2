@@ -108,6 +108,16 @@
 }
 
 /* Responsive Design */
+@media (max-width: 1200px) {
+  .collapsible-section__header {
+    padding: 10px 14px;
+  }
+  
+  .collapsible-section__body {
+    padding: 14px;
+  }
+}
+
 @media (max-width: 768px) {
   .collapsible-section__header {
     padding: 10px 12px;
@@ -119,6 +129,15 @@
   
   .collapsible-section__title {
     font-size: 0.9em;
+  }
+  
+  .collapsible-section__toggle {
+    width: 22px;
+    height: 22px;
+  }
+  
+  .collapsible-section__arrow {
+    font-size: 11px;
   }
 }
 
