@@ -702,12 +702,18 @@ export function initializeMultiplayerGame(playerNames: string[]): GameState {
     hasMoney: false
   }))
 
+  // Select random buyer
+  const buyerIndex = selectRandomBuyer(players.length)
+  
+  // Set money bag for buyer
+  players[buyerIndex].hasMoney = true
+
   const deck = createShuffledDeck()
   
   return {
     players,
-    currentBuyerIndex: 0,
-    nextBuyerIndex: 1,
+    currentBuyerIndex: buyerIndex,
+    nextBuyerIndex: buyerIndex, // Initially same as current buyer
     currentPhase: GamePhase.BUYER_ASSIGNMENT,
     currentPlayerIndex: 0,
     round: 1,
