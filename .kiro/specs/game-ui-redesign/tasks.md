@@ -70,7 +70,7 @@ Transform the main game page UI by consolidating information into a comprehensiv
   - Clean up related CSS and component references
   - _Requirements: 5.1, 5.2, 5.3, 5.4_
 
-- [ ] 6. Implement collapsible player sub-areas
+- [x] 6. Implement collapsible player sub-areas
   - [x] 6.1 Create CollapsibleSection component
     - Design reusable collapsible section with expand/collapse controls
     - Add state management for expanded/collapsed state
@@ -89,14 +89,14 @@ Transform the main game page UI by consolidating information into a comprehensiv
   - Ensure manual collapse/expand still works in relevant phases
   - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5_
 
-- [ ] 8. Create split player areas layout
-  - [ ] 8.1 Implement active player prominence
+- [x] 8. Create split player areas layout
+  - [x] 8.1 Implement active player prominence
     - Split player areas into left (active) and right (others) sections
     - Display active player area on left with full prominence
     - Add visual distinction for active player area
     - _Requirements: 8.1, 8.2, 8.5_
 
-  - [ ] 8.2 Configure active player area defaults
+  - [x] 8.2 Configure active player area defaults
     - Set collection and hand expanded by default for active player
     - Set offer expanded/collapsed based on phase for active player
     - Ensure active player area is easily identifiable
