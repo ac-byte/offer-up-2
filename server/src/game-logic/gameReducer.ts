@@ -354,6 +354,9 @@ function flipCard(state: GameState, offerId: number, cardIndex: number): GameSta
     }
   }
 
+  // Automatically advance to action phase after flip
+  newState.currentPhase = GamePhase.ACTION_PHASE
+  
   return newState
 }
 
