@@ -354,10 +354,8 @@ function flipCard(state: GameState, offerId: number, cardIndex: number): GameSta
     }
   }
 
-  // Automatically advance to action phase after flip
-  newState.currentPhase = GamePhase.ACTION_PHASE
-  
-  return newState
+  // Automatically advance to action phase after flip with proper initialization
+  return advanceToNextPhaseWithInitialization(newState)
 }
 
 /**
@@ -742,4 +740,237 @@ export function initializeMultiplayerGame(playerNames: string[]): GameState {
     winner: null,
     gameStarted: true
   }
+}
+/**
+ * Gets the correct phase order for the 10-phase round system
+ */
+export function getPhaseOrder(): GamePhase[] {
+  return [
+    GamePhase.BUYER_ASSIGNMENT,
+    GamePhase.DEAL,
+    GamePhase.OFFER_PHASE,
+    GamePhase.BUYER_FLIP,
+    GamePhase.ACTION_PHASE,
+    GamePhase.OFFER_SELECTION,
+    GamePhase.OFFER_DISTRIBUTION,
+    GamePhase.GOTCHA_TRADEINS,
+    GamePhase.THING_TRADEINS,
+    GamePhase.WINNER_DETERMINATION
+  ]
+}
+
+/**
+ * Advances to the next phase in the sequence
+ */
+export function advanceToNextPhase(currentPhase: GamePhase, currentRound: number): { nextPhase: GamePhase; nextRound: number } {
+  const phaseOrder = getPhaseOrder()
+  const currentIndex = phaseOrder.indexOf(currentPhase)
+  
+  if (currentIndex === -1) {
+    throw new Error(`Invalid current phase: ${currentPhase}`)
+  }
+  
+  const nextIndex = (currentIndex + 1) % phaseOrder.length
+  const nextPhase = phaseOrder[nextIndex]
+  
+  // If we're going back to buyer assignment, increment round
+  const nextRound = nextPhase === GamePhase.BUYER_ASSIGNMENT ? currentRound + 1 : currentRound
+  
+  return { nextPhase, nextRound }
+}
+
+/**
+ * Gets instructions for each phase
+ */
+function getPhaseInstructions(phase: GamePhase): string {
+  switch (phase) {
+    case GamePhase.BUYER_ASSIGNMENT:
+      return 'Buyer assignment: Transferring buyer role to money bag holder...'
+    case GamePhase.DEAL:
+      return 'Deal phase: Dealing cards to all players...'
+    case GamePhase.OFFER_PHASE:
+      return 'Offer phase: Sellers place their 3-card offers...'
+    case GamePhase.BUYER_FLIP:
+      return 'Buyer-flip phase: Buyer flips one face-down card...'
+    case GamePhase.ACTION_PHASE:
+      return 'Action phase: Players may play action cards...'
+    case GamePhase.OFFER_SELECTION:
+      return 'Offer selection: Buyer selects one offer...'
+    case GamePhase.OFFER_DISTRIBUTION:
+      return 'Offer distribution: Distributing cards and money bag...'
+    case GamePhase.GOTCHA_TRADEINS:
+      return 'Gotcha trade-ins: Processing Gotcha card effects...'
+    case GamePhase.THING_TRADEINS:
+      return 'Thing trade-ins: Converting complete sets to points...'
+    case GamePhase.WINNER_DETERMINATION:
+      return 'Winner determination: Checking for game winner...'
+    default:
+      return 'Unknown phase'
+  }
+}
+
+/**
+ * Advance to the next phase with proper initialization
+ * @param state Current game state
+ * @returns Updated state with advanced phase and action phase initialized if needed
+ */
+export function advanceToNextPhaseWithInitialization(state: GameState): GameState {
+  const { nextPhase, nextRound } = advanceToNextPhase(state.currentPhase, state.round)
+  
+  // Create state with advanced phase
+  const stateWithNewPhase = {
+    ...state,
+    currentPhase: nextPhase,
+    round: nextRound,
+    phaseInstructions: getPhaseInstructions(nextPhase)
+  }
+  
+  // Initialize special phases if we're entering them
+  let stateWithInitializedPhase = stateWithNewPhase
+  if (nextPhase === GamePhase.ACTION_PHASE) {
+    stateWithInitializedPhase = initializeActionPhase(stateWithNewPhase)
+  } else if (nextPhase === GamePhase.DEAL) {
+    // Automatically handle deal phase
+    stateWithInitializedPhase = handleDealPhase(stateWithNewPhase)
+  } else if (nextPhase === GamePhase.GOTCHA_TRADEINS) {
+    // Process Gotcha trade-ins
+    const stateAfterGotcha = handleGotchaTradeinsPhase(stateWithNewPhase)
+    
+    // If there's a pending Gotcha effect, wait for buyer interaction
+    if (stateAfterGotcha.gotchaEffectState !== null) {
+      stateWithInitializedPhase = stateAfterGotcha
+    } else {
+      // No pending effects - automatically advance to Thing trade-ins
+      stateWithInitializedPhase = advanceToNextPhaseWithInitialization(stateAfterGotcha)
+    }
+  } else if (nextPhase === GamePhase.THING_TRADEINS) {
+    // Process Thing trade-ins and automatically advance to next phase
+    const stateAfterThings = handleThingTradeinsPhase(stateWithNewPhase)
+    stateWithInitializedPhase = advanceToNextPhaseWithInitialization(stateAfterThings)
+  } else if (nextPhase === GamePhase.WINNER_DETERMINATION) {
+    // Automatically handle winner determination
+    stateWithInitializedPhase = handleWinnerDeterminationPhase(stateWithNewPhase)
+  } else if (nextPhase === GamePhase.BUYER_ASSIGNMENT) {
+    // Automatically handle buyer assignment
+    stateWithInitializedPhase = handleBuyerAssignmentPhase(stateWithNewPhase)
+  }
+  
+  return stateWithInitializedPhase
+}
+
+/**
+ * Initializes the action phase with proper done system setup
+ * @param state Current game state that should be in action phase
+ * @returns Updated state with done system initialized, or advanced to next phase if action phase should end immediately
+ */
+export function initializeActionPhase(state: GameState): GameState {
+  if (state.currentPhase !== GamePhase.ACTION_PHASE) {
+    return state
+  }
+  
+  // Initialize the done system immediately when entering action phase
+  const stateWithDoneSystem = initializeActionPhaseDoneSystem(state)
+  
+  // Check if any players have action cards
+  const playersWithActionCards = stateWithDoneSystem.players.filter(player => 
+    player.collection.some(card => card.type === 'action')
+  )
+  
+  // If no players have action cards, skip action phase
+  if (playersWithActionCards.length === 0) {
+    return advanceToNextPhaseWithInitialization(stateWithDoneSystem)
+  }
+  
+  return stateWithDoneSystem
+}
+
+/**
+ * Initialize action phase done system
+ */
+function initializeActionPhaseDoneSystem(state: GameState): GameState {
+  return {
+    ...state,
+    actionPhaseDoneStates: new Array(state.players.length).fill(false)
+  }
+}
+/**
+ * Handles the deal phase automatically
+ */
+function handleDealPhase(state: GameState): GameState {
+  if (state.currentPhase !== GamePhase.DEAL) {
+    return state
+  }
+
+  // Deal cards to all players
+  return dealCards(state)
+}
+
+/**
+ * Transfers buyer role to the player holding the money bag
+ */
+function handleBuyerAssignmentPhase(state: GameState): GameState {
+  if (state.currentPhase !== GamePhase.BUYER_ASSIGNMENT) {
+    return state
+  }
+
+  const newState = { ...state }
+  
+  // Find player with money bag (hasMoney = true)
+  const moneyBagHolderIndex = newState.players.findIndex(player => player.hasMoney)
+  
+  if (moneyBagHolderIndex !== -1) {
+    newState.currentBuyerIndex = moneyBagHolderIndex
+  }
+  
+  // Automatically advance to next phase
+  return advanceToNextPhaseWithInitialization(newState)
+}
+
+/**
+ * Handles the winner determination phase
+ */
+function handleWinnerDeterminationPhase(state: GameState): GameState {
+  if (state.currentPhase !== GamePhase.WINNER_DETERMINATION) {
+    return state
+  }
+
+  const newState = { ...state }
+  
+  // Check for winner (player with 5+ points)
+  const maxPoints = Math.max(...newState.players.map(p => p.points))
+  
+  if (maxPoints >= 5) {
+    // Game ends - find winner
+    const winnerIndex = newState.players.findIndex(p => p.points === maxPoints)
+    newState.winner = winnerIndex
+    newState.phaseInstructions = `Game Over! ${newState.players[winnerIndex].name} wins!`
+    return newState
+  } else {
+    // Continue to next round
+    return advanceToNextPhaseWithInitialization(newState)
+  }
+}
+
+/**
+ * Handles the Gotcha trade-ins phase automatically (simplified version)
+ */
+function handleGotchaTradeinsPhase(state: GameState): GameState {
+  if (state.currentPhase !== GamePhase.GOTCHA_TRADEINS) {
+    return state
+  }
+
+  // For now, just advance to next phase (full Gotcha logic can be added later)
+  return advanceToNextPhaseWithInitialization(state)
+}
+
+/**
+ * Handles the Thing trade-ins phase automatically (simplified version)
+ */
+function handleThingTradeinsPhase(state: GameState): GameState {
+  if (state.currentPhase !== GamePhase.THING_TRADEINS) {
+    return state
+  }
+
+  // For now, just advance to next phase (full Thing logic can be added later)
+  return advanceToNextPhaseWithInitialization(state)
 }
