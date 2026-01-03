@@ -27,10 +27,21 @@ export const GameLobby: React.FC<GameLobbyProps> = ({ onLeaveGame }) => {
     }
   }
 
-  const copyJoinUrl = () => {
-    if (state.gameCode) {
-      const joinUrl = `${window.location.origin}/join?game=${state.gameCode}`
-      navigator.clipboard.writeText(joinUrl)
+  const copyJoinUrl = async () => {
+    if (state.joinUrl) {
+      try {
+        await navigator.clipboard.writeText(state.joinUrl)
+        // Could add a toast notification here
+      } catch (error) {
+        console.error('Failed to copy URL:', error)
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea')
+        textArea.value = state.joinUrl
+        document.body.appendChild(textArea)
+        textArea.select()
+        document.execCommand('copy')
+        document.body.removeChild(textArea)
+      }
     }
   }
 
@@ -72,12 +83,12 @@ export const GameLobby: React.FC<GameLobbyProps> = ({ onLeaveGame }) => {
               </div>
             </div>
             
-            {state.isHost && (
+            {state.isHost && state.joinUrl && (
               <div className="join-url-section">
                 <label>Share this link:</label>
                 <div className="join-url-display">
                   <span className="join-url">
-                    {window.location.origin}/join?game={state.gameCode}
+                    {state.joinUrl}
                   </span>
                   <button 
                     onClick={copyJoinUrl}

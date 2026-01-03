@@ -7,6 +7,7 @@ export interface MultiplayerState {
   isHost: boolean
   gameId: string | null
   gameCode: string | null
+  joinUrl: string | null
   playerId: string | null
   playerName: string | null
   lobbyState: LobbyState | null
@@ -20,7 +21,7 @@ export type MultiplayerAction =
   | { type: 'SET_MODE'; mode: 'local' | 'multiplayer' }
   | { type: 'SET_CONNECTION_STATUS'; status: 'disconnected' | 'connecting' | 'connected' | 'error' }
   | { type: 'SET_ERROR'; error: string | null }
-  | { type: 'GAME_CREATED'; gameId: string; gameCode: string; playerId: string; playerName: string }
+  | { type: 'GAME_CREATED'; gameId: string; gameCode: string; joinUrl: string; playerId: string; playerName: string }
   | { type: 'GAME_JOINED'; gameId: string; playerId: string; playerName: string; lobbyState: LobbyState }
   | { type: 'LOBBY_UPDATED'; lobbyState: LobbyState }
   | { type: 'GAME_STARTED' }
@@ -33,6 +34,7 @@ const initialState: MultiplayerState = {
   isHost: false,
   gameId: null,
   gameCode: null,
+  joinUrl: null,
   playerId: null,
   playerName: null,
   lobbyState: null,
@@ -75,6 +77,7 @@ function multiplayerReducer(state: MultiplayerState, action: MultiplayerAction):
         isHost: true,
         gameId: action.gameId,
         gameCode: action.gameCode,
+        joinUrl: action.joinUrl,
         playerId: action.playerId,
         playerName: action.playerName,
         lobbyState: hostLobbyState,
@@ -270,6 +273,7 @@ export const MultiplayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
         type: 'GAME_CREATED',
         gameId: response.gameId,
         gameCode: response.joinUrl.split('game=')[1], // Extract code from URL
+        joinUrl: response.joinUrl,
         playerId: response.hostPlayerId,
         playerName: hostName
       })

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, useNavigate, useSearchParams } from 'react-router-dom';
 import './App.css';
 import { GameBoard } from './components/GameBoard';
 import { HomeScreen } from './components/HomeScreen';
@@ -10,7 +11,8 @@ type AppScreen = 'home' | 'lobby' | 'game'
 
 function AppContent() {
   const [currentScreen, setCurrentScreen] = useState<AppScreen>('home')
-  const { state, leaveGame } = useMultiplayer()
+  const { state, joinGame, leaveGame } = useMultiplayer()
+  const navigate = useNavigate()
 
   const handleStartLocalGame = () => {
     setCurrentScreen('game')
@@ -23,6 +25,7 @@ function AppContent() {
   const handleLeaveLobby = () => {
     leaveGame()
     setCurrentScreen('home')
+    navigate('/')
   }
 
   const handleGameStart = () => {
@@ -30,7 +33,7 @@ function AppContent() {
   }
 
   // Auto-navigate to game when multiplayer game starts
-  React.useEffect(() => {
+  useEffect(() => {
     if (state.mode === 'multiplayer' && state.gameStarted) {
       setCurrentScreen('game')
     }
@@ -39,12 +42,21 @@ function AppContent() {
   return (
     <div className="App">
       <GameProvider>
-        {currentScreen === 'home' && (
-          <HomeScreen 
-            onStartGame={handleStartLocalGame}
-            onEnterLobby={handleEnterLobby}
-          />
-        )}
+        <Routes>
+          <Route path="/" element={
+            <HomeScreen 
+              onStartGame={handleStartLocalGame}
+              onEnterLobby={handleEnterLobby}
+            />
+          } />
+          
+          <Route path="/join" element={
+            <JoinGameHandler 
+              onEnterLobby={handleEnterLobby}
+              onError={() => setCurrentScreen('home')}
+            />
+          } />
+        </Routes>
         
         {currentScreen === 'lobby' && (
           <GameLobby 
@@ -60,11 +72,116 @@ function AppContent() {
   )
 }
 
+function JoinGameHandler({ onEnterLobby, onError }: { onEnterLobby: () => void, onError: () => void }) {
+  const [searchParams] = useSearchParams()
+  const { joinGame } = useMultiplayer()
+  const [isJoining, setIsJoining] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [playerName, setPlayerName] = useState('')
+  const navigate = useNavigate()
+
+  const gameCode = searchParams.get('game')
+
+  useEffect(() => {
+    if (!gameCode) {
+      setError('No game code provided in URL')
+      return
+    }
+
+    // Validate game code format (should be 6 characters)
+    if (gameCode.length !== 6) {
+      setError('Invalid game code format')
+      return
+    }
+  }, [gameCode])
+
+  const handleJoinGame = async () => {
+    if (!gameCode || !playerName.trim()) {
+      setError('Player name is required')
+      return
+    }
+
+    setIsJoining(true)
+    setError(null)
+
+    try {
+      const success = await joinGame(gameCode, playerName.trim())
+      
+      if (success) {
+        onEnterLobby()
+      } else {
+        setError('Failed to join game. The game may be full or no longer available.')
+      }
+    } catch (err) {
+      setError('Failed to join game. Please check your connection and try again.')
+    } finally {
+      setIsJoining(false)
+    }
+  }
+
+  const handleGoHome = () => {
+    navigate('/')
+    onError()
+  }
+
+  if (!gameCode) {
+    return (
+      <div className="join-game-error">
+        <h2>Invalid Game Link</h2>
+        <p>No game code was provided in the URL.</p>
+        <button onClick={handleGoHome}>Go Home</button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="join-game-screen">
+      <h2>Join Game</h2>
+      <p>Game Code: <strong>{gameCode}</strong></p>
+      
+      {error && (
+        <div className="error-message">
+          {error}
+        </div>
+      )}
+      
+      <div className="join-form">
+        <label htmlFor="playerName">Your Name:</label>
+        <input
+          id="playerName"
+          type="text"
+          value={playerName}
+          onChange={(e) => setPlayerName(e.target.value)}
+          placeholder="Enter your name"
+          maxLength={20}
+          disabled={isJoining}
+          onKeyPress={(e) => e.key === 'Enter' && handleJoinGame()}
+        />
+        
+        <div className="join-actions">
+          <button 
+            onClick={handleJoinGame}
+            disabled={isJoining || !playerName.trim()}
+          >
+            {isJoining ? 'Joining...' : 'Join Game'}
+          </button>
+          
+          <button onClick={handleGoHome} disabled={isJoining}>
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function App() {
   return (
-    <MultiplayerProvider>
-      <AppContent />
-    </MultiplayerProvider>
+    <Router>
+      <MultiplayerProvider>
+        <AppContent />
+      </MultiplayerProvider>
+    </Router>
   );
 }
 
