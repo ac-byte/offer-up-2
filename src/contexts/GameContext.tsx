@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, ReactNode } from 'react'
+import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react'
 import { GameState, GameAction } from '../types'
 import { gameReducer, createInitialGameState } from '../game-logic/gameReducer'
 
@@ -19,6 +19,23 @@ interface GameProviderProps {
 // Provider component
 export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
   const [gameState, dispatch] = useReducer(gameReducer, createInitialGameState())
+
+  // Listen for multiplayer game state updates
+  useEffect(() => {
+    const handleMultiplayerGameStateUpdate = (event: CustomEvent) => {
+      const serverGameState = event.detail
+      
+      // Replace the local game state with the server state
+      // We need to dispatch a special action to replace the entire state
+      dispatch({ type: 'REPLACE_STATE', newState: serverGameState })
+    }
+
+    window.addEventListener('multiplayer-game-state-update', handleMultiplayerGameStateUpdate as EventListener)
+
+    return () => {
+      window.removeEventListener('multiplayer-game-state-update', handleMultiplayerGameStateUpdate as EventListener)
+    }
+  }, [])
 
   const contextValue: GameContextType = {
     gameState,

@@ -10,162 +10,195 @@ import './GameBoard.css'
 
 export const GameBoard: React.FC = () => {
   const { gameState, dispatch } = useGameContext()
-  const { state: multiplayerState } = useMultiplayer()
+  const { state: multiplayerState, submitAction } = useMultiplayer()
+
+  // Auto-set perspective for multiplayer mode
+  React.useEffect(() => {
+    if (multiplayerState.mode === 'multiplayer' && multiplayerState.playerId) {
+      // Find the player index for this multiplayer player
+      const playerIndex = gameState.players.findIndex(p => p.id.toString() === multiplayerState.playerId)
+      if (playerIndex !== -1 && gameState.selectedPerspective !== playerIndex) {
+        // Automatically set perspective to this player
+        const action: GameAction = { type: 'CHANGE_PERSPECTIVE', playerId: playerIndex }
+        dispatch(action)
+      }
+    }
+  }, [multiplayerState.mode, multiplayerState.playerId, gameState.players, gameState.selectedPerspective, dispatch])
+
+  // Helper function to handle actions - either dispatch locally or send to server
+  const handleAction = async (action: GameAction) => {
+    if (multiplayerState.mode === 'multiplayer') {
+      try {
+        await submitAction(action)
+      } catch (error) {
+        console.error('Failed to submit action to server:', error)
+        // In a real app, show error to user
+      }
+    } else {
+      dispatch(action)
+    }
+  }
 
   const handlePerspectiveChange = (playerId: number) => {
-    const action: GameAction = { type: 'CHANGE_PERSPECTIVE', playerId }
-    dispatch(action)
+    // Only allow perspective changes in local mode or for host
+    if (multiplayerState.mode === 'local' || multiplayerState.isHost) {
+      const action: GameAction = { type: 'CHANGE_PERSPECTIVE', playerId }
+      dispatch(action) // Always local for perspective changes
+    }
   }
 
   const handleToggleAutoFollow = () => {
-    const action: GameAction = { type: 'TOGGLE_AUTO_FOLLOW' }
-    dispatch(action)
+    // Only allow in local mode or for host
+    if (multiplayerState.mode === 'local' || multiplayerState.isHost) {
+      const action: GameAction = { type: 'TOGGLE_AUTO_FOLLOW' }
+      dispatch(action) // Always local for perspective changes
+    }
   }
 
   const handleStartGame = (action: GameAction) => {
-    dispatch(action)
+    dispatch(action) // Local game start
   }
 
   const handleResetGame = () => {
     const action: GameAction = { type: 'RESET_GAME' }
-    dispatch(action)
+    dispatch(action) // Always local for reset
   }
 
-  const handleAdvancePhase = () => {
+  const handleAdvancePhase = async () => {
     const action: GameAction = { type: 'ADVANCE_PHASE' }
-    dispatch(action)
+    await handleAction(action)
   }
 
-  const handleDealCards = () => {
+  const handleDealCards = async () => {
     const action: GameAction = { type: 'DEAL_CARDS' }
-    dispatch(action)
+    await handleAction(action)
   }
 
-  const handleOfferPlace = (playerId: number, cards: Card[], faceUpIndex: number) => {
+  const handleOfferPlace = async (playerId: number, cards: Card[], faceUpIndex: number) => {
     const action: GameAction = { type: 'PLACE_OFFER', playerId, cards, faceUpIndex }
     try {
-      dispatch(action)
+      await handleAction(action)
     } catch (error) {
       console.error('Error placing offer:', error)
       // In a real app, you'd show this error to the user
     }
   }
 
-  const handleCardPlay = (playerId: number, card: Card) => {
+  const handleCardPlay = async (playerId: number, card: Card) => {
     const action: GameAction = { type: 'PLAY_ACTION_CARD', playerId, cardId: card.id }
     try {
-      dispatch(action)
+      await handleAction(action)
     } catch (error) {
       console.error('Error playing action card:', error)
       // In a real app, you'd show this error to the user
     }
   }
 
-  const handleCardFlip = (offerId: number, cardIndex: number) => {
+  const handleCardFlip = async (offerId: number, cardIndex: number) => {
     const action: GameAction = { type: 'FLIP_CARD', offerId, cardIndex }
     try {
-      dispatch(action)
+      await handleAction(action)
     } catch (error) {
       console.error('Error flipping card:', error)
       // In a real app, you'd show this error to the user
     }
   }
 
-  const handleOfferSelect = (sellerId: number) => {
+  const handleOfferSelect = async (sellerId: number) => {
     const buyerId = gameState.currentBuyerIndex
     const action: GameAction = { type: 'SELECT_OFFER', buyerId, sellerId }
     try {
-      dispatch(action)
+      await handleAction(action)
     } catch (error) {
       console.error('Error selecting offer:', error)
       // In a real app, you'd show this error to the user
     }
   }
 
-  const handleGotchaCardSelect = (cardId: string) => {
+  const handleGotchaCardSelect = async (cardId: string) => {
     const action: GameAction = { type: 'SELECT_GOTCHA_CARD', cardId }
     try {
-      dispatch(action)
+      await handleAction(action)
     } catch (error) {
       console.error('Error selecting Gotcha card:', error)
       // In a real app, you'd show this error to the user
     }
   }
 
-  const handleGotchaActionChoice = (actionChoice: 'steal' | 'discard') => {
+  const handleGotchaActionChoice = async (actionChoice: 'steal' | 'discard') => {
     const action: GameAction = { type: 'CHOOSE_GOTCHA_ACTION', action: actionChoice }
     try {
-      dispatch(action)
+      await handleAction(action)
     } catch (error) {
       console.error('Error choosing Gotcha action:', error)
       // In a real app, you'd show this error to the user
     }
   }
 
-  const handleFlipOneCardSelect = (offerId: number, cardIndex: number) => {
+  const handleFlipOneCardSelect = async (offerId: number, cardIndex: number) => {
     const action: GameAction = { type: 'SELECT_FLIP_ONE_CARD', offerId, cardIndex }
     try {
-      dispatch(action)
+      await handleAction(action)
     } catch (error) {
       console.error('Error selecting card for Flip One:', error)
       // In a real app, you'd show this error to the user
     }
   }
 
-  const handleAddOneHandCardSelect = (cardId: string) => {
+  const handleAddOneHandCardSelect = async (cardId: string) => {
     const action: GameAction = { type: 'SELECT_ADD_ONE_HAND_CARD', cardId }
     try {
-      dispatch(action)
+      await handleAction(action)
     } catch (error) {
       console.error('Error selecting hand card for Add One:', error)
       // In a real app, you'd show this error to the user
     }
   }
 
-  const handleAddOneOfferSelect = (offerId: number) => {
+  const handleAddOneOfferSelect = async (offerId: number) => {
     const action: GameAction = { type: 'SELECT_ADD_ONE_OFFER', offerId }
     try {
-      dispatch(action)
+      await handleAction(action)
     } catch (error) {
       console.error('Error selecting offer for Add One:', error)
       // In a real app, you'd show this error to the user
     }
   }
 
-  const handleRemoveOneCardSelect = (offerId: number, cardIndex: number) => {
+  const handleRemoveOneCardSelect = async (offerId: number, cardIndex: number) => {
     const action: GameAction = { type: 'SELECT_REMOVE_ONE_CARD', offerId, cardIndex }
     try {
-      dispatch(action)
+      await handleAction(action)
     } catch (error) {
       console.error('Error selecting card for Remove One:', error)
       // In a real app, you'd show this error to the user
     }
   }
 
-  const handleRemoveTwoCardSelect = (offerId: number, cardIndex: number) => {
+  const handleRemoveTwoCardSelect = async (offerId: number, cardIndex: number) => {
     const action: GameAction = { type: 'SELECT_REMOVE_TWO_CARD', offerId, cardIndex }
     try {
-      dispatch(action)
+      await handleAction(action)
     } catch (error) {
       console.error('Error selecting card for Remove Two:', error)
       // In a real app, you'd show this error to the user
     }
   }
 
-  const handleDeclareDone = (playerId: number) => {
+  const handleDeclareDone = async (playerId: number) => {
     const action: GameAction = { type: 'DECLARE_DONE', playerId }
     try {
-      dispatch(action)
+      await handleAction(action)
     } catch (error) {
       console.error('Error declaring done:', error)
       // In a real app, you'd show this error to the user
     }
   }
 
-  const handleStealAPointTargetSelect = (targetPlayerId: number) => {
+  const handleStealAPointTargetSelect = async (targetPlayerId: number) => {
     const action: GameAction = { type: 'SELECT_STEAL_A_POINT_TARGET', targetPlayerId }
     try {
-      dispatch(action)
+      await handleAction(action)
     } catch (error) {
       console.error('Error selecting target for Steal A Point:', error)
       // In a real app, you'd show this error to the user
@@ -503,31 +536,54 @@ export const GameBoard: React.FC = () => {
 
     return (
       <div className="debug-controls">
-        <div className="debug-section">
-          <label>View Perspective:</label>
-          <PerspectiveSelector
-            players={gameState.players}
-            selectedPerspective={gameState.selectedPerspective}
-            autoFollowPerspective={gameState.autoFollowPerspective}
-            onPerspectiveChange={handlePerspectiveChange}
-            onToggleAutoFollow={handleToggleAutoFollow}
-          />
-        </div>
-        
-        <div className="debug-section">
-          <div className="debug-buttons">
-            {(needsContinueButton || needsGotchaContinue) && (
-              <button onClick={handleAdvancePhase} className="action-button debug-button">
-                Continue to Next Phase
-              </button>
-            )}
-            {needsSkipButton && (
-              <button onClick={handleAdvancePhase} className="action-button secondary debug-button">
-                Skip Phase (Debug)
-              </button>
-            )}
+        {/* Only show perspective selector in local mode or for host in multiplayer */}
+        {(multiplayerState.mode === 'local' || multiplayerState.isHost) && (
+          <div className="debug-section">
+            <label>View Perspective:</label>
+            <PerspectiveSelector
+              players={gameState.players}
+              selectedPerspective={gameState.selectedPerspective}
+              autoFollowPerspective={gameState.autoFollowPerspective}
+              onPerspectiveChange={handlePerspectiveChange}
+              onToggleAutoFollow={handleToggleAutoFollow}
+            />
           </div>
-        </div>
+        )}
+        
+        {/* Only show debug buttons for host in multiplayer mode or in local mode */}
+        {(multiplayerState.mode === 'local' || multiplayerState.isHost) && (
+          <div className="debug-section">
+            <div className="debug-buttons">
+              {(needsContinueButton || needsGotchaContinue) && (
+                <button onClick={handleAdvancePhase} className="action-button debug-button">
+                  Continue to Next Phase
+                </button>
+              )}
+              {needsSkipButton && (
+                <button onClick={handleAdvancePhase} className="action-button secondary debug-button">
+                  Skip Phase (Debug)
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+        
+        {/* Show connection status in multiplayer mode */}
+        {multiplayerState.mode === 'multiplayer' && (
+          <div className="debug-section">
+            <div className="connection-status">
+              <span className={`status-indicator ${multiplayerState.connectionStatus}`}>
+                {multiplayerState.connectionStatus === 'connected' ? '🟢' : 
+                 multiplayerState.connectionStatus === 'connecting' ? '🟡' : 
+                 multiplayerState.connectionStatus === 'error' ? '🔴' : '⚫'}
+              </span>
+              <span>Connection: {multiplayerState.connectionStatus}</span>
+              {multiplayerState.error && (
+                <span className="error-message"> - {multiplayerState.error}</span>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     )
   }

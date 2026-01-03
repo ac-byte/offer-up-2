@@ -1,5 +1,6 @@
-import { MultiplayerGameState, GameStatus, Player, LobbyState, GamePhase } from '../types'
+import { MultiplayerGameState, GameStatus, Player, LobbyState, GamePhase, GameAction } from '../types'
 import { GameStorage } from './GameStorage'
+import { gameReducer, initializeMultiplayerGame } from '../game-logic/gameReducer'
 import config from '../config'
 
 /**
@@ -124,6 +125,43 @@ export class GameManager {
   }
 
   /**
+   * Process a game action
+   */
+  processAction(gameId: string, action: GameAction, playerId: string): { success: boolean; error?: string } {
+    const game = this.getGameById(gameId)
+    
+    if (!game) {
+      return { success: false, error: 'Game not found' }
+    }
+    
+    if (game.status !== GameStatus.PLAYING) {
+      return { success: false, error: 'Game is not in playing state' }
+    }
+    
+    // Validate that the player is in the game
+    const playerExists = game.connectedPlayers.some(p => p.playerId === playerId)
+    if (!playerExists) {
+      return { success: false, error: 'Player not in game' }
+    }
+    
+    try {
+      // Process the action using the game reducer
+      const newGameState = gameReducer(game, action)
+      
+      // Merge the updated game state back into the multiplayer game state
+      Object.assign(game, newGameState)
+      
+      // Update the game in storage
+      this.updateGame(gameId, game)
+      
+      return { success: true }
+    } catch (error) {
+      console.error('Error processing game action:', error)
+      return { success: false, error: 'Failed to process action' }
+    }
+  }
+
+  /**
    * Get server statistics
    */
   getStats() {
@@ -134,34 +172,18 @@ export class GameManager {
    * Initialize game state for actual gameplay
    */
   private initializeGameplay(game: MultiplayerGameState): void {
-    // Convert connected players to game players
-    const players: Player[] = game.connectedPlayers.map((connectedPlayer, index) => ({
-      id: index,
-      name: connectedPlayer.playerName,
-      hand: [],
-      offer: [],
-      collection: [],
-      points: 0,
-      hasMoney: index === 0 // First player (host) starts with money
-    }))
-
-    // Update game state for gameplay
-    game.players = players
-    game.currentBuyerIndex = 0
-    game.nextBuyerIndex = 1
-    game.currentPhase = GamePhase.DEAL
-    game.currentPlayerIndex = 0
-    game.round = 1
-    game.actionPhaseDoneStates = new Array(players.length).fill(false)
-    game.selectedPerspective = 0
-    game.phaseInstructions = 'Game starting! Deal cards to begin.'
-    game.gameStarted = true
+    // Get player names from connected players
+    const playerNames = game.connectedPlayers.map(p => p.playerName)
+    
+    // Initialize the game state using the game reducer
+    const initialGameState = initializeMultiplayerGame(playerNames)
+    
+    // Copy the initialized state to the multiplayer game
+    Object.assign(game, initialGameState)
+    
+    // Set multiplayer-specific properties
     game.status = GameStatus.PLAYING
     
-    // Initialize empty card piles (will be populated by game logic)
-    game.drawPile = []
-    game.discardPile = []
-    
-    console.log(`🎮 Started game ${game.gameId} with ${players.length} players`)
+    console.log(`🎮 Started game ${game.gameId} with ${playerNames.length} players`)
   }
 }

@@ -235,16 +235,20 @@ router.post('/:gameId/actions', validateGameAction, (req, res) => {
       return res.status(403).json({ error: 'Action not allowed at this time' })
     }
     
-    // TODO: Apply the action to the game state using game reducer
-    // For now, just acknowledge the action and broadcast state
+    // Process the action using the game manager
+    const result = gameManager.processAction(gameId, action, playerId)
+    
+    if (!result.success) {
+      return res.status(400).json({ error: result.error })
+    }
+    
     console.log(`🎮 Player ${playerId} in game ${gameId} performed action:`, action.type)
     
-    // Update last activity
-    game.lastActivity = new Date()
-    gameManager.updateGame(gameId, game)
-    
-    // Broadcast updated game state to all players
-    gameStateBroadcaster.broadcastGameState(game)
+    // Get updated game state and broadcast to all players
+    const updatedGame = gameManager.getGameById(gameId)
+    if (updatedGame) {
+      gameStateBroadcaster.broadcastGameState(updatedGame)
+    }
     
     const response: GameActionResponse = {
       success: true

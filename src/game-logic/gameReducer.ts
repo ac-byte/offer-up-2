@@ -1434,6 +1434,11 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       }
     }
     
+    case 'REPLACE_STATE': {
+      // Replace the entire state with the new state from the server
+      // This is used for multiplayer synchronization
+      return action.newState
+    }
     
     default:
       return state

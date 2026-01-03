@@ -220,9 +220,17 @@ export const MultiplayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const handleServerEvent = (event: ServerSentEvent) => {
     switch (event.type) {
       case 'game-state-update':
-        // This will be handled by the game context
-        // For now, just log it
-        console.log('Game state update received:', event.gameState)
+        // Forward game state updates to the game context
+        if (event.gameState) {
+          // We need to dispatch this to the game context
+          // For now, just log it - we'll need to connect this to the game context
+          console.log('Game state update received:', event.gameState)
+          
+          // Dispatch a custom event that the game context can listen to
+          window.dispatchEvent(new CustomEvent('multiplayer-game-state-update', {
+            detail: event.gameState
+          }))
+        }
         break
       
       case 'player-joined':

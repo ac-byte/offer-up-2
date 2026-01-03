@@ -133,6 +133,7 @@ export type GameAction =
   | { type: 'SELECT_REMOVE_ONE_CARD'; offerId: number; cardIndex: number }
   | { type: 'SELECT_REMOVE_TWO_CARD'; offerId: number; cardIndex: number }
   | { type: 'SELECT_STEAL_A_POINT_TARGET'; targetPlayerId: number }
+  | { type: 'REPLACE_STATE'; newState: GameState }
 
 // Card display states
 export type CardDisplayState = 'face_up' | 'face_down' | 'partial'
