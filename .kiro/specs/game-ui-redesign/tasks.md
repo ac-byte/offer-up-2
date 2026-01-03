@@ -102,14 +102,14 @@ Transform the main game page UI by consolidating information into a comprehensiv
     - Ensure active player area is easily identifiable
     - _Requirements: 8.3, 8.4_
 
-- [ ] 9. Organize other players' areas
-  - [ ] 9.1 Implement right-side player stacking
+- [x] 9. Organize other players' areas
+  - [x] 9.1 Implement right-side player stacking
     - Stack non-active players vertically on right side
     - Maintain player order in stacking
     - Optimize width for multiple players
     - _Requirements: 9.1, 9.2_
 
-  - [ ] 9.2 Configure other players' area defaults
+  - [x] 9.2 Configure other players' area defaults
     - Set collection expanded by default for other players
     - Set offer expanded/collapsed based on phase for other players
     - Set hand collapsed by default for other players
