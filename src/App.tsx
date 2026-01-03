@@ -105,13 +105,8 @@ function JoinGameHandler({ onEnterLobby, onError }: { onEnterLobby: () => void, 
     setError(null)
 
     try {
-      const success = await joinGame(gameCode, playerName.trim())
-      
-      if (success) {
-        onEnterLobby()
-      } else {
-        setError('Failed to join game. The game may be full or no longer available.')
-      }
+      await joinGame(gameCode, playerName.trim())
+      onEnterLobby()
     } catch (err) {
       setError('Failed to join game. Please check your connection and try again.')
     } finally {

@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useMultiplayer } from '../contexts/MultiplayerContext'
 import './GameLobby.css'
 
@@ -8,6 +8,7 @@ export interface GameLobbyProps {
 
 export const GameLobby: React.FC<GameLobbyProps> = ({ onLeaveGame }) => {
   const { state, startGame } = useMultiplayer()
+  const [copyFeedback, setCopyFeedback] = useState<string | null>(null)
 
   const handleStartGame = async () => {
     try {
@@ -21,9 +22,20 @@ export const GameLobby: React.FC<GameLobbyProps> = ({ onLeaveGame }) => {
     onLeaveGame()
   }
 
-  const copyGameCode = () => {
+  const showCopyFeedback = (message: string) => {
+    setCopyFeedback(message)
+    setTimeout(() => setCopyFeedback(null), 2000)
+  }
+
+  const copyGameCode = async () => {
     if (state.gameCode) {
-      navigator.clipboard.writeText(state.gameCode)
+      try {
+        await navigator.clipboard.writeText(state.gameCode)
+        showCopyFeedback('Game code copied!')
+      } catch (error) {
+        console.error('Failed to copy game code:', error)
+        showCopyFeedback('Failed to copy')
+      }
     }
   }
 
@@ -31,16 +43,21 @@ export const GameLobby: React.FC<GameLobbyProps> = ({ onLeaveGame }) => {
     if (state.joinUrl) {
       try {
         await navigator.clipboard.writeText(state.joinUrl)
-        // Could add a toast notification here
+        showCopyFeedback('Join URL copied!')
       } catch (error) {
         console.error('Failed to copy URL:', error)
         // Fallback for older browsers
-        const textArea = document.createElement('textarea')
-        textArea.value = state.joinUrl
-        document.body.appendChild(textArea)
-        textArea.select()
-        document.execCommand('copy')
-        document.body.removeChild(textArea)
+        try {
+          const textArea = document.createElement('textarea')
+          textArea.value = state.joinUrl
+          document.body.appendChild(textArea)
+          textArea.select()
+          document.execCommand('copy')
+          document.body.removeChild(textArea)
+          showCopyFeedback('Join URL copied!')
+        } catch (fallbackError) {
+          showCopyFeedback('Failed to copy')
+        }
       }
     }
   }
@@ -102,6 +119,13 @@ export const GameLobby: React.FC<GameLobbyProps> = ({ onLeaveGame }) => {
             )}
           </div>
         </div>
+
+        {/* Copy Feedback Toast */}
+        {copyFeedback && (
+          <div className="copy-feedback">
+            {copyFeedback}
+          </div>
+        )}
 
         {/* Connection Status */}
         <div className={`connection-status ${state.connectionStatus}`}>
