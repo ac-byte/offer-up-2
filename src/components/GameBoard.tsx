@@ -695,13 +695,13 @@ export const GameBoard: React.FC = () => {
         {/* Active Player Area (Left Side) */}
         <div className="active-player-area">
           {(() => {
-            const activePlayer = gameState.players[gameState.currentPlayerIndex];
-            const activePlayerIndex = gameState.currentPlayerIndex;
+            const activePlayer = gameState.players[gameState.selectedPerspective];
+            const activePlayerIndex = gameState.selectedPerspective;
             return (
               <PlayerArea
                 key={activePlayer.id}
                 player={activePlayer}
-                isCurrentPlayer={true}
+                isCurrentPlayer={activePlayerIndex === gameState.currentPlayerIndex}
                 isBuyer={activePlayerIndex === gameState.currentBuyerIndex}
                 perspective={gameState.selectedPerspective}
                 phase={gameState.currentPhase}
@@ -777,7 +777,7 @@ export const GameBoard: React.FC = () => {
         <div className="other-players-area">
           {gameState.players
             .map((player, index) => ({ player, index }))
-            .filter(({ index }) => index !== gameState.currentPlayerIndex)
+            .filter(({ index }) => index !== gameState.selectedPerspective)
             .map(({ player, index }) => (
               <PlayerArea
                 key={player.id}
