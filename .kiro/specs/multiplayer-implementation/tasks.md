@@ -87,43 +87,43 @@ Transform the single-browser card game into a true multiplayer experience by add
     - Add connection status management
     - _Requirements: 5.3, 9.1, 9.4_
 
-- [ ] 6. GameBoard Multiplayer Adaptation
-  - [ ] 6.1 Player perspective enforcement
+- [x] 6. GameBoard Multiplayer Adaptation
+  - [x] 6.1 Player perspective enforcement
     - Remove perspective selector from main UI
     - Automatically set perspective to current player
     - Hide sensitive information (other players' hands)
     - Preserve admin controls in AdminFooter for host
     - _Requirements: 4.1, 4.2, 4.4, 4.5_
 
-  - [ ] 6.2 Turn-based action enforcement
+  - [x] 6.2 Turn-based action enforcement
     - Modify action handlers to send HTTP requests instead of direct dispatch
     - Add client-side turn validation and UI feedback
     - Implement "waiting for player" states and indicators
     - Handle server action validation responses
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 9.2_
 
-  - [ ] 6.3 Connection status and feedback
+  - [x] 6.3 Connection status and feedback
     - Add connection status indicators for all players
     - Implement loading states for server communications
     - Show appropriate error messages for network issues
     - Add reconnection handling for temporary disconnections
     - _Requirements: 9.1, 9.3, 9.4, 9.5_
 
-- [ ] 7. Game Logic Server Integration
-  - [ ] 7.1 Move game reducer to server
+- [-] 7. Game Logic Server Integration
+  - [x] 7.1 Move game reducer to server
     - Copy existing game logic to server-side
     - Adapt reducer for server-side validation
     - Ensure game state consistency between client and server
     - _Requirements: 5.1, 5.4_
 
-  - [ ] 7.2 Action validation and processing
+  - [x] 7.2 Action validation and processing
     - Implement server-side action validation
     - Add turn enforcement for different game phases
     - Handle simultaneous actions in offer phase
     - Process buyer-only actions (gotcha, offer selection)
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5_
 
-  - [ ] 7.3 Disconnection handling
+  - [x] 7.3 Disconnection handling
     - Implement player disconnection detection
     - Add automatic turn skipping for disconnected players
     - Handle game continuation with reduced player count
@@ -131,13 +131,13 @@ Transform the single-browser card game into a true multiplayer experience by add
     - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5_
 
 - [ ] 8. URL-based game joining
-  - [ ] 8.1 Implement URL routing for game codes
+  - [x] 8.1 Implement URL routing for game codes
     - Add React Router for /join?game=CODE URLs
     - Create automatic join flow from URL parameters
     - Handle invalid or expired game codes
     - _Requirements: 2.1, 2.5_
 
-  - [ ] 8.2 Game URL generation and sharing
+  - [x] 8.2 Game URL generation and sharing
     - Generate shareable URLs when creating games
     - Add copy-to-clipboard functionality for game URLs
     - Display join instructions for game hosts
@@ -164,7 +164,7 @@ Transform the single-browser card game into a true multiplayer experience by add
     - _Requirements: 6.5, 7.5_
 
 - [ ] 10. Development Environment Setup
-  - [ ] 10.1 Concurrent development servers
+  - [x] 10.1 Concurrent development servers
     - Configure backend server (port 3000)
     - Set up frontend proxy to backend API
     - Add development scripts for running both servers

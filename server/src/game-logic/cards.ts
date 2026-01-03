@@ -1,4 +1,4 @@
-import { Card, CardType } from '../types'
+import { Card } from '../types'
 
 /**
  * Creates a shuffled deck of cards
@@ -23,37 +23,76 @@ function createDeck(): Card[] {
       cards.push({
         id: `thing_${value}_${i}`,
         name: `${value}`,
-        type: 'thing' as CardType,
-        value: value,
-        faceUp: false
+        type: 'thing',
+        subtype: `thing_${value}`,
+        setSize: value,
+        effect: undefined
       })
     }
   }
   
-  // Action cards
-  const actionCards = [
-    { name: 'Gotcha Once', count: 3 },
-    { name: 'Gotcha Twice', count: 2 },
-    { name: 'Flip One', count: 3 },
-    { name: 'Add One', count: 3 },
-    { name: 'Remove One', count: 3 },
-    { name: 'Remove Two', count: 2 },
-    { name: 'Steal A Point', count: 2 }
+  // Gotcha cards
+  const gotchaCards = [
+    { name: 'Gotcha Once', count: 3, subtype: 'gotcha_once' },
+    { name: 'Gotcha Twice', count: 2, subtype: 'gotcha_twice' }
   ]
   
-  actionCards.forEach(({ name, count }) => {
+  gotchaCards.forEach(({ name, count, subtype }) => {
     for (let i = 0; i < count; i++) {
       cards.push({
-        id: `action_${name.toLowerCase().replace(/\s+/g, '_')}_${i}`,
+        id: `gotcha_${subtype}_${i}`,
         name: name,
-        type: 'action' as CardType,
-        value: 0,
-        faceUp: false
+        type: 'gotcha',
+        subtype: subtype,
+        setSize: 0,
+        effect: `Buyer selects cards from another player's collection`
+      })
+    }
+  })
+  
+  // Action cards
+  const actionCards = [
+    { name: 'Flip One', count: 3, subtype: 'flip_one' },
+    { name: 'Add One', count: 3, subtype: 'add_one' },
+    { name: 'Remove One', count: 3, subtype: 'remove_one' },
+    { name: 'Remove Two', count: 2, subtype: 'remove_two' },
+    { name: 'Steal A Point', count: 2, subtype: 'steal_point' }
+  ]
+  
+  actionCards.forEach(({ name, count, subtype }) => {
+    for (let i = 0; i < count; i++) {
+      cards.push({
+        id: `action_${subtype}_${i}`,
+        name: name,
+        type: 'action',
+        subtype: subtype,
+        setSize: 0,
+        effect: getActionCardEffect(name)
       })
     }
   })
   
   return cards
+}
+
+/**
+ * Get the effect description for an action card
+ */
+function getActionCardEffect(cardName: string): string {
+  switch (cardName) {
+    case 'Flip One':
+      return 'Flip one face-down card in any offer'
+    case 'Add One':
+      return 'Add one card from your hand to any offer'
+    case 'Remove One':
+      return 'Remove one card from any offer'
+    case 'Remove Two':
+      return 'Remove two cards from any offers'
+    case 'Steal A Point':
+      return 'Steal one point from a player with more points than you'
+    default:
+      return 'Unknown action card effect'
+  }
 }
 
 /**

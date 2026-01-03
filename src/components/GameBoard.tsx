@@ -15,15 +15,12 @@ export const GameBoard: React.FC = () => {
   // Auto-set perspective for multiplayer mode
   React.useEffect(() => {
     if (multiplayerState.mode === 'multiplayer' && multiplayerState.playerId) {
-      // Find the player index for this multiplayer player
-      const playerIndex = gameState.players.findIndex(p => p.id.toString() === multiplayerState.playerId)
-      if (playerIndex !== -1 && gameState.selectedPerspective !== playerIndex) {
-        // Automatically set perspective to this player
-        const action: GameAction = { type: 'CHANGE_PERSPECTIVE', playerId: playerIndex }
-        dispatch(action)
-      }
+      // In multiplayer mode, the server should be setting the correct perspective
+      // via the REPLACE_STATE action, so we don't need to override it here.
+      // The server filters the game state to show the correct perspective for each player.
+      console.log('Multiplayer mode - perspective managed by server')
     }
-  }, [multiplayerState.mode, multiplayerState.playerId, gameState.players, gameState.selectedPerspective, dispatch])
+  }, [multiplayerState.mode, multiplayerState.playerId])
 
   // Helper function to handle actions - either dispatch locally or send to server
   const handleAction = async (action: GameAction) => {
