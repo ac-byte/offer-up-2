@@ -2,6 +2,13 @@ import { GameState, GameAction, GamePhase, Player, Card, OfferCard } from '../ty
 import { createShuffledDeck, shuffleArray } from './cards'
 
 /**
+ * Randomly selects a buyer from the players
+ */
+export function selectRandomBuyer(playerCount: number): number {
+  return Math.floor(Math.random() * playerCount)
+}
+
+/**
  * Server-side game reducer for processing multiplayer game actions
  */
 export function gameReducer(state: GameState, action: GameAction): GameState {
