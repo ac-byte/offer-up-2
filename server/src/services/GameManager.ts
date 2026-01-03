@@ -1,6 +1,7 @@
 import { MultiplayerGameState, GameStatus, Player, LobbyState, GamePhase, GameAction } from '../types'
 import { GameStorage } from './GameStorage'
 import { gameReducer, initializeMultiplayerGame } from '../game-logic/gameReducer'
+import { shuffleArray } from '../game-logic/cards'
 import config from '../config'
 
 /**
@@ -298,6 +299,62 @@ export class GameManager {
       connectedPlayer.gamePlayerIndex = index
     })
     
+    // Automatically advance through buyer assignment and deal phases
+    // This matches the client-side behavior in START_GAME action
+    if (game.currentPhase === GamePhase.BUYER_ASSIGNMENT) {
+      // Advance to DEAL phase
+      game.currentPhase = GamePhase.DEAL
+      
+      // Then advance to OFFER_PHASE (deal phase auto-advances)
+      game.currentPhase = GamePhase.OFFER_PHASE
+      
+      // Deal cards to all players (bring hands to 5 cards)
+      this.dealCardsToPlayers(game)
+    }
+    
     console.log(`🎮 Started game ${game.gameId} with ${playerNames.length} players`)
+  }
+
+  /**
+   * Deal cards to bring all players' hands to exactly 5 cards
+   */
+  private dealCardsToPlayers(game: MultiplayerGameState): void {
+    // Calculate how many cards each player needs
+    const playersNeedingCards = game.players.map((player, index) => ({
+      playerIndex: index,
+      cardsNeeded: Math.max(0, 5 - player.hand.length)
+    })).filter(p => p.cardsNeeded > 0)
+
+    // Deal cards sequentially (one card per player per round)
+    let maxCardsNeeded = Math.max(...playersNeedingCards.map(p => p.cardsNeeded), 0)
+    
+    for (let round = 0; round < maxCardsNeeded; round++) {
+      for (const playerInfo of playersNeedingCards) {
+        const { playerIndex, cardsNeeded } = playerInfo
+        
+        // Skip if this player already has enough cards
+        if (round >= cardsNeeded) {
+          continue
+        }
+
+        // Check if we need to reshuffle
+        if (game.drawPile.length === 0) {
+          if (game.discardPile.length === 0) {
+            // No more cards available - stop dealing
+            break
+          }
+          
+          // Reshuffle discard pile into draw pile
+          game.drawPile = shuffleArray(game.discardPile)
+          game.discardPile = []
+        }
+
+        // Deal one card to this player
+        if (game.drawPile.length > 0) {
+          const card = game.drawPile.shift()! // Take from beginning of array
+          game.players[playerIndex].hand.push(card)
+        }
+      }
+    }
   }
 }
