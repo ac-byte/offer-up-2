@@ -208,6 +208,39 @@ router.get('/stats', (req, res) => {
 })
 
 /**
+ * POST /api/games/:gameId/reconnect
+ * Handle player reconnection
+ */
+router.post('/:gameId/reconnect', (req, res) => {
+  try {
+    const { gameId } = req.params
+    const { playerId } = req.body
+    
+    if (!gameId || !playerId) {
+      return res.status(400).json({ error: 'Game ID and player ID are required' })
+    }
+    
+    const result = gameManager.handlePlayerReconnection(gameId, playerId)
+    
+    if (result.success) {
+      // Update connection status for all players
+      const game = gameManager.getGameById(gameId)
+      if (game) {
+        gameStateBroadcaster.updatePlayerConnectionStatus(game)
+      }
+      
+      console.log(`🔌 Player ${playerId} reconnected to game ${gameId}`)
+      res.status(200).json({ success: true })
+    } else {
+      res.status(400).json({ error: result.error })
+    }
+  } catch (error) {
+    console.error('Error handling reconnection:', error)
+    res.status(500).json({ error: 'Failed to handle reconnection' })
+  }
+})
+
+/**
  * POST /api/games/:gameId/actions
  * Submit a player action
  */
@@ -294,8 +327,29 @@ router.get('/:gameId/events', validateSSEParams, (req, res) => {
       'Access-Control-Allow-Credentials': 'true'
     })
     
-    // Add connection to SSE manager
-    sseConnectionManager.addConnection(playerId, gameId, res)
+    // Add connection to SSE manager with disconnection callback
+    sseConnectionManager.addConnection(playerId, gameId, res, (disconnectedPlayerId, disconnectedGameId) => {
+      // Handle player disconnection
+      const disconnectionResult = gameManager.handlePlayerDisconnection(disconnectedGameId, disconnectedPlayerId)
+      
+      if (disconnectionResult.success) {
+        console.log(`🔌 Player ${disconnectedPlayerId} disconnected from game ${disconnectedGameId}`)
+        
+        // If game ended due to disconnection, broadcast to remaining players
+        if (disconnectionResult.gameEnded) {
+          const updatedGame = gameManager.getGameById(disconnectedGameId)
+          if (updatedGame) {
+            gameStateBroadcaster.broadcastGameState(updatedGame)
+          }
+        } else {
+          // Update connection status for remaining players
+          const updatedGame = gameManager.getGameById(disconnectedGameId)
+          if (updatedGame) {
+            gameStateBroadcaster.updatePlayerConnectionStatus(updatedGame)
+          }
+        }
+      }
+    })
     
     // Send initial game state (filtered for this player)
     gameStateBroadcaster.broadcastGameState(game)

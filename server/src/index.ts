@@ -1,6 +1,6 @@
 import express from 'express'
 import cors from 'cors'
-import { gamesRouter } from './routes/games'
+import { gamesRouter, gameManager } from './routes/games'
 import config from './config'
 
 const app = express()
@@ -41,9 +41,31 @@ app.use('*', (req, res) => {
   res.status(404).json({ error: 'Endpoint not found' })
 })
 
+// Start periodic cleanup job for stale games
+const cleanupInterval = setInterval(() => {
+  const cleanedCount = gameManager.cleanupStaleGames()
+  if (cleanedCount > 0) {
+    console.log(`🧹 Cleaned up ${cleanedCount} stale games`)
+  }
+}, 5 * 60 * 1000) // Run every 5 minutes
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('🛑 Received SIGTERM, shutting down gracefully')
+  clearInterval(cleanupInterval)
+  process.exit(0)
+})
+
+process.on('SIGINT', () => {
+  console.log('🛑 Received SIGINT, shutting down gracefully')
+  clearInterval(cleanupInterval)
+  process.exit(0)
+})
+
 app.listen(PORT, () => {
   console.log(`🚀 Offer Up server running on port ${PORT}`)
   console.log(`📡 Health check: http://localhost:${PORT}/api/health`)
   console.log(`🎮 Game API: http://localhost:${PORT}/api/games`)
   console.log(`🌐 Client URL: ${config.clientUrl}`)
+  console.log(`🧹 Cleanup job running every 5 minutes`)
 })

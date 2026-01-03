@@ -29,7 +29,7 @@ export class SSEConnectionManager {
   /**
    * Add a new SSE connection
    */
-  addConnection(playerId: string, gameId: string, response: Response): void {
+  addConnection(playerId: string, gameId: string, response: Response, onDisconnect?: (playerId: string, gameId: string) => void): void {
     const connectionId = `${gameId}-${playerId}`
     
     // Remove existing connection if any
@@ -48,6 +48,10 @@ export class SSEConnectionManager {
     // Set up cleanup on client disconnect
     response.on('close', () => {
       this.removeConnection(playerId, gameId)
+      // Notify about disconnection
+      if (onDisconnect) {
+        onDisconnect(playerId, gameId)
+      }
     })
     
     console.log(`📡 SSE connection added for player ${playerId} in game ${gameId}`)
