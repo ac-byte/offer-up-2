@@ -210,6 +210,10 @@ export function validatePhaseAction(phase: GamePhase, action: GameAction): boole
       // Steal A Point target selection is only allowed during action phase when effect is active
       return phase === GamePhase.ACTION_PHASE
     
+    case 'REPLACE_STATE':
+      // State replacement is always allowed (for multiplayer synchronization)
+      return true
+    
     default:
       return false
   }
@@ -448,9 +452,9 @@ export function handleDealPhase(state: GameState): GameState {
  * Game reducer function
  */
 export function gameReducer(state: GameState, action: GameAction): GameState {
-  // Prevent any actions if game is over (winner declared), except perspective changes and reset
-  if (state.winner !== null && action.type !== 'CHANGE_PERSPECTIVE' && action.type !== 'RESET_GAME') {
-    // Only allow perspective changes and reset after game ends
+  // Prevent any actions if game is over (winner declared), except perspective changes, reset, and state replacement
+  if (state.winner !== null && action.type !== 'CHANGE_PERSPECTIVE' && action.type !== 'RESET_GAME' && action.type !== 'REPLACE_STATE') {
+    // Only allow perspective changes, reset, and state replacement after game ends
     return state
   }
 
