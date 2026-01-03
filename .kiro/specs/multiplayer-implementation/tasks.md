@@ -13,20 +13,20 @@ Transform the single-browser card game into a true multiplayer experience by add
   - Create basic server structure with health check endpoint
   - _Requirements: 8.1, 8.4_
 
-- [ ] 2. Game State Management Backend
-  - [ ] 2.1 Create multiplayer game state interfaces
+- [x] 2. Game State Management Backend
+  - [x] 2.1 Create multiplayer game state interfaces
     - Define MultiplayerGameState extending existing GameState
     - Create ConnectedPlayer and LobbyState interfaces
     - Add game status tracking (lobby, playing, finished)
     - _Requirements: 1.2, 2.2, 3.1_
 
-  - [ ] 2.2 Implement in-memory game storage
+  - [x] 2.2 Implement in-memory game storage
     - Create game storage using Map data structure
     - Add game cleanup and garbage collection logic
     - Implement game code generation (6-character alphanumeric)
     - _Requirements: 1.1, 1.5, 8.1, 8.3_
 
-  - [ ] 2.3 Add game lifecycle management
+  - [x] 2.3 Add game lifecycle management
     - Implement create game functionality
     - Add player join/leave logic with validation
     - Create game start transition from lobby to playing
