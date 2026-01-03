@@ -168,7 +168,30 @@
 
 
 
-/* Player Areas Styles */
+/* Split Player Areas Layout */
+.player-areas-split {
+  display: flex;
+  gap: 20px;
+  margin: 20px 0;
+  align-items: flex-start;
+}
+
+/* Active Player Area (Left Side) */
+.active-player-area {
+  flex: 1;
+  min-width: 0; /* Allow flex item to shrink */
+}
+
+/* Other Players Area (Right Side) */
+.other-players-area {
+  flex: 1;
+  min-width: 0; /* Allow flex item to shrink */
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Player Areas Styles - Updated for split layout */
 .player-areas {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -316,6 +339,16 @@
   
   .player-areas {
     grid-template-columns: 1fr;
+  }
+  
+  /* Split layout becomes stacked on mobile */
+  .player-areas-split {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .other-players-area {
+    gap: 12px;
   }
   
   .actions-content {

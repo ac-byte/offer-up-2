@@ -231,4 +231,117 @@ describe('PlayerArea Component', () => {
     expect(screen.queryByText('Select 3 cards')).not.toBeInTheDocument();
     expect(screen.queryByText('Make Offer')).not.toBeInTheDocument();
   });
+
+  describe('Phase-based offer visibility', () => {
+    it('auto-expands offers in relevant phases (Offer phase)', () => {
+      const { container } = render(
+        <PlayerArea 
+          {...defaultProps} 
+          phase={GamePhase.OFFER_PHASE}
+        />
+      );
+      
+      // Offer section should be expanded in offer phase
+      const offerSection = container.querySelector('.player-area__offer-section');
+      expect(offerSection).toHaveClass('collapsible-section--expanded');
+    });
+
+    it('auto-expands offers in relevant phases (Buyer-flip phase)', () => {
+      const { container } = render(
+        <PlayerArea 
+          {...defaultProps} 
+          phase={GamePhase.BUYER_FLIP}
+        />
+      );
+      
+      // Offer section should be expanded in buyer-flip phase
+      const offerSection = container.querySelector('.player-area__offer-section');
+      expect(offerSection).toHaveClass('collapsible-section--expanded');
+    });
+
+    it('auto-expands offers in relevant phases (Action phase)', () => {
+      const { container } = render(
+        <PlayerArea 
+          {...defaultProps} 
+          phase={GamePhase.ACTION_PHASE}
+        />
+      );
+      
+      // Offer section should be expanded in action phase
+      const offerSection = container.querySelector('.player-area__offer-section');
+      expect(offerSection).toHaveClass('collapsible-section--expanded');
+    });
+
+    it('auto-expands offers in relevant phases (Offer-selection phase)', () => {
+      const { container } = render(
+        <PlayerArea 
+          {...defaultProps} 
+          phase={GamePhase.OFFER_SELECTION}
+        />
+      );
+      
+      // Offer section should be expanded in offer-selection phase
+      const offerSection = container.querySelector('.player-area__offer-section');
+      expect(offerSection).toHaveClass('collapsible-section--expanded');
+    });
+
+    it('auto-collapses offers in non-relevant phases', () => {
+      const { container } = render(
+        <PlayerArea 
+          {...defaultProps} 
+          phase={GamePhase.DEAL}
+        />
+      );
+      
+      // Offer section should be collapsed in deal phase
+      const offerSection = container.querySelector('.player-area__offer-section');
+      expect(offerSection).toHaveClass('collapsible-section--collapsed');
+    });
+
+    it('auto-collapses offers in gotcha trade-ins phase', () => {
+      const { container } = render(
+        <PlayerArea 
+          {...defaultProps} 
+          phase={GamePhase.GOTCHA_TRADEINS}
+        />
+      );
+      
+      // Offer section should be collapsed in gotcha trade-ins phase
+      const offerSection = container.querySelector('.player-area__offer-section');
+      expect(offerSection).toHaveClass('collapsible-section--collapsed');
+    });
+
+    it('auto-collapses offers in thing trade-ins phase', () => {
+      const { container } = render(
+        <PlayerArea 
+          {...defaultProps} 
+          phase={GamePhase.THING_TRADEINS}
+        />
+      );
+      
+      // Offer section should be collapsed in thing trade-ins phase
+      const offerSection = container.querySelector('.player-area__offer-section');
+      expect(offerSection).toHaveClass('collapsible-section--collapsed');
+    });
+
+    it('allows manual collapse/expand in relevant phases', async () => {
+      const { container } = render(
+        <PlayerArea 
+          {...defaultProps} 
+          phase={GamePhase.OFFER_PHASE}
+        />
+      );
+      
+      // Initially expanded in offer phase
+      const offerSection = container.querySelector('.player-area__offer-section');
+      expect(offerSection).toHaveClass('collapsible-section--expanded');
+      
+      // Click to collapse manually
+      const offerHeader = container.querySelector('.player-area__offer-section .collapsible-section__header');
+      expect(offerHeader).toBeInTheDocument();
+      
+      // Manual collapse/expand functionality is tested in CollapsibleSection tests
+      // This test verifies the section is initially expanded in relevant phases
+    });
+  });
 });

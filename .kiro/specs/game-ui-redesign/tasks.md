@@ -71,19 +71,19 @@ Transform the main game page UI by consolidating information into a comprehensiv
   - _Requirements: 5.1, 5.2, 5.3, 5.4_
 
 - [ ] 6. Implement collapsible player sub-areas
-  - [ ] 6.1 Create CollapsibleSection component
+  - [x] 6.1 Create CollapsibleSection component
     - Design reusable collapsible section with expand/collapse controls
     - Add state management for expanded/collapsed state
     - Style with appropriate visual indicators
     - _Requirements: 6.1, 6.3_
 
-  - [ ] 6.2 Refactor PlayerArea to use collapsible sections
+  - [x] 6.2 Refactor PlayerArea to use collapsible sections
     - Convert collection, offer, and hand to collapsible sections
     - Order sections as: collection (top), offer (middle), hand (bottom)
     - Implement independent collapse control for each section
     - _Requirements: 6.2, 6.4, 6.5_
 
-- [ ] 7. Implement phase-based offer visibility
+- [x] 7. Implement phase-based offer visibility
   - Add logic to auto-expand offers in relevant phases (Offer, Buyer-flip, Action, Offer-selection)
   - Add logic to auto-collapse offers in other phases
   - Ensure manual collapse/expand still works in relevant phases

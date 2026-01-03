@@ -624,80 +624,168 @@ export const GameBoard: React.FC = () => {
         </div>
       )}
 
-      {/* Player Areas */}
-      <div className="player-areas">
-        {gameState.players.map((player, index) => (
-          <PlayerArea
-            key={player.id}
-            player={player}
-            isCurrentPlayer={index === gameState.currentPlayerIndex}
-            isBuyer={index === gameState.currentBuyerIndex}
-            perspective={gameState.selectedPerspective}
-            phase={gameState.currentPhase}
-            onCardPlay={(card) => handleCardPlay(player.id, card)}
-            onOfferPlace={(cards, faceUpIndex) => handleOfferPlace(player.id, cards, faceUpIndex)}
-            onCardFlip={(cardIndex) => handleCardFlip(index, cardIndex)} // index is the player index (offerId)
-            onOfferSelect={() => handleOfferSelect(player.id)}
-            onGotchaCardSelect={handleGotchaCardSelect}
-            onFlipOneCardSelect={(cardIndex) => handleFlipOneCardSelect(index, cardIndex)} // New handler for Flip One
-            onAddOneHandCardSelect={handleAddOneHandCardSelect} // New handler for Add One hand card selection
-            onAddOneOfferSelect={() => handleAddOneOfferSelect(index)} // New handler for Add One offer selection
-            canFlipCards={gameState.currentPhase === GamePhase.BUYER_FLIP && gameState.selectedPerspective === gameState.currentBuyerIndex}
-            canSelectOffer={gameState.currentPhase === GamePhase.OFFER_SELECTION && gameState.selectedPerspective === gameState.currentBuyerIndex && index !== gameState.currentBuyerIndex && player.offer.length > 0}
-            canSelectGotchaCards={
-              gameState.currentPhase === GamePhase.GOTCHA_TRADEINS &&
-              gameState.gotchaEffectState !== null &&
-              !gameState.gotchaEffectState?.awaitingBuyerChoice &&
-              gameState.gotchaEffectState.affectedPlayerIndex === index &&
-              gameState.selectedPerspective === gameState.currentBuyerIndex
-            }
-            canSelectFlipOneCards={
-              gameState.currentPhase === GamePhase.ACTION_PHASE &&
-              gameState.flipOneEffectState !== null &&
-              gameState.flipOneEffectState?.awaitingCardSelection === true &&
-              index !== gameState.currentBuyerIndex && // Can't flip buyer's cards (buyer has no offer)
-              player.offer.length > 0 // Player must have an offer
-            }
-            canSelectAddOneHandCards={
-              gameState.currentPhase === GamePhase.ACTION_PHASE &&
-              gameState.addOneEffectState !== null &&
-              gameState.addOneEffectState?.awaitingHandCardSelection === true &&
-              index === gameState.addOneEffectState.playerId && // Only the player who played Add One can select from their hand
-              gameState.selectedPerspective === gameState.addOneEffectState.playerId
-            }
-            canSelectAddOneOffers={
-              gameState.currentPhase === GamePhase.ACTION_PHASE &&
-              gameState.addOneEffectState !== null &&
-              gameState.addOneEffectState?.awaitingOfferSelection === true &&
-              index !== gameState.currentBuyerIndex && // Can't add to buyer's offer (buyer has no offer)
-              player.offer.length > 0 // Player must have an offer
-            }
-            onRemoveOneCardSelect={(cardIndex) => handleRemoveOneCardSelect(index, cardIndex)} // New handler for Remove One
-            canSelectRemoveOneCards={
-              gameState.currentPhase === GamePhase.ACTION_PHASE &&
-              gameState.removeOneEffectState !== null &&
-              gameState.removeOneEffectState?.awaitingCardSelection === true &&
-              index !== gameState.currentBuyerIndex && // Can't remove from buyer's offer (buyer has no offer)
-              player.offer.length > 0 // Player must have an offer
-            }
-            onRemoveTwoCardSelect={(cardIndex) => handleRemoveTwoCardSelect(index, cardIndex)} // New handler for Remove Two
-            canSelectRemoveTwoCards={
-              gameState.currentPhase === GamePhase.ACTION_PHASE &&
-              gameState.removeTwoEffectState !== null &&
-              gameState.removeTwoEffectState?.awaitingCardSelection === true &&
-              index !== gameState.currentBuyerIndex && // Can't remove from buyer's offer (buyer has no offer)
-              player.offer.length > 0 // Player must have an offer
-            }
-            onDeclareDone={() => handleDeclareDone(player.id)} // New handler for declaring done
-            isDone={gameState.actionPhaseDoneStates[index] || false} // Whether player is done
-            canDeclareDone={
-              gameState.currentPhase === GamePhase.ACTION_PHASE &&
-              gameState.selectedPerspective === player.id && // Only own perspective can declare done
-              player.collection.some(card => card.type === 'action') && // Player must have action cards
-              !(gameState.actionPhaseDoneStates[index] || false) // Player must not already be done
-            }
-          />
-        ))}
+      {/* Split Player Areas Layout */}
+      <div className="player-areas-split">
+        {/* Active Player Area (Left Side) */}
+        <div className="active-player-area">
+          {(() => {
+            const activePlayer = gameState.players[gameState.currentPlayerIndex];
+            const activePlayerIndex = gameState.currentPlayerIndex;
+            return (
+              <PlayerArea
+                key={activePlayer.id}
+                player={activePlayer}
+                isCurrentPlayer={true}
+                isBuyer={activePlayerIndex === gameState.currentBuyerIndex}
+                perspective={gameState.selectedPerspective}
+                phase={gameState.currentPhase}
+                isActivePlayer={true}
+                onCardPlay={(card) => handleCardPlay(activePlayer.id, card)}
+                onOfferPlace={(cards, faceUpIndex) => handleOfferPlace(activePlayer.id, cards, faceUpIndex)}
+                onCardFlip={(cardIndex) => handleCardFlip(activePlayerIndex, cardIndex)}
+                onOfferSelect={() => handleOfferSelect(activePlayer.id)}
+                onGotchaCardSelect={handleGotchaCardSelect}
+                onFlipOneCardSelect={(cardIndex) => handleFlipOneCardSelect(activePlayerIndex, cardIndex)}
+                onAddOneHandCardSelect={handleAddOneHandCardSelect}
+                onAddOneOfferSelect={() => handleAddOneOfferSelect(activePlayerIndex)}
+                canFlipCards={gameState.currentPhase === GamePhase.BUYER_FLIP && gameState.selectedPerspective === gameState.currentBuyerIndex}
+                canSelectOffer={gameState.currentPhase === GamePhase.OFFER_SELECTION && gameState.selectedPerspective === gameState.currentBuyerIndex && activePlayerIndex !== gameState.currentBuyerIndex && activePlayer.offer.length > 0}
+                canSelectGotchaCards={
+                  gameState.currentPhase === GamePhase.GOTCHA_TRADEINS &&
+                  gameState.gotchaEffectState !== null &&
+                  !gameState.gotchaEffectState?.awaitingBuyerChoice &&
+                  gameState.gotchaEffectState.affectedPlayerIndex === activePlayerIndex &&
+                  gameState.selectedPerspective === gameState.currentBuyerIndex
+                }
+                canSelectFlipOneCards={
+                  gameState.currentPhase === GamePhase.ACTION_PHASE &&
+                  gameState.flipOneEffectState !== null &&
+                  gameState.flipOneEffectState?.awaitingCardSelection === true &&
+                  activePlayerIndex !== gameState.currentBuyerIndex &&
+                  activePlayer.offer.length > 0
+                }
+                canSelectAddOneHandCards={
+                  gameState.currentPhase === GamePhase.ACTION_PHASE &&
+                  gameState.addOneEffectState !== null &&
+                  gameState.addOneEffectState?.awaitingHandCardSelection === true &&
+                  activePlayerIndex === gameState.addOneEffectState.playerId &&
+                  gameState.selectedPerspective === gameState.addOneEffectState.playerId
+                }
+                canSelectAddOneOffers={
+                  gameState.currentPhase === GamePhase.ACTION_PHASE &&
+                  gameState.addOneEffectState !== null &&
+                  gameState.addOneEffectState?.awaitingOfferSelection === true &&
+                  activePlayerIndex !== gameState.currentBuyerIndex &&
+                  activePlayer.offer.length > 0
+                }
+                onRemoveOneCardSelect={(cardIndex) => handleRemoveOneCardSelect(activePlayerIndex, cardIndex)}
+                canSelectRemoveOneCards={
+                  gameState.currentPhase === GamePhase.ACTION_PHASE &&
+                  gameState.removeOneEffectState !== null &&
+                  gameState.removeOneEffectState?.awaitingCardSelection === true &&
+                  activePlayerIndex !== gameState.currentBuyerIndex &&
+                  activePlayer.offer.length > 0
+                }
+                onRemoveTwoCardSelect={(cardIndex) => handleRemoveTwoCardSelect(activePlayerIndex, cardIndex)}
+                canSelectRemoveTwoCards={
+                  gameState.currentPhase === GamePhase.ACTION_PHASE &&
+                  gameState.removeTwoEffectState !== null &&
+                  gameState.removeTwoEffectState?.awaitingCardSelection === true &&
+                  activePlayerIndex !== gameState.currentBuyerIndex &&
+                  activePlayer.offer.length > 0
+                }
+                onDeclareDone={() => handleDeclareDone(activePlayer.id)}
+                isDone={gameState.actionPhaseDoneStates[activePlayerIndex] || false}
+                canDeclareDone={
+                  gameState.currentPhase === GamePhase.ACTION_PHASE &&
+                  gameState.selectedPerspective === activePlayer.id &&
+                  activePlayer.collection.some(card => card.type === 'action') &&
+                  !(gameState.actionPhaseDoneStates[activePlayerIndex] || false)
+                }
+              />
+            );
+          })()}
+        </div>
+
+        {/* Other Players Area (Right Side) */}
+        <div className="other-players-area">
+          {gameState.players
+            .map((player, index) => ({ player, index }))
+            .filter(({ index }) => index !== gameState.currentPlayerIndex)
+            .map(({ player, index }) => (
+              <PlayerArea
+                key={player.id}
+                player={player}
+                isCurrentPlayer={false}
+                isBuyer={index === gameState.currentBuyerIndex}
+                perspective={gameState.selectedPerspective}
+                phase={gameState.currentPhase}
+                isActivePlayer={false}
+                onCardPlay={(card) => handleCardPlay(player.id, card)}
+                onOfferPlace={(cards, faceUpIndex) => handleOfferPlace(player.id, cards, faceUpIndex)}
+                onCardFlip={(cardIndex) => handleCardFlip(index, cardIndex)}
+                onOfferSelect={() => handleOfferSelect(player.id)}
+                onGotchaCardSelect={handleGotchaCardSelect}
+                onFlipOneCardSelect={(cardIndex) => handleFlipOneCardSelect(index, cardIndex)}
+                onAddOneHandCardSelect={handleAddOneHandCardSelect}
+                onAddOneOfferSelect={() => handleAddOneOfferSelect(index)}
+                canFlipCards={gameState.currentPhase === GamePhase.BUYER_FLIP && gameState.selectedPerspective === gameState.currentBuyerIndex}
+                canSelectOffer={gameState.currentPhase === GamePhase.OFFER_SELECTION && gameState.selectedPerspective === gameState.currentBuyerIndex && index !== gameState.currentBuyerIndex && player.offer.length > 0}
+                canSelectGotchaCards={
+                  gameState.currentPhase === GamePhase.GOTCHA_TRADEINS &&
+                  gameState.gotchaEffectState !== null &&
+                  !gameState.gotchaEffectState?.awaitingBuyerChoice &&
+                  gameState.gotchaEffectState.affectedPlayerIndex === index &&
+                  gameState.selectedPerspective === gameState.currentBuyerIndex
+                }
+                canSelectFlipOneCards={
+                  gameState.currentPhase === GamePhase.ACTION_PHASE &&
+                  gameState.flipOneEffectState !== null &&
+                  gameState.flipOneEffectState?.awaitingCardSelection === true &&
+                  index !== gameState.currentBuyerIndex &&
+                  player.offer.length > 0
+                }
+                canSelectAddOneHandCards={
+                  gameState.currentPhase === GamePhase.ACTION_PHASE &&
+                  gameState.addOneEffectState !== null &&
+                  gameState.addOneEffectState?.awaitingHandCardSelection === true &&
+                  index === gameState.addOneEffectState.playerId &&
+                  gameState.selectedPerspective === gameState.addOneEffectState.playerId
+                }
+                canSelectAddOneOffers={
+                  gameState.currentPhase === GamePhase.ACTION_PHASE &&
+                  gameState.addOneEffectState !== null &&
+                  gameState.addOneEffectState?.awaitingOfferSelection === true &&
+                  index !== gameState.currentBuyerIndex &&
+                  player.offer.length > 0
+                }
+                onRemoveOneCardSelect={(cardIndex) => handleRemoveOneCardSelect(index, cardIndex)}
+                canSelectRemoveOneCards={
+                  gameState.currentPhase === GamePhase.ACTION_PHASE &&
+                  gameState.removeOneEffectState !== null &&
+                  gameState.removeOneEffectState?.awaitingCardSelection === true &&
+                  index !== gameState.currentBuyerIndex &&
+                  player.offer.length > 0
+                }
+                onRemoveTwoCardSelect={(cardIndex) => handleRemoveTwoCardSelect(index, cardIndex)}
+                canSelectRemoveTwoCards={
+                  gameState.currentPhase === GamePhase.ACTION_PHASE &&
+                  gameState.removeTwoEffectState !== null &&
+                  gameState.removeTwoEffectState?.awaitingCardSelection === true &&
+                  index !== gameState.currentBuyerIndex &&
+                  player.offer.length > 0
+                }
+                onDeclareDone={() => handleDeclareDone(player.id)}
+                isDone={gameState.actionPhaseDoneStates[index] || false}
+                canDeclareDone={
+                  gameState.currentPhase === GamePhase.ACTION_PHASE &&
+                  gameState.selectedPerspective === player.id &&
+                  player.collection.some(card => card.type === 'action') &&
+                  !(gameState.actionPhaseDoneStates[index] || false)
+                }
+              />
+            ))}
+        </div>
       </div>
 
 

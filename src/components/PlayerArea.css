@@ -25,6 +25,13 @@
   background-color: #fffbf0;
 }
 
+.player-area--active-player {
+  border-color: #007bff;
+  background-color: #f0f8ff;
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.2);
+  border-width: 3px;
+}
+
 .player-area--selecting-offer {
   border-color: #dc3545;
   background-color: #fff5f5;
@@ -158,9 +165,17 @@
 .player-area__content {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 8px;
 }
 
+/* Collapsible section styles for player areas */
+.player-area__collection-section,
+.player-area__offer-section,
+.player-area__hand-section {
+  width: 100%;
+}
+
+/* Remove old row styles since we're using collapsible sections now */
 .player-area__top-row,
 .player-area__middle-row,
 .player-area__bottom-row {
@@ -176,23 +191,32 @@
   padding: 12px;
 }
 
-.hand__header {
-  margin-bottom: 8px;
-}
-
-.hand__title {
-  margin: 0;
-  font-size: 1em;
-  font-weight: 600;
-  color: #333;
-}
-
 .hand__cards {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   min-height: 60px;
   align-items: center;
+}
+
+.hand__add-one-hint,
+.hand__offer-selection-hint {
+  font-size: 0.8em;
+  font-style: italic;
+  margin-bottom: 8px;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.hand__add-one-hint {
+  color: #17a2b8;
+  background-color: #e6f7ff;
+}
+
+.hand__offer-selection-hint {
+  color: #dc3545;
+  background-color: #fff5f5;
+  font-weight: 600;
 }
 
 .hand__card {
@@ -238,15 +262,35 @@
   border-style: solid;
 }
 
-.offer-area__header {
+.offer-area__flip-one-hint,
+.offer-area__add-one-hint,
+.offer-area__remove-one-hint,
+.offer-area__remove-two-hint {
+  font-size: 0.8em;
+  font-style: italic;
   margin-bottom: 8px;
+  padding: 4px 8px;
+  border-radius: 4px;
 }
 
-.offer-area__title {
-  margin: 0;
-  font-size: 1em;
-  font-weight: 600;
-  color: #333;
+.offer-area__flip-one-hint {
+  color: #ff6b35;
+  background-color: #fff5f0;
+}
+
+.offer-area__add-one-hint {
+  color: #17a2b8;
+  background-color: #e6f7ff;
+}
+
+.offer-area__remove-one-hint {
+  color: #dc3545;
+  background-color: #fff5f5;
+}
+
+.offer-area__remove-two-hint {
+  color: #fd7e14;
+  background-color: #fff8f0;
 }
 
 .offer-area__cards {
@@ -324,19 +368,13 @@
   overflow-y: auto;
 }
 
-.collection-area__header {
+.collection-area__gotcha-hint {
+  font-size: 0.85rem;
+  color: #856404;
+  background-color: #fff3cd;
+  padding: 4px 8px;
+  border-radius: 4px;
   margin-bottom: 8px;
-  position: sticky;
-  top: 0;
-  background-color: #fff;
-  z-index: 1;
-}
-
-.collection-area__title {
-  margin: 0;
-  font-size: 1em;
-  font-weight: 600;
-  color: #333;
 }
 
 .collection-area__cards {
@@ -435,15 +473,6 @@
   }
 }
 /* Gotcha Card Selection Styles */
-.collection-area__gotcha-hint {
-  font-size: 0.85rem;
-  color: #856404;
-  background-color: #fff3cd;
-  padding: 4px 8px;
-  border-radius: 4px;
-  margin-top: 4px;
-}
-
 .collection-area__card--selectable {
   cursor: pointer;
   transition: all 0.2s ease;
@@ -469,12 +498,6 @@
   transform: translateY(-2px);
 }
 
-.offer-area__flip-one-hint {
-  font-size: 0.8em;
-  color: #ff6b35;
-  font-weight: normal;
-}
-
 @keyframes flip-one-pulse {
   0%, 100% {
     box-shadow: 0 0 8px rgba(255, 107, 53, 0.3);
@@ -487,19 +510,6 @@
 .hand--add-one-selectable {
   border: 2px dashed #17a2b8;
   background-color: #e6f7ff;
-}
-
-.hand__add-one-hint {
-  font-size: 0.8em;
-  color: #17a2b8;
-  font-style: italic;
-}
-
-.hand__offer-selection-hint {
-  font-size: 0.8em;
-  color: #dc3545;
-  font-style: italic;
-  font-weight: 600;
 }
 
 .hand--selecting-offer {
@@ -525,12 +535,6 @@
 
 .offer-area--add-one-selectable:hover {
   background-color: #d1ecf1;
-}
-
-.offer-area__add-one-hint {
-  font-size: 0.8em;
-  color: #17a2b8;
-  font-style: italic;
 }
 
 .add-one-effect-controls {
@@ -566,12 +570,6 @@
   transform: translateY(-2px);
 }
 
-.offer-area__remove-one-hint {
-  color: #dc3545;
-  font-size: 0.8em;
-  font-weight: normal;
-}
-
 /* Remove Two Effect Styles */
 .offer-area__card--remove-two-selectable {
   cursor: pointer;
@@ -584,12 +582,6 @@
   border-color: #e8590c;
   box-shadow: 0 0 12px rgba(253, 126, 20, 0.5);
   transform: translateY(-2px);
-}
-
-.offer-area__remove-two-hint {
-  color: #fd7e14;
-  font-size: 0.8em;
-  font-weight: normal;
 }
 /* Action Phase "I'm done" checkbox styles */
 .player-area__done-checkbox {

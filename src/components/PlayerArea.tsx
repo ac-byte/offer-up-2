@@ -1,6 +1,7 @@
 import React from 'react';
 import { Player, GamePhase, Card, OfferCard, CardDisplayState } from '../types';
 import { Card as CardComponent } from './Card';
+import { CollapsibleSection } from './CollapsibleSection';
 import './PlayerArea.css';
 
 interface PlayerAreaProps {
@@ -9,6 +10,7 @@ interface PlayerAreaProps {
   isBuyer: boolean;
   perspective: number;
   phase: GamePhase;
+  isActivePlayer: boolean; // New prop to indicate if this is the active player area
   onCardPlay: (card: Card) => void;
   onOfferPlace: (cards: Card[], faceUpIndex: number) => void;
   onCardFlip: (cardIndex: number) => void;
@@ -84,17 +86,16 @@ const Hand: React.FC<HandProps> = ({ cards, isOwnHand, onCardDrag, onCardClick, 
 
   return (
     <div className={`hand ${canSelectAddOneCards && isOwnHand ? 'hand--add-one-selectable' : ''} ${selectedCards.length > 0 ? 'hand--selecting-offer' : ''}`}>
-      <div className="hand__header">
-        <h4 className="hand__title">Hand ({cards.length})</h4>
-        {canSelectAddOneCards && isOwnHand && (
-          <div className="hand__add-one-hint">Click a card to add to an offer</div>
-        )}
-        {selectedCards.length > 0 && (
-          <div className="hand__offer-selection-hint">
-            Click cards to select for offer ({selectedCards.length}/3 selected)
-          </div>
-        )}
-      </div>
+      {/* Hints and selection info */}
+      {canSelectAddOneCards && isOwnHand && (
+        <div className="hand__add-one-hint">Click a card to add to an offer</div>
+      )}
+      {selectedCards.length > 0 && (
+        <div className="hand__offer-selection-hint">
+          Click cards to select for offer ({selectedCards.length}/3 selected)
+        </div>
+      )}
+      
       <div className="hand__cards">
         {cards.map((card, index) => (
           <CardComponent
@@ -182,23 +183,20 @@ const OfferArea: React.FC<OfferAreaProps> = ({ offer, isOwnOffer, canFlipCards, 
       onDrop={handleDrop}
       onClick={handleOfferAreaClick}
     >
-      <div className="offer-area__header">
-        <h4 className="offer-area__title">
-          Offer Area
-          {canSelectFlipOneCards && (
-            <span className="offer-area__flip-one-hint"> (Click face-down card to flip)</span>
-          )}
-          {canSelectAddOneOffers && offer.length > 0 && (
-            <span className="offer-area__add-one-hint"> (Click to add card here)</span>
-          )}
-          {canSelectRemoveOneCards && offer.length > 0 && (
-            <span className="offer-area__remove-one-hint"> (Click card to remove)</span>
-          )}
-          {canSelectRemoveTwoCards && offer.length > 0 && (
-            <span className="offer-area__remove-two-hint"> (Click cards to remove - 2 total)</span>
-          )}
-        </h4>
-      </div>
+      {/* Hints for different interaction modes */}
+      {canSelectFlipOneCards && (
+        <div className="offer-area__flip-one-hint">Click face-down card to flip</div>
+      )}
+      {canSelectAddOneOffers && offer.length > 0 && (
+        <div className="offer-area__add-one-hint">Click to add card here</div>
+      )}
+      {canSelectRemoveOneCards && offer.length > 0 && (
+        <div className="offer-area__remove-one-hint">Click card to remove</div>
+      )}
+      {canSelectRemoveTwoCards && offer.length > 0 && (
+        <div className="offer-area__remove-two-hint">Click cards to remove - 2 total</div>
+      )}
+      
       <div className="offer-area__cards">
         {offer.length > 0 ? (
           offer
@@ -253,16 +251,12 @@ const CollectionArea: React.FC<CollectionAreaProps> = ({ cards, points, onCardCl
 
   return (
     <div className="collection-area">
-      <div className="collection-area__header">
-        <h4 className="collection-area__title">
-          Collection ({cards.length} cards, {points} points)
-        </h4>
-        {canSelectGotchaCards && (
-          <div className="collection-area__gotcha-hint">
-            Click a card to select for Gotcha effect
-          </div>
-        )}
-      </div>
+      {canSelectGotchaCards && (
+        <div className="collection-area__gotcha-hint">
+          Click a card to select for Gotcha effect
+        </div>
+      )}
+      
       <div className="collection-area__cards">
         {Object.entries(groupedCards).map(([groupKey, groupCards]) => (
           <div key={groupKey} className="collection-area__group">
@@ -301,6 +295,7 @@ export const PlayerArea: React.FC<PlayerAreaProps> = ({
   isBuyer,
   perspective,
   phase,
+  isActivePlayer,
   onCardPlay,
   onOfferPlace,
   onCardFlip,
@@ -326,6 +321,72 @@ export const PlayerArea: React.FC<PlayerAreaProps> = ({
   const isOwnPerspective = player.id === perspective;
   const [selectedCards, setSelectedCards] = React.useState<Card[]>([])
   const [isSelectingOffer, setIsSelectingOffer] = React.useState(false)
+
+  // Define phases where offers should be auto-expanded
+  const OFFER_RELEVANT_PHASES = [
+    GamePhase.OFFER_PHASE,
+    GamePhase.BUYER_FLIP,
+    GamePhase.ACTION_PHASE,
+    GamePhase.OFFER_SELECTION
+  ];
+
+  // Determine if offers should be expanded based on current phase
+  const shouldExpandOffers = OFFER_RELEVANT_PHASES.includes(phase);
+
+  // State for collapsible sections with defaults based on active player status
+  const [sectionStates, setSectionStates] = React.useState({
+    collection: true,  // expanded by default for all players
+    offer: true,       // expanded by default, but will be managed by phase logic
+    hand: isActivePlayer // expanded for active player, collapsed for others
+  });
+
+  // State to track manual overrides for offer section during relevant phases
+  const [offerManualOverride, setOfferManualOverride] = React.useState<boolean | null>(null);
+
+  const handleSectionToggle = (sectionId: string, isExpanded: boolean) => {
+    if (sectionId === 'offer' && shouldExpandOffers) {
+      // In relevant phases, track manual override for offer section
+      setOfferManualOverride(isExpanded);
+    }
+    
+    setSectionStates(prev => ({
+      ...prev,
+      [sectionId]: isExpanded
+    }));
+  };
+
+  // Effect to handle phase-based offer visibility
+  React.useEffect(() => {
+    if (shouldExpandOffers) {
+      // In relevant phases, expand offers unless manually overridden
+      if (offerManualOverride === null) {
+        // No manual override, auto-expand
+        setSectionStates(prev => ({
+          ...prev,
+          offer: true
+        }));
+      }
+      // If there's a manual override, respect it
+    } else {
+      // In non-relevant phases, auto-collapse offers and clear manual override
+      setSectionStates(prev => ({
+        ...prev,
+        offer: false
+      }));
+      setOfferManualOverride(null);
+    }
+  }, [phase, shouldExpandOffers, offerManualOverride]);
+
+  // Get the effective expanded state for offer section
+  const getOfferExpandedState = () => {
+    if (shouldExpandOffers) {
+      // In relevant phases, use manual override if set, otherwise default to expanded
+      return offerManualOverride !== null ? offerManualOverride : sectionStates.offer;
+    } else {
+      // In non-relevant phases, always collapsed
+      return false;
+    }
+  };
 
   // Reset selection when phase changes or when not in offer phase
   React.useEffect(() => {
@@ -459,6 +520,7 @@ export const PlayerArea: React.FC<PlayerAreaProps> = ({
     if (isCurrentPlayer) classes.push('player-area--current');
     if (isBuyer) classes.push('player-area--buyer');
     if (isOwnPerspective) classes.push('player-area--own-perspective');
+    if (isActivePlayer) classes.push('player-area--active-player');
     if (isSelectingOffer) classes.push('player-area--selecting-offer');
     if (phase === GamePhase.ACTION_PHASE && isDone) classes.push('player-area--action-phase-done');
     
@@ -555,18 +617,30 @@ export const PlayerArea: React.FC<PlayerAreaProps> = ({
       </div>
 
       <div className="player-area__content">
-        <div className="player-area__top-row">
-          <Hand
-            cards={player.hand}
-            isOwnHand={isOwnPerspective}
-            onCardDrag={handleCardDrag}
-            onCardClick={handleCardClick}
-            selectedCards={isSelectingOffer ? selectedCards : []}
-            canSelectAddOneCards={canSelectAddOneHandCards}
+        {/* Collection Section (Top) */}
+        <CollapsibleSection
+          id={`collection-${player.id}`}
+          title={`Collection (${player.collection.length} cards, ${player.points} points)`}
+          isExpanded={sectionStates.collection}
+          onToggle={handleSectionToggle}
+          className="player-area__collection-section"
+        >
+          <CollectionArea
+            cards={player.collection}
+            points={player.points}
+            onCardClick={handleCollectionCardClick}
+            canSelectGotchaCards={canSelectGotchaCards}
           />
-        </div>
+        </CollapsibleSection>
 
-        <div className="player-area__middle-row">
+        {/* Offer Section (Middle) */}
+        <CollapsibleSection
+          id={`offer-${player.id}`}
+          title="Offer Area"
+          isExpanded={getOfferExpandedState()}
+          onToggle={handleSectionToggle}
+          className="player-area__offer-section"
+        >
           <OfferArea
             offer={player.offer}
             isOwnOffer={isOwnPerspective}
@@ -580,16 +654,25 @@ export const PlayerArea: React.FC<PlayerAreaProps> = ({
             onDrop={handleOfferDrop}
             onStartOfferSelection={handleStartOfferSelection}
           />
-        </div>
+        </CollapsibleSection>
 
-        <div className="player-area__bottom-row">
-          <CollectionArea
-            cards={player.collection}
-            points={player.points}
-            onCardClick={handleCollectionCardClick}
-            canSelectGotchaCards={canSelectGotchaCards}
+        {/* Hand Section (Bottom) */}
+        <CollapsibleSection
+          id={`hand-${player.id}`}
+          title={`Hand (${player.hand.length})`}
+          isExpanded={sectionStates.hand}
+          onToggle={handleSectionToggle}
+          className="player-area__hand-section"
+        >
+          <Hand
+            cards={player.hand}
+            isOwnHand={isOwnPerspective}
+            onCardDrag={handleCardDrag}
+            onCardClick={handleCardClick}
+            selectedCards={isSelectingOffer ? selectedCards : []}
+            canSelectAddOneCards={canSelectAddOneHandCards}
           />
-        </div>
+        </CollapsibleSection>
       </div>
     </div>
   );
