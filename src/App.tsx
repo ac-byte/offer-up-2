@@ -44,29 +44,30 @@ function AppContent() {
       <GameProvider>
         <Routes>
           <Route path="/" element={
-            <HomeScreen 
-              onStartGame={handleStartLocalGame}
-              onEnterLobby={handleEnterLobby}
-            />
+            currentScreen === 'home' ? (
+              <HomeScreen 
+                onStartGame={handleStartLocalGame}
+                onEnterLobby={handleEnterLobby}
+              />
+            ) : currentScreen === 'lobby' ? (
+              <GameLobby 
+                onLeaveGame={handleLeaveLobby}
+              />
+            ) : currentScreen === 'game' ? (
+              <GameBoard />
+            ) : null
           } />
           
           <Route path="/join" element={
             <JoinGameHandler 
               onEnterLobby={handleEnterLobby}
-              onError={() => setCurrentScreen('home')}
+              onError={() => {
+                setCurrentScreen('home')
+                navigate('/')
+              }}
             />
           } />
         </Routes>
-        
-        {currentScreen === 'lobby' && (
-          <GameLobby 
-            onLeaveGame={handleLeaveLobby}
-          />
-        )}
-        
-        {currentScreen === 'game' && (
-          <GameBoard />
-        )}
       </GameProvider>
     </div>
   )
@@ -106,6 +107,7 @@ function JoinGameHandler({ onEnterLobby, onError }: { onEnterLobby: () => void, 
 
     try {
       await joinGame(gameCode, playerName.trim())
+      navigate('/')  // Navigate to home, which will show the lobby
       onEnterLobby()
     } catch (err) {
       setError('Failed to join game. Please check your connection and try again.')
