@@ -53,6 +53,22 @@ function multiplayerReducer(state: MultiplayerState, action: MultiplayerAction):
       return { ...state, error: action.error }
     
     case 'GAME_CREATED':
+      // Create initial lobby state for the host
+      const hostLobbyState = {
+        gameId: action.gameId,
+        players: [{
+          playerId: action.playerId,
+          playerName: action.playerName,
+          connected: true,
+          joinedAt: new Date().toISOString(),
+          lastSeen: new Date().toISOString()
+        }],
+        isHost: true,
+        canStart: false, // Need at least 3 players
+        maxPlayers: 6,
+        minPlayers: 3
+      }
+      
       return {
         ...state,
         mode: 'multiplayer',
@@ -61,6 +77,7 @@ function multiplayerReducer(state: MultiplayerState, action: MultiplayerAction):
         gameCode: action.gameCode,
         playerId: action.playerId,
         playerName: action.playerName,
+        lobbyState: hostLobbyState,
         connectionStatus: 'connected',
         error: null
       }
@@ -92,21 +109,25 @@ function multiplayerReducer(state: MultiplayerState, action: MultiplayerAction):
     
     case 'PLAYER_JOINED':
       if (!state.lobbyState) return state
+      const updatedPlayers = [...state.lobbyState.players, action.player]
       return {
         ...state,
         lobbyState: {
           ...state.lobbyState,
-          players: [...state.lobbyState.players, action.player]
+          players: updatedPlayers,
+          canStart: updatedPlayers.length >= state.lobbyState.minPlayers
         }
       }
     
     case 'PLAYER_LEFT':
       if (!state.lobbyState) return state
+      const remainingPlayers = state.lobbyState.players.filter(p => p.playerId !== action.playerId)
       return {
         ...state,
         lobbyState: {
           ...state.lobbyState,
-          players: state.lobbyState.players.filter(p => p.playerId !== action.playerId)
+          players: remainingPlayers,
+          canStart: remainingPlayers.length >= state.lobbyState.minPlayers
         }
       }
     

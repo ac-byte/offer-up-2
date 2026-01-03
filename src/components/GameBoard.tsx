@@ -1,5 +1,6 @@
 import React from 'react'
 import { useGameContext } from '../contexts'
+import { useMultiplayer } from '../contexts/MultiplayerContext'
 import { PerspectiveSelector } from './PerspectiveSelector'
 import { PlayerArea } from './PlayerArea'
 import { HomeScreen } from './HomeScreen'
@@ -9,6 +10,7 @@ import './GameBoard.css'
 
 export const GameBoard: React.FC = () => {
   const { gameState, dispatch } = useGameContext()
+  const { state: multiplayerState } = useMultiplayer()
 
   const handlePerspectiveChange = (playerId: number) => {
     const action: GameAction = { type: 'CHANGE_PERSPECTIVE', playerId }
@@ -530,8 +532,19 @@ export const GameBoard: React.FC = () => {
     )
   }
 
-  if (!gameState.gameStarted) {
-    return <HomeScreen onStartGame={handleStartGame} />
+  // Check if game has started - consider both local and multiplayer contexts
+  const isGameStarted = multiplayerState.mode === 'multiplayer' 
+    ? multiplayerState.gameStarted 
+    : gameState.gameStarted
+
+  if (!isGameStarted) {
+    return <HomeScreen 
+      onStartGame={handleStartGame} 
+      onEnterLobby={() => {
+        // This shouldn't be called from GameBoard context since we're already in a game
+        console.warn('onEnterLobby called from GameBoard context - this should not happen')
+      }} 
+    />
   }
 
   return (
