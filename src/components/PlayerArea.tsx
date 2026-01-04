@@ -345,6 +345,17 @@ export const PlayerArea: React.FC<PlayerAreaProps> = ({
   };
 
   const handleCardClick = (card: Card) => {
+    // Debug logging for multiplayer troubleshooting
+    console.log('handleCardClick called:', {
+      cardId: card.id,
+      phase,
+      isOwnPerspective,
+      isBuyer,
+      playerId: player.id,
+      offerCreationState,
+      hasOnMoveCardToOffer: !!onMoveCardToOffer
+    });
+
     // Handle Add One hand card selection during action phase
     if (canSelectAddOneHandCards && onAddOneHandCardSelect) {
       onAddOneHandCardSelect(card.id);
@@ -355,6 +366,7 @@ export const PlayerArea: React.FC<PlayerAreaProps> = ({
     if (phase === GamePhase.OFFER_PHASE && isOwnPerspective && !isBuyer && 
         offerCreationState && offerCreationState.playerId === player.id && 
         offerCreationState.mode === 'selecting' && onMoveCardToOffer) {
+      console.log('Moving card to offer:', card.id);
       onMoveCardToOffer(card.id);
       return;
     }

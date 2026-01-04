@@ -219,6 +219,7 @@ export const GameBoard: React.FC = () => {
   }
 
   const handleMoveCardToOffer = async (playerId: number, cardId: string) => {
+    console.log('handleMoveCardToOffer called:', { playerId, cardId, offerCreationState: gameState.offerCreationState });
     const action: GameAction = { type: 'MOVE_CARD_TO_OFFER', playerId, cardId }
     try {
       await handleAction(action)
