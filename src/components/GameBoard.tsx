@@ -11,6 +11,7 @@ import './GameBoard.css'
 export const GameBoard: React.FC = () => {
   const { gameState, dispatch } = useGameContext()
   const { state: multiplayerState, submitAction } = useMultiplayer()
+  const [localGameStarting, setLocalGameStarting] = React.useState(false)
 
   // Auto-set perspective for multiplayer mode
   React.useEffect(() => {
@@ -21,6 +22,13 @@ export const GameBoard: React.FC = () => {
       console.log('Multiplayer mode - perspective managed by server')
     }
   }, [multiplayerState.mode, multiplayerState.playerId])
+
+  // Reset localGameStarting when game actually starts
+  React.useEffect(() => {
+    if (gameState.gameStarted) {
+      setLocalGameStarting(false)
+    }
+  }, [gameState.gameStarted])
 
   // Helper function to handle actions - either dispatch locally or send to server
   const handleAction = async (action: GameAction) => {
@@ -55,6 +63,7 @@ export const GameBoard: React.FC = () => {
   const handleStartGame = (action: GameAction) => {
     console.log('GameBoard: handleStartGame called with action:', action)
     console.log('GameBoard: Current gameState.gameStarted:', gameState.gameStarted)
+    setLocalGameStarting(true) // Set flag immediately to prevent re-showing HomeScreen
     dispatch(action) // Local game start
     console.log('GameBoard: Action dispatched')
   }
@@ -591,12 +600,13 @@ export const GameBoard: React.FC = () => {
   // Check if game has started - consider both local and multiplayer contexts
   const isGameStarted = multiplayerState.mode === 'multiplayer' 
     ? multiplayerState.gameStarted 
-    : gameState.gameStarted
+    : (gameState.gameStarted || localGameStarting) // Include local starting flag
 
   console.log('GameBoard: isGameStarted check:', {
     multiplayerMode: multiplayerState.mode,
     multiplayerGameStarted: multiplayerState.gameStarted,
     localGameStarted: gameState.gameStarted,
+    localGameStarting: localGameStarting,
     finalIsGameStarted: isGameStarted
   })
 
