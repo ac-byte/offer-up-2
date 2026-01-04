@@ -66,17 +66,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onStartGame, onEnterLobb
 
   // Update validation and button state whenever names change
   useEffect(() => {
-    console.log('HomeScreen: Validation useEffect triggered')
-    console.log('HomeScreen: playerNames:', playerNames)
-    console.log('HomeScreen: playerCount:', playerCount)
-    
     const validation = validatePlayerSetup(playerNames)
-    console.log('HomeScreen: validation result:', validation)
-    
     setValidationErrors(validation.errors)
     setIsStartButtonEnabled(validation.isValid)
-    
-    console.log('HomeScreen: isStartButtonEnabled set to:', validation.isValid)
   }, [playerNames, playerCount])
 
   const handlePlayerCountChange = (count: number) => {
@@ -88,21 +80,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onStartGame, onEnterLobb
   }
 
   const handleStartGame = () => {
-    console.log('HomeScreen: handleStartGame called')
-    console.log('HomeScreen: isStartButtonEnabled:', isStartButtonEnabled)
-    console.log('HomeScreen: playerNames:', playerNames)
-    console.log('HomeScreen: validationErrors:', validationErrors)
-    
     if (isStartButtonEnabled) {
       // Create START_GAME action with the configured player names
       const startGameAction: GameAction = {
         type: 'START_GAME',
         players: playerNames.map(name => name.trim())
       }
-      console.log('HomeScreen: Calling onStartGame with action:', startGameAction)
       onStartGame(startGameAction)
-    } else {
-      console.log('HomeScreen: Button not enabled, not starting game')
     }
   }
 

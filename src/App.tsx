@@ -4,17 +4,21 @@ import './App.css';
 import { GameBoard } from './components/GameBoard';
 import { HomeScreen } from './components/HomeScreen';
 import { GameLobby } from './components/GameLobby';
-import { GameProvider } from './contexts';
+import { GameProvider, useGameContext } from './contexts';
 import { MultiplayerProvider, useMultiplayer } from './contexts/MultiplayerContext';
+import { GameAction } from './types';
 
 type AppScreen = 'home' | 'lobby' | 'game'
 
 function AppContent() {
   const [currentScreen, setCurrentScreen] = useState<AppScreen>('home')
-  const { state, joinGame, leaveGame } = useMultiplayer()
+  const { state, leaveGame } = useMultiplayer()
+  const { dispatch } = useGameContext()
   const navigate = useNavigate()
 
-  const handleStartLocalGame = () => {
+  const handleStartLocalGame = (action: GameAction) => {
+    // Dispatch the START_GAME action to actually start the game
+    dispatch(action)
     setCurrentScreen('game')
   }
 
@@ -28,10 +32,6 @@ function AppContent() {
     navigate('/')
   }
 
-  const handleGameStart = () => {
-    setCurrentScreen('game')
-  }
-
   // Auto-navigate to game when multiplayer game starts
   useEffect(() => {
     if (state.mode === 'multiplayer' && state.gameStarted) {
@@ -41,34 +41,32 @@ function AppContent() {
 
   return (
     <div className="App">
-      <GameProvider>
-        <Routes>
-          <Route path="/" element={
-            currentScreen === 'home' ? (
-              <HomeScreen 
-                onStartGame={handleStartLocalGame}
-                onEnterLobby={handleEnterLobby}
-              />
-            ) : currentScreen === 'lobby' ? (
-              <GameLobby 
-                onLeaveGame={handleLeaveLobby}
-              />
-            ) : currentScreen === 'game' ? (
-              <GameBoard />
-            ) : null
-          } />
-          
-          <Route path="/join" element={
-            <JoinGameHandler 
+      <Routes>
+        <Route path="/" element={
+          currentScreen === 'home' ? (
+            <HomeScreen 
+              onStartGame={handleStartLocalGame}
               onEnterLobby={handleEnterLobby}
-              onError={() => {
-                setCurrentScreen('home')
-                navigate('/')
-              }}
             />
-          } />
-        </Routes>
-      </GameProvider>
+          ) : currentScreen === 'lobby' ? (
+            <GameLobby 
+              onLeaveGame={handleLeaveLobby}
+            />
+          ) : currentScreen === 'game' ? (
+            <GameBoard />
+          ) : null
+        } />
+        
+        <Route path="/join" element={
+          <JoinGameHandler 
+            onEnterLobby={handleEnterLobby}
+            onError={() => {
+              setCurrentScreen('home')
+              navigate('/')
+            }}
+          />
+        } />
+      </Routes>
     </div>
   )
 }
@@ -152,7 +150,7 @@ function JoinGameHandler({ onEnterLobby, onError }: { onEnterLobby: () => void, 
           placeholder="Enter your name"
           maxLength={20}
           disabled={isJoining}
-          onKeyPress={(e) => e.key === 'Enter' && handleJoinGame()}
+          onKeyDown={(e) => e.key === 'Enter' && handleJoinGame()}
         />
         
         <div className="join-actions">
@@ -176,7 +174,9 @@ function App() {
   return (
     <Router>
       <MultiplayerProvider>
-        <AppContent />
+        <GameProvider>
+          <AppContent />
+        </GameProvider>
       </MultiplayerProvider>
     </Router>
   );

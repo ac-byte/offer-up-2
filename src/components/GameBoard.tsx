@@ -61,11 +61,8 @@ export const GameBoard: React.FC = () => {
   }
 
   const handleStartGame = (action: GameAction) => {
-    console.log('GameBoard: handleStartGame called with action:', action)
-    console.log('GameBoard: Current gameState.gameStarted:', gameState.gameStarted)
     setLocalGameStarting(true) // Set flag immediately to prevent re-showing HomeScreen
     dispatch(action) // Local game start
-    console.log('GameBoard: Action dispatched')
   }
 
   const handleResetGame = () => {
@@ -601,14 +598,6 @@ export const GameBoard: React.FC = () => {
   const isGameStarted = multiplayerState.mode === 'multiplayer' 
     ? multiplayerState.gameStarted 
     : (gameState.gameStarted || localGameStarting) // Include local starting flag
-
-  console.log('GameBoard: isGameStarted check:', {
-    multiplayerMode: multiplayerState.mode,
-    multiplayerGameStarted: multiplayerState.gameStarted,
-    localGameStarted: gameState.gameStarted,
-    localGameStarting: localGameStarting,
-    finalIsGameStarted: isGameStarted
-  })
 
   if (!isGameStarted) {
     return <HomeScreen 
