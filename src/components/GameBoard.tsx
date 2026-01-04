@@ -364,24 +364,37 @@ export const GameBoard: React.FC = () => {
           )
         }
         
-        return (
-          <div className="offer-selection-controls">
-            <div className="offer-selection-header">
-              <strong>{buyer?.name}</strong> (Buyer): Select one offer to purchase
+        // Check if current player is the buyer
+        const isBuyer = gameState.selectedPerspective === gameState.currentBuyerIndex
+        
+        if (isBuyer) {
+          // Show buttons for the buyer
+          return (
+            <div className="offer-selection-controls">
+              <div className="offer-selection-header">
+                <strong>{buyer?.name}</strong> (Buyer): Select one offer to purchase
+              </div>
+              <div className="offer-selection-buttons">
+                {sellersWithOffers.map((seller) => (
+                  <button
+                    key={seller.id}
+                    onClick={() => handleOfferSelect(seller.id)}
+                    className="action-button offer-select-button"
+                  >
+                    Select {seller.name}'s Offer
+                  </button>
+                ))}
+              </div>
             </div>
-            <div className="offer-selection-buttons">
-              {sellersWithOffers.map((seller) => (
-                <button
-                  key={seller.id}
-                  onClick={() => handleOfferSelect(seller.id)}
-                  className="action-button offer-select-button"
-                >
-                  Select {seller.name}'s Offer
-                </button>
-              ))}
+          )
+        } else {
+          // Show waiting message for non-buyers
+          return (
+            <div className="phase-waiting">
+              <span>Waiting for <strong>{buyer?.name}</strong> (Buyer) to select an offer</span>
             </div>
-          </div>
-        )
+          )
+        }
       
       case GamePhase.BUYER_ASSIGNMENT:
       case GamePhase.OFFER_DISTRIBUTION:
