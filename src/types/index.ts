@@ -31,6 +31,9 @@ export interface GameState {
   phaseInstructions: string
   autoFollowPerspective: boolean
   
+  // Previous Round Summary
+  previousRoundSummary: string | null
+  
   // Game Status
   winner: number | null
   gameStarted: boolean

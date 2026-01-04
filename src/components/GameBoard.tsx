@@ -251,6 +251,10 @@ export const GameBoard: React.FC = () => {
       case GamePhase.DEAL:
         return true // Show deal cards button
       
+      case GamePhase.OFFER_PHASE:
+        // Show if there's a previous round summary to display
+        return gameState.previousRoundSummary !== null
+      
       case GamePhase.OFFER_SELECTION:
         // Show if there are offers to select
         const sellersWithOffers = gameState.players.filter((player, index) => 
@@ -277,7 +281,6 @@ export const GameBoard: React.FC = () => {
       case GamePhase.OFFER_DISTRIBUTION:
       case GamePhase.THING_TRADEINS:
       case GamePhase.WINNER_DETERMINATION:
-      case GamePhase.OFFER_PHASE:
       case GamePhase.BUYER_FLIP:
       default:
         return false // No user interaction required
@@ -292,6 +295,22 @@ export const GameBoard: React.FC = () => {
             Deal Cards
           </button>
         )
+      
+      case GamePhase.OFFER_PHASE:
+        // Show previous round summary if available
+        if (gameState.previousRoundSummary) {
+          return (
+            <div className="previous-round-summary">
+              <div className="summary-header">
+                <strong>Previous Round Summary</strong>
+              </div>
+              <div className="summary-content">
+                {gameState.previousRoundSummary}
+              </div>
+            </div>
+          )
+        }
+        return null
       
       case GamePhase.OFFER_SELECTION:
         const buyer = getCurrentBuyer()

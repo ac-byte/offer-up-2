@@ -236,7 +236,32 @@ function selectOffer(state: GameState, buyerId: number, sellerId: number): GameS
     throw new Error('Selected seller has no offer to select')
   }
 
-  const newState = { ...state }
+  // Generate previous round summary
+  const buyer = state.players[buyerId]
+  const selectedOfferCards = selectedSeller.offer.map(card => card.name)
+  
+  // Get all other sellers and their returned cards
+  const otherSellers = state.players
+    .map((player, index) => ({ player, index }))
+    .filter(({ index, player }) => index !== buyerId && index !== sellerId && player.offer.length > 0)
+  
+  let summaryParts = [
+    `${buyer.name} selected ${selectedSeller.name}'s offer.`,
+    `${buyer.name} received: ${selectedOfferCards.join(', ')}.`,
+    `${selectedSeller.name} got the money bag.`
+  ]
+  
+  if (otherSellers.length > 0) {
+    summaryParts.push('All other players\' offers returned to their collections:')
+    otherSellers.forEach(({ player }) => {
+      const returnedCards = player.offer.map(card => card.name)
+      summaryParts.push(`${player.name} got ${returnedCards.join(', ')}.`)
+    })
+  }
+  
+  const previousRoundSummary = summaryParts.join(' ')
+
+  const newState = { ...state, previousRoundSummary }
   
   // Process all players according to their role in the transaction
   newState.players = state.players.map((player, playerIndex) => {
@@ -811,6 +836,7 @@ export function initializeMultiplayerGame(playerNames: string[]): GameState {
     selectedPerspective: 0,
     phaseInstructions: 'Game starting...',
     autoFollowPerspective: true,
+    previousRoundSummary: null,
     winner: null,
     gameStarted: true
   }
@@ -891,12 +917,16 @@ function getPhaseInstructions(phase: GamePhase): string {
 export function advanceToNextPhaseWithInitialization(state: GameState): GameState {
   const { nextPhase, nextRound } = advanceToNextPhase(state.currentPhase, state.round)
   
+  // Clear previousRoundSummary when leaving OFFER_PHASE
+  const shouldClearSummary = state.currentPhase === GamePhase.OFFER_PHASE
+  
   // Create state with advanced phase
   const stateWithNewPhase = {
     ...state,
     currentPhase: nextPhase,
     round: nextRound,
-    phaseInstructions: getPhaseInstructions(nextPhase)
+    phaseInstructions: getPhaseInstructions(nextPhase),
+    ...(shouldClearSummary && { previousRoundSummary: null })
   }
   
   // Initialize special phases if we're entering them

@@ -316,6 +316,28 @@
   flex-wrap: wrap;
 }
 
+/* Previous Round Summary Styles */
+.previous-round-summary {
+  text-align: left;
+  width: 100%;
+}
+
+.summary-header {
+  margin-bottom: 12px;
+  color: #333;
+  font-size: 1.1rem;
+}
+
+.summary-content {
+  background-color: #f8f9fa;
+  padding: 16px;
+  border-radius: 8px;
+  border-left: 4px solid var(--info-color);
+  line-height: 1.5;
+  color: #495057;
+  font-size: 0.95rem;
+}
+
 /* Responsive actions content */
 @media (max-width: 1200px) {
   .actions-content {
