@@ -295,6 +295,7 @@
 
 .offer-area__cards {
   display: flex;
+  flex-wrap: wrap; /* Fix for offer card overflow - allows cards to wrap to multiple rows */
   gap: 8px;
   min-height: 80px;
   align-items: center;
@@ -302,7 +303,8 @@
 }
 
 .offer-area__card {
-  flex-shrink: 0;
+  flex-shrink: 0; /* Prevents cards from shrinking - keeps full size and readability */
+  /* Alternative fix for overflow: change to flex-shrink: 1 to allow cards to shrink instead of wrapping */
 }
 
 .offer-area__card--position-0 {
