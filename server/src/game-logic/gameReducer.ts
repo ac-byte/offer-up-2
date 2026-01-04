@@ -1,5 +1,5 @@
 import { GameState, GameAction, GamePhase, Player, Card, OfferCard } from '../types'
-import { createShuffledDeck, shuffleArray } from './cards'
+import { createShuffledDeck, shuffleArray, identifyGotchaSetsInOrder } from './cards'
 
 /**
  * Randomly selects a buyer from the players
@@ -452,6 +452,9 @@ function selectGotchaCard(state: GameState, cardId: string): GameState {
   // Check if we have enough cards selected
   if (newState.gotchaEffectState.selectedCards.length >= newState.gotchaEffectState.cardsToSelect) {
     newState.gotchaEffectState.awaitingBuyerChoice = true
+    const affectedPlayerName = newState.players[state.gotchaEffectState.affectedPlayerIndex].name
+    const cardNames = newState.gotchaEffectState.selectedCards.map(c => c.name).join(', ')
+    newState.phaseInstructions = `Buyer must choose to steal or discard ${cardNames} from ${affectedPlayerName}'s collection`
   }
 
   return newState
@@ -465,31 +468,7 @@ function chooseGotchaAction(state: GameState, action: 'steal' | 'discard'): Game
     return state
   }
 
-  const newState = { ...state }
-  const buyer = newState.players[state.currentBuyerIndex]
-  const affectedPlayer = newState.players[state.gotchaEffectState.affectedPlayerIndex]
-
-  // Process the selected cards
-  for (const card of state.gotchaEffectState.selectedCards) {
-    // Remove from affected player's collection
-    const cardIndex = affectedPlayer.collection.findIndex(c => c.id === card.id)
-    if (cardIndex !== -1) {
-      newState.players[state.gotchaEffectState.affectedPlayerIndex].collection.splice(cardIndex, 1)
-      
-      if (action === 'steal' && state.gotchaEffectState.affectedPlayerIndex !== state.currentBuyerIndex) {
-        // Add to buyer's collection
-        newState.players[state.currentBuyerIndex].collection.push(card)
-      } else {
-        // Discard the card
-        newState.discardPile.push(card)
-      }
-    }
-  }
-
-  // Clear the Gotcha effect
-  newState.gotchaEffectState = null
-
-  return newState
+  return handleGotchaActionChoice(state, action)
 }
 
 /**
@@ -1317,6 +1296,289 @@ function endActionPhaseAndAdvance(state: GameState): GameState {
   return advanceToNextPhaseWithInitialization(clearedState)
 }
 /**
+ * Applies Gotcha Bad effect to a player
+ * Reduces player points by 1 if they have points, transfers point to buyer if applicable
+ */
+export function applyGotchaBadEffect(state: GameState, playerIndex: number): GameState {
+  const newState = { ...state }
+  newState.players = [...state.players]
+  
+  const player = newState.players[playerIndex]
+  const buyer = newState.players[state.currentBuyerIndex]
+  
+  // Only apply penalty if player has at least one point
+  if (player.points > 0) {
+    // Reduce player's points by 1
+    newState.players[playerIndex] = {
+      ...player,
+      points: player.points - 1
+    }
+    
+    // Transfer point to buyer if affected player is not the buyer
+    if (playerIndex !== state.currentBuyerIndex) {
+      newState.players[state.currentBuyerIndex] = {
+        ...buyer,
+        points: buyer.points + 1
+      }
+    }
+    // If affected player is the buyer, the point is discarded (no transfer)
+  }
+  
+  return newState
+}
+
+/**
+ * Applies Gotcha Once effect to a player
+ * Buyer selects 1 card from the affected player's collection to steal or discard
+ */
+export function applyGotchaOnceEffect(state: GameState, affectedPlayerIndex: number): GameState {
+  const affectedPlayer = state.players[affectedPlayerIndex]
+  
+  // If player has no cards, no effect can be applied
+  if (affectedPlayer.collection.length === 0) {
+    return state
+  }
+  
+  // If player has only 1 card, automatically select it
+  if (affectedPlayer.collection.length === 1) {
+    const cardToSelect = affectedPlayer.collection[0]
+    
+    // Create effect state for buyer to choose steal or discard
+    return {
+      ...state,
+      gotchaEffectState: {
+        type: 'once',
+        affectedPlayerIndex,
+        cardsToSelect: 1,
+        selectedCards: [cardToSelect],
+        awaitingBuyerChoice: true
+      },
+      phaseInstructions: `Buyer must choose to steal or discard ${cardToSelect.name} from ${affectedPlayer.name}'s collection`
+    }
+  }
+  
+  // Player has multiple cards - buyer needs to select one
+  return {
+    ...state,
+    gotchaEffectState: {
+      type: 'once',
+      affectedPlayerIndex,
+      cardsToSelect: 1,
+      selectedCards: [],
+      awaitingBuyerChoice: false
+    },
+    phaseInstructions: `Buyer must select 1 card from ${affectedPlayer.name}'s collection`
+  }
+}
+
+/**
+ * Applies Gotcha Twice effect to a player
+ * Buyer selects 2 cards from the affected player's collection to steal or discard independently
+ */
+export function applyGotchaTwiceEffect(state: GameState, affectedPlayerIndex: number): GameState {
+  const affectedPlayer = state.players[affectedPlayerIndex]
+  
+  // If player has no cards, no effect can be applied
+  if (affectedPlayer.collection.length === 0) {
+    return state
+  }
+  
+  // Start the first iteration of Gotcha Twice (works like Gotcha Once)
+  return applyGotchaTwiceIteration(state, affectedPlayerIndex, 1)
+}
+
+/**
+ * Applies one iteration of Gotcha Twice effect (like a single Gotcha Once)
+ */
+export function applyGotchaTwiceIteration(state: GameState, affectedPlayerIndex: number, iteration: number): GameState {
+  const affectedPlayer = state.players[affectedPlayerIndex]
+  
+  // If player has no cards, skip this iteration
+  if (affectedPlayer.collection.length === 0) {
+    if (iteration === 1) {
+      // If first iteration has no cards, try second iteration
+      return applyGotchaTwiceIteration(state, affectedPlayerIndex, 2)
+    } else {
+      // Second iteration with no cards - effect is complete
+      return state
+    }
+  }
+  
+  // If player has only 1 card, automatically select it
+  if (affectedPlayer.collection.length === 1) {
+    const cardToSelect = affectedPlayer.collection[0]
+    
+    // Create effect state for buyer to choose steal or discard
+    return {
+      ...state,
+      gotchaEffectState: {
+        type: 'twice',
+        affectedPlayerIndex,
+        cardsToSelect: 1,
+        selectedCards: [cardToSelect],
+        awaitingBuyerChoice: true,
+        twiceIteration: iteration
+      },
+      phaseInstructions: `Buyer must choose to steal or discard ${cardToSelect.name} from ${affectedPlayer.name}'s collection (${iteration} of 2)`
+    }
+  }
+  
+  // Player has multiple cards - buyer needs to select one
+  return {
+    ...state,
+    gotchaEffectState: {
+      type: 'twice',
+      affectedPlayerIndex,
+      cardsToSelect: 1,
+      selectedCards: [],
+      awaitingBuyerChoice: false,
+      twiceIteration: iteration
+    },
+    phaseInstructions: `Buyer must select 1 card from ${affectedPlayer.name}'s collection (${iteration} of 2)`
+  }
+}
+
+/**
+ * Handles buyer choosing to steal or discard selected cards
+ */
+export function handleGotchaActionChoice(state: GameState, action: 'steal' | 'discard'): GameState {
+  if (!state.gotchaEffectState || !state.gotchaEffectState.awaitingBuyerChoice) {
+    return state // Invalid state for action choice
+  }
+  
+  const { type, affectedPlayerIndex, selectedCards, twiceIteration } = state.gotchaEffectState
+  
+  // Process the selected card(s)
+  const isBuyerAffected = affectedPlayerIndex === state.currentBuyerIndex
+  
+  let newState = { ...state }
+  newState.players = [...state.players]
+  newState.discardPile = [...state.discardPile]
+  
+  // Process each selected card
+  for (const selectedCard of selectedCards) {
+    // Remove card from affected player's collection
+    newState.players[affectedPlayerIndex] = {
+      ...newState.players[affectedPlayerIndex],
+      collection: newState.players[affectedPlayerIndex].collection.filter(card => card.id !== selectedCard.id)
+    }
+    
+    if (action === 'steal' && !isBuyerAffected) {
+      // Steal card to buyer's collection (only if not affecting own collection)
+      newState.players[state.currentBuyerIndex] = {
+        ...newState.players[state.currentBuyerIndex],
+        collection: [...newState.players[state.currentBuyerIndex].collection, selectedCard]
+      }
+    } else {
+      // Discard card (either buyer chose discard, or buyer is affecting own collection)
+      newState.discardPile.push(selectedCard)
+    }
+  }
+  
+  // Clear current Gotcha effect state
+  newState.gotchaEffectState = null
+  newState.phaseInstructions = getPhaseInstructions(state.currentPhase)
+  
+  // For Gotcha Twice, check if we need to do the second iteration
+  if (type === 'twice' && twiceIteration === 1) {
+    // Start the second iteration
+    return applyGotchaTwiceIteration(newState, affectedPlayerIndex, 2)
+  }
+  
+  // Effect is complete - continue processing any remaining Gotcha sets
+  const stateAfterProcessing = processGotchaTradeins(newState)
+  
+  // If there's still a pending Gotcha effect, wait for buyer interaction
+  if (stateAfterProcessing.gotchaEffectState !== null) {
+    return stateAfterProcessing
+  }
+  
+  // No more Gotcha effects - processing is complete, but don't auto-advance
+  // Let the caller (advanceToNextPhaseWithInitialization) handle phase advancement
+  return stateAfterProcessing
+}
+
+/**
+ * Processes automatic Gotcha trade-ins for all players
+ * Removes complete Gotcha sets from collections and applies their effects
+ * Processes sets in order: Bad first, then Twice, then Once
+ * Returns state with pending Gotcha Once/Twice effects if buyer interaction is needed
+ */
+export function processGotchaTradeins(state: GameState): GameState {
+  let newState = { ...state }
+  newState.players = state.players.map(player => ({ ...player, collection: [...player.collection] }))
+  newState.discardPile = [...state.discardPile]
+  
+  // Continue processing iteratively until no complete Gotcha sets remain
+  while (true) {
+    let foundGotchaSet = false
+    
+    // Process in priority order: Bad, Twice, Once (across all players)
+    for (const subtype of ['bad', 'twice', 'once']) {
+      // Check all players for this subtype
+      for (let playerIndex = 0; playerIndex < newState.players.length; playerIndex++) {
+        const player = newState.players[playerIndex]
+        const setsBySubtype = identifyGotchaSetsInOrder(player.collection)
+        const completeSets = setsBySubtype[subtype]
+        
+        if (completeSets.length > 0) {
+          // Found a Gotcha set of this subtype - process the first one
+          const set = completeSets[0]
+          foundGotchaSet = true
+          
+          // Remove the set from player's collection
+          const tradedInCardIds = new Set(set.map(card => card.id))
+          newState.players[playerIndex].collection = newState.players[playerIndex].collection.filter(
+            card => !tradedInCardIds.has(card.id)
+          )
+          
+          // Add traded-in cards to discard pile
+          newState.discardPile.push(...set)
+          
+          // Apply Gotcha effects based on subtype
+          if (subtype === 'bad') {
+            // Apply Gotcha Bad effect: point penalty and transfer
+            newState = applyGotchaBadEffect(newState, playerIndex)
+          } else if (subtype === 'twice') {
+            // Apply Gotcha Twice effect: buyer selects 2 cards to steal/discard
+            newState = applyGotchaTwiceEffect(newState, playerIndex)
+            
+            // If buyer interaction is needed, return state with pending effect
+            if (newState.gotchaEffectState !== null) {
+              return newState
+            }
+          } else if (subtype === 'once') {
+            // Apply Gotcha Once effect: buyer selects 1 card to steal/discard
+            newState = applyGotchaOnceEffect(newState, playerIndex)
+            
+            // If buyer interaction is needed, return state with pending effect
+            if (newState.gotchaEffectState !== null) {
+              return newState
+            }
+          }
+          
+          // Break out of both loops to restart checking from the beginning
+          // This ensures we always process in priority order after each set
+          break
+        }
+      }
+      
+      // If we found a set, break out of subtype loop to restart from 'bad'
+      if (foundGotchaSet) {
+        break
+      }
+    }
+    
+    // If no Gotcha sets were found in any player's collection, we're done
+    if (!foundGotchaSet) {
+      break
+    }
+  }
+  
+  return newState
+}
+
+/**
  * Handles the deal phase automatically
  */
 function handleDealPhase(state: GameState): GameState {
@@ -1397,8 +1659,17 @@ function handleGotchaTradeinsPhase(state: GameState): GameState {
     return state
   }
 
-  // For now, just advance to next phase (full Gotcha logic can be added later)
-  return advanceToNextPhaseWithInitialization(state)
+  // Process Gotcha trade-ins for all players
+  const newState = processGotchaTradeins(state)
+  
+  // If there's a pending Gotcha effect, wait for buyer interaction
+  if (newState.gotchaEffectState !== null) {
+    return newState
+  }
+  
+  // No pending effects - processing is complete, but don't auto-advance
+  // Let the caller (advanceToNextPhaseWithInitialization) handle phase advancement
+  return newState
 }
 
 /**
@@ -1409,6 +1680,7 @@ function handleThingTradeinsPhase(state: GameState): GameState {
     return state
   }
 
-  // For now, just advance to next phase (full Thing logic can be added later)
-  return advanceToNextPhaseWithInitialization(state)
+  // For now, just return the state (full Thing logic can be added later)
+  // The main advanceToNextPhaseWithInitialization function will handle advancement
+  return state
 }
