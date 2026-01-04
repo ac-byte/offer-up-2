@@ -1,5 +1,5 @@
 import React from 'react';
-import { Player, GamePhase, Card, OfferCard, CardDisplayState } from '../types';
+import { Player, GamePhase, Card, OfferCard, CardDisplayState, OfferCreationState } from '../types';
 import { Card as CardComponent } from './Card';
 import { CollapsibleSection } from './CollapsibleSection';
 import './PlayerArea.css';
@@ -11,6 +11,7 @@ interface PlayerAreaProps {
   perspective: number;
   phase: GamePhase;
   isActivePlayer: boolean; // New prop to indicate if this is the active player area
+  offerCreationState?: OfferCreationState | null; // Add offer creation state
   onCardPlay: (card: Card) => void;
   onOfferPlace: (cards: Card[], faceUpIndex: number) => void;
   onCardFlip: (cardIndex: number) => void;
@@ -243,6 +244,7 @@ export const PlayerArea: React.FC<PlayerAreaProps> = ({
   perspective,
   phase,
   isActivePlayer,
+  offerCreationState,
   onCardPlay,
   onOfferPlace,
   onCardFlip,
@@ -349,9 +351,10 @@ export const PlayerArea: React.FC<PlayerAreaProps> = ({
       return;
     }
 
-    // Handle interactive offer creation during offer phase
-    if (phase === GamePhase.OFFER_PHASE && isOwnPerspective && !isBuyer && onMoveCardToOffer) {
-      // Check if this player is in offer creation mode
+    // Handle interactive offer creation during offer phase (only in selecting mode)
+    if (phase === GamePhase.OFFER_PHASE && isOwnPerspective && !isBuyer && 
+        offerCreationState && offerCreationState.playerId === player.id && 
+        offerCreationState.mode === 'selecting' && onMoveCardToOffer) {
       onMoveCardToOffer(card.id);
       return;
     }
@@ -376,15 +379,19 @@ export const PlayerArea: React.FC<PlayerAreaProps> = ({
   };
 
   const handleOfferCardClick = (offerCard: OfferCard, index: number) => {
-    // Handle interactive offer creation - move card back to hand
-    if (phase === GamePhase.OFFER_PHASE && isOwnPerspective && !isBuyer && onMoveCardToHand) {
-      onMoveCardToHand(offerCard.id);
+    // Handle offer creation flipping mode - check this FIRST
+    if (phase === GamePhase.OFFER_PHASE && isOwnPerspective && !isBuyer && 
+        offerCreationState && offerCreationState.playerId === player.id && 
+        offerCreationState.mode === 'flipping' && onFlipOfferCard) {
+      onFlipOfferCard(index);
       return;
     }
 
-    // Handle offer creation flipping mode
-    if (phase === GamePhase.OFFER_PHASE && isOwnPerspective && !isBuyer && onFlipOfferCard) {
-      onFlipOfferCard(index);
+    // Handle interactive offer creation - move card back to hand (only in selecting mode)
+    if (phase === GamePhase.OFFER_PHASE && isOwnPerspective && !isBuyer && 
+        offerCreationState && offerCreationState.playerId === player.id && 
+        offerCreationState.mode === 'selecting' && onMoveCardToHand) {
+      onMoveCardToHand(offerCard.id);
       return;
     }
 
@@ -479,7 +486,11 @@ export const PlayerArea: React.FC<PlayerAreaProps> = ({
         {phase === GamePhase.OFFER_PHASE && isOwnPerspective && !isBuyer && (
           <div className="player-area__offer-creation-controls">
             {/* Show "Lock in cards and flip one" button when 3 cards in offer and in selecting mode */}
-            {player.offer.length === 3 && onLockOfferForFlipping && (
+            {player.offer.length === 3 && 
+             offerCreationState && 
+             offerCreationState.playerId === player.id && 
+             offerCreationState.mode === 'selecting' && 
+             onLockOfferForFlipping && (
               <button 
                 className="player-area__lock-offer-button"
                 onClick={onLockOfferForFlipping}
@@ -489,8 +500,13 @@ export const PlayerArea: React.FC<PlayerAreaProps> = ({
             )}
             
             {/* Show "Click on a card to flip it" text when in flipping mode */}
-            {/* This would be determined by the offer creation state from the game state */}
-            {/* For now, we'll show it when there are 3 cards and we're not showing the lock button */}
+            {offerCreationState && 
+             offerCreationState.playerId === player.id && 
+             offerCreationState.mode === 'flipping' && (
+              <div className="player-area__flip-instruction">
+                Click on a card to flip it
+              </div>
+            )}
           </div>
         )}
         

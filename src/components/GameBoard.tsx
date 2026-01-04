@@ -779,6 +779,7 @@ export const GameBoard: React.FC = () => {
                 perspective={gameState.selectedPerspective}
                 phase={gameState.currentPhase}
                 isActivePlayer={true}
+                offerCreationState={gameState.offerCreationState}
                 onCardPlay={(card) => handleCardPlay(activePlayer.id, card)}
                 onOfferPlace={(cards, faceUpIndex) => handleOfferPlace(activePlayer.id, cards, faceUpIndex)}
                 onCardFlip={(cardIndex) => handleCardFlip(activePlayerIndex, cardIndex)}
@@ -864,6 +865,7 @@ export const GameBoard: React.FC = () => {
                 perspective={gameState.selectedPerspective}
                 phase={gameState.currentPhase}
                 isActivePlayer={false}
+                offerCreationState={gameState.offerCreationState}
                 onCardPlay={(card) => handleCardPlay(player.id, card)}
                 onOfferPlace={(cards, faceUpIndex) => handleOfferPlace(player.id, cards, faceUpIndex)}
                 onCardFlip={(cardIndex) => handleCardFlip(index, cardIndex)}
