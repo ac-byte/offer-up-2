@@ -27,7 +27,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       return dealCards(state)
     
     case 'ADVANCE_PHASE':
-      return advancePhase(state)
+      return advanceToNextPhaseWithInitialization(state)
     
     case 'PLACE_OFFER':
       return placeOffer(state, action.playerId, action.cards, action.faceUpIndex)
@@ -146,91 +146,6 @@ function dealCards(state: GameState): GameState {
   // Advance to next phase
   newState.currentPhase = GamePhase.OFFER_PHASE
   newState.phaseInstructions = 'Place your offers (3 cards, 1 face up)'
-  
-  return newState
-}
-
-/**
- * Advance to the next game phase
- */
-function advancePhase(state: GameState): GameState {
-  const newState = { ...state }
-  
-  switch (state.currentPhase) {
-    case GamePhase.BUYER_ASSIGNMENT:
-      newState.currentPhase = GamePhase.DEAL
-      newState.phaseInstructions = 'Dealing cards to all players...'
-      break
-    
-    case GamePhase.DEAL:
-      newState.currentPhase = GamePhase.OFFER_PHASE
-      newState.phaseInstructions = 'Place your offers (3 cards, 1 face up)'
-      break
-    
-    case GamePhase.OFFER_PHASE:
-      newState.currentPhase = GamePhase.BUYER_FLIP
-      newState.phaseInstructions = 'Buyer: Flip cards to see what you want to buy'
-      break
-    
-    case GamePhase.BUYER_FLIP:
-      newState.currentPhase = GamePhase.ACTION_PHASE
-      newState.phaseInstructions = 'Play action cards or declare done'
-      break
-    
-    case GamePhase.ACTION_PHASE:
-      newState.currentPhase = GamePhase.OFFER_SELECTION
-      newState.phaseInstructions = 'Buyer: Select which offer to purchase'
-      break
-    
-    case GamePhase.OFFER_SELECTION:
-      newState.currentPhase = GamePhase.OFFER_DISTRIBUTION
-      newState.phaseInstructions = 'Distributing purchased offer...'
-      break
-    
-    case GamePhase.OFFER_DISTRIBUTION:
-      newState.currentPhase = GamePhase.GOTCHA_TRADEINS
-      newState.phaseInstructions = 'Processing Gotcha card effects...'
-      break
-    
-    case GamePhase.GOTCHA_TRADEINS:
-      newState.currentPhase = GamePhase.THING_TRADEINS
-      newState.phaseInstructions = 'Processing Thing card sets...'
-      break
-    
-    case GamePhase.THING_TRADEINS:
-      newState.currentPhase = GamePhase.WINNER_DETERMINATION
-      newState.phaseInstructions = 'Checking for winner...'
-      break
-    
-    case GamePhase.WINNER_DETERMINATION:
-      // Check if game should end or continue to next round
-      const maxPoints = Math.max(...newState.players.map(p => p.points))
-      if (maxPoints >= 5) {
-        // Game ends
-        const winnerIndex = newState.players.findIndex(p => p.points === maxPoints)
-        newState.winner = winnerIndex
-        newState.phaseInstructions = `Game Over! ${newState.players[winnerIndex].name} wins!`
-      } else {
-        // Next round
-        newState.round += 1
-        newState.currentPhase = GamePhase.BUYER_ASSIGNMENT
-        newState.currentBuyerIndex = (newState.currentBuyerIndex + 1) % newState.players.length
-        newState.phaseInstructions = 'Starting next round...'
-        
-        // Reset action phase done states
-        newState.actionPhaseDoneStates = new Array(newState.players.length).fill(false)
-        
-        // Clear all offers
-        newState.players = newState.players.map(player => ({
-          ...player,
-          offer: []
-        }))
-      }
-      break
-    
-    default:
-      break
-  }
   
   return newState
 }
