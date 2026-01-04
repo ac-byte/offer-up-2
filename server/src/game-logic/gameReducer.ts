@@ -294,35 +294,80 @@ function selectOffer(state: GameState, buyerId: number, sellerId: number): GameS
     return state
   }
 
-  const newState = { ...state }
-  const sellerIndex = newState.players.findIndex(p => p.id === sellerId)
-  const buyerIndex = newState.players.findIndex(p => p.id === buyerId)
+  // Validate buyer ID
+  if (buyerId < 0 || buyerId >= state.players.length) {
+    throw new Error(`Invalid buyer ID: ${buyerId}`)
+  }
   
-  if (sellerIndex === -1 || buyerIndex === -1 || buyerIndex !== state.currentBuyerIndex) {
-    return state
+  // Validate that the specified buyer is actually the current buyer
+  if (buyerId !== state.currentBuyerIndex) {
+    throw new Error('Only the current buyer can select offers')
+  }
+  
+  // Validate seller ID
+  if (sellerId < 0 || sellerId >= state.players.length) {
+    throw new Error(`Invalid seller ID: ${sellerId}`)
+  }
+  
+  // Validate that seller is not the buyer
+  if (sellerId === state.currentBuyerIndex) {
+    throw new Error('Buyer cannot select their own offer (buyer has no offer)')
+  }
+  
+  const selectedSeller = state.players[sellerId]
+  
+  // Validate that the selected seller has an offer
+  if (selectedSeller.offer.length === 0) {
+    throw new Error('Selected seller has no offer to select')
   }
 
-  const seller = newState.players[sellerIndex]
-  const buyer = newState.players[buyerIndex]
+  const newState = { ...state }
+  
+  // Process all players according to their role in the transaction
+  newState.players = state.players.map((player, playerIndex) => {
+    if (playerIndex === buyerId) {
+      // Buyer: remove money bag, add selected offer to collection
+      return {
+        ...player,
+        hasMoney: false,
+        collection: [...player.collection, ...selectedSeller.offer.map(offerCard => ({
+          id: offerCard.id,
+          type: offerCard.type,
+          subtype: offerCard.subtype,
+          name: offerCard.name,
+          setSize: offerCard.setSize,
+          effect: offerCard.effect
+        }))]
+      }
+    } else if (playerIndex === sellerId) {
+      // Selected seller: receive money bag, clear offer
+      return {
+        ...player,
+        hasMoney: true,
+        offer: []
+      }
+    } else {
+      // Non-selected sellers: return offer to collection, clear offer
+      const returnedCards = player.offer.map(offerCard => ({
+        id: offerCard.id,
+        type: offerCard.type,
+        subtype: offerCard.subtype,
+        name: offerCard.name,
+        setSize: offerCard.setSize,
+        effect: offerCard.effect
+      }))
+      
+      return {
+        ...player,
+        collection: [...player.collection, ...returnedCards],
+        offer: []
+      }
+    }
+  })
 
-  // Transfer offer to buyer's collection
-  newState.players[buyerIndex] = {
-    ...buyer,
-    collection: [...buyer.collection, ...seller.offer.map(offerCard => ({
-      id: offerCard.id,
-      type: offerCard.type,
-      subtype: offerCard.subtype,
-      name: offerCard.name,
-      setSize: offerCard.setSize,
-      effect: offerCard.effect
-    }))]
-  }
-
-  // Clear seller's offer
-  newState.players[sellerIndex] = {
-    ...seller,
-    offer: []
-  }
+  // Update next buyer index to the selected seller (money bag holder)
+  // But keep current buyer index unchanged for this round
+  newState.nextBuyerIndex = sellerId
 
   // Advance to next phase using proper initialization
   return advanceToNextPhaseWithInitialization(newState)
