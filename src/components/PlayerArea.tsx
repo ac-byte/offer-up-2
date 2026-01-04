@@ -374,14 +374,21 @@ export const PlayerArea: React.FC<PlayerAreaProps> = ({
     // In multiplayer mode, allow any eligible seller to start moving cards
     // The server will auto-initialize offer creation state as needed
     if (phase === GamePhase.OFFER_PHASE && isOwnPerspective && !isBuyer && onMoveCardToOffer) {
-      // Check if this player can create an offer (either no state exists, or it's for this player in selecting mode)
+      // Allow any seller to create offers - the server will handle the state management
+      // Only block if this specific player is in flipping mode (can't move cards during flipping)
       const canCreateOffer = !offerCreationState || 
-                            (offerCreationState.playerId === player.id && offerCreationState.mode === 'selecting');
+                            offerCreationState.playerId !== player.id ||
+                            offerCreationState.mode === 'selecting';
       
       console.log('Offer creation check:', {
         canCreateOffer,
         offerCreationState,
-        playerId: player.id
+        playerId: player.id,
+        reasoning: {
+          noState: !offerCreationState,
+          differentPlayer: offerCreationState?.playerId !== player.id,
+          selectingMode: offerCreationState?.mode === 'selecting'
+        }
       });
       
       if (canCreateOffer) {
