@@ -68,7 +68,19 @@ export class ActionValidator {
       return { valid: true, canExecute: true }
     }
     
-    return { valid: false, error: 'Only place offer actions allowed in offer phase', canExecute: false }
+    // Allow interactive offer creation actions
+    if (action.type === 'MOVE_CARD_TO_OFFER' || 
+        action.type === 'MOVE_CARD_TO_HAND' || 
+        action.type === 'LOCK_OFFER_FOR_FLIPPING' || 
+        action.type === 'FLIP_OFFER_CARD') {
+      // Validate that the action is for the correct player
+      if (action.playerId !== playerIndex) {
+        return { valid: false, error: 'Cannot perform offer creation action for another player', canExecute: false }
+      }
+      return { valid: true, canExecute: true }
+    }
+    
+    return { valid: false, error: 'Only offer-related actions allowed in offer phase', canExecute: false }
   }
 
   private validateBuyerFlipAction(gameState: MultiplayerGameState, playerIndex: number, action: GameAction): ActionValidationResult {
