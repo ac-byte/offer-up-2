@@ -370,13 +370,25 @@ export const PlayerArea: React.FC<PlayerAreaProps> = ({
       return;
     }
 
-    // Handle interactive offer creation during offer phase (only in selecting mode)
-    if (phase === GamePhase.OFFER_PHASE && isOwnPerspective && !isBuyer && 
-        offerCreationState && offerCreationState.playerId === player.id && 
-        offerCreationState.mode === 'selecting' && onMoveCardToOffer) {
-      console.log('Moving card to offer:', card.id);
-      onMoveCardToOffer(card.id);
-      return;
+    // Handle interactive offer creation during offer phase
+    // In multiplayer mode, allow any eligible seller to start moving cards
+    // The server will auto-initialize offer creation state as needed
+    if (phase === GamePhase.OFFER_PHASE && isOwnPerspective && !isBuyer && onMoveCardToOffer) {
+      // Check if this player can create an offer (either no state exists, or it's for this player in selecting mode)
+      const canCreateOffer = !offerCreationState || 
+                            (offerCreationState.playerId === player.id && offerCreationState.mode === 'selecting');
+      
+      console.log('Offer creation check:', {
+        canCreateOffer,
+        offerCreationState,
+        playerId: player.id
+      });
+      
+      if (canCreateOffer) {
+        console.log('Moving card to offer:', card.id);
+        onMoveCardToOffer(card.id);
+        return;
+      }
     }
 
     // Handle action card clicks during action phase from collection
