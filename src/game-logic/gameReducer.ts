@@ -1093,7 +1093,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           selectedHandCard: selectedCard,
           awaitingOfferSelection: true
         },
-        phaseInstructions: `${player.name} selected ${selectedCard.name}. Now select an offer to add it to.`
+        phaseInstructions: `${player.name} selected a card. Now select an offer to add it to.`
       }
     }
     
@@ -1431,7 +1431,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         return advanceToNextEligiblePlayerInActionPhase(newState)
       } else {
         // Still need to select more cards
-        newState.phaseInstructions = `${state.players[state.removeTwoEffectState.playerId].name} played Remove Two. Select exactly 2 cards from any offers to remove (${newCardsToSelect} remaining).`
+        newState.phaseInstructions = `${state.players[state.removeTwoEffectState.playerId].name} played an action card. Select exactly 2 cards from any offers to remove (${newCardsToSelect} remaining).`
         
         // Don't advance player yet, continue waiting for more card selections
         return newState
@@ -1939,7 +1939,7 @@ function executeInteractiveActionCardEffect(state: GameState, actionCard: Card, 
           awaitingHandCardSelection: true,
           awaitingOfferSelection: false
         },
-        phaseInstructions: `${state.players[playerId].name} played Add One. Select a card from your hand to add to an offer.`
+        phaseInstructions: `${state.players[playerId].name} played an action card. Select a card from your hand to add to an offer.`
       }
     }
     
@@ -1952,7 +1952,7 @@ function executeInteractiveActionCardEffect(state: GameState, actionCard: Card, 
           playerId,
           awaitingCardSelection: true
         },
-        phaseInstructions: `${state.players[playerId].name} played Remove One. Select a card from any offer to remove.`
+        phaseInstructions: `${state.players[playerId].name} played an action card. Select a card from any offer to remove.`
       }
     }
     
@@ -1967,7 +1967,7 @@ function executeInteractiveActionCardEffect(state: GameState, actionCard: Card, 
           selectedCards: [],
           cardsToSelect: 2
         },
-        phaseInstructions: `${state.players[playerId].name} played Remove Two. Select exactly 2 cards from any offers to remove (${2} remaining).`
+        phaseInstructions: `${state.players[playerId].name} played an action card. Select exactly 2 cards from any offers to remove (${2} remaining).`
       }
     }
     
