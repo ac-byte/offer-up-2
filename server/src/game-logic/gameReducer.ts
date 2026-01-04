@@ -832,6 +832,9 @@ export function advanceToNextPhaseWithInitialization(state: GameState): GameStat
   } else if (nextPhase === GamePhase.DEAL) {
     // Automatically handle deal phase
     stateWithInitializedPhase = handleDealPhase(stateWithNewPhase)
+  } else if (nextPhase === GamePhase.OFFER_DISTRIBUTION) {
+    // Automatically handle offer distribution phase
+    stateWithInitializedPhase = handleOfferDistributionPhase(stateWithNewPhase)
   } else if (nextPhase === GamePhase.GOTCHA_TRADEINS) {
     // Process Gotcha trade-ins
     const stateAfterGotcha = handleGotchaTradeinsPhase(stateWithNewPhase)
@@ -903,6 +906,21 @@ function handleDealPhase(state: GameState): GameState {
 
   // Deal cards to all players
   return dealCards(state)
+}
+
+/**
+ * Handles the offer distribution phase automatically
+ * Offer distribution is already complete (handled in SELECT_OFFER action)
+ * Just automatically advance to next phase
+ */
+function handleOfferDistributionPhase(state: GameState): GameState {
+  if (state.currentPhase !== GamePhase.OFFER_DISTRIBUTION) {
+    return state
+  }
+
+  // Offer distribution is already complete (handled in SELECT_OFFER action)
+  // Just automatically advance to next phase
+  return advanceToNextPhaseWithInitialization(state)
 }
 
 /**
