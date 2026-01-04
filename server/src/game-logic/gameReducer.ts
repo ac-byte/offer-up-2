@@ -1493,9 +1493,8 @@ export function handleGotchaActionChoice(state: GameState, action: 'steal' | 'di
     return stateAfterProcessing
   }
   
-  // No more Gotcha effects - processing is complete, but don't auto-advance
-  // Let the caller (advanceToNextPhaseWithInitialization) handle phase advancement
-  return stateAfterProcessing
+  // No more Gotcha effects - advance to next phase with automatic processing
+  return advanceToNextPhaseWithInitialization(stateAfterProcessing)
 }
 
 /**
