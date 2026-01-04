@@ -301,11 +301,9 @@ export const GameBoard: React.FC = () => {
         if (gameState.previousRoundSummary) {
           return (
             <div className="previous-round-summary">
-              <div className="summary-header">
-                <strong>Previous Round Summary</strong>
-              </div>
               <div className="summary-content">
-                {gameState.previousRoundSummary}
+                <strong>Previous Round Summary</strong>
+                {'\n'}{gameState.previousRoundSummary}
               </div>
             </div>
           )

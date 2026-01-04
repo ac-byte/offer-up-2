@@ -890,20 +890,15 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         .filter(({ index, player }) => index !== buyerId && index !== sellerId && player.offer.length > 0)
       
       let summaryParts = [
-        `${buyer.name} selected ${selectedSeller.name}'s offer.`,
-        `${buyer.name} received: ${selectedOfferCards.join(', ')}.`,
-        `${selectedSeller.name} got the money bag.`
+        `• ${buyer.name} gave ${selectedSeller.name} the money bag and received: ${selectedOfferCards.join(', ')}.`
       ]
       
-      if (otherSellers.length > 0) {
-        summaryParts.push('All other players\' offers returned to their collections:')
-        otherSellers.forEach(({ player }) => {
-          const returnedCards = player.offer.map(card => card.name)
-          summaryParts.push(`${player.name} got ${returnedCards.join(', ')}.`)
-        })
-      }
+      otherSellers.forEach(({ player }) => {
+        const returnedCards = player.offer.map(card => card.name)
+        summaryParts.push(`• ${player.name} got ${returnedCards.join(', ')}.`)
+      })
       
-      const previousRoundSummary = summaryParts.join(' ')
+      const previousRoundSummary = summaryParts.join('\n')
       
       // Create new state
       const newState = { ...state, previousRoundSummary }
@@ -1822,6 +1817,8 @@ export function handleGotchaActionChoice(state: GameState, action: 'steal' | 'di
  */
 export function processThingTradeins(state: GameState): GameState {
   const newState = { ...state }
+  const tradeInSummaryParts: string[] = []
+  
   newState.players = state.players.map(player => {
     const playerCopy = { ...player, collection: [...player.collection] }
     
@@ -1832,9 +1829,26 @@ export function processThingTradeins(state: GameState): GameState {
       return playerCopy
     }
     
-    // Calculate points for complete sets
-    // 1 Giant = 1 point, 2 Big = 1 point, 3 Medium = 1 point, 4 Tiny = 1 point
+    // Calculate points for complete sets and generate summary
     const pointsEarned = completeSets.length // Each complete set = 1 point
+    
+    // Group sets by type for summary
+    const setsByType: { [key: string]: number } = {}
+    completeSets.forEach(set => {
+      const setType = set[0].subtype
+      const setCount = set.length
+      const key = `${setCount} ${setType} thing${setCount > 1 ? 's' : ''}`
+      setsByType[key] = (setsByType[key] || 0) + 1
+    })
+    
+    // Generate summary for this player
+    if (pointsEarned > 0) {
+      const setDescriptions = Object.entries(setsByType).map(([setType, count]) => 
+        count === 1 ? setType : `${count} sets of ${setType}`
+      )
+      const pointText = pointsEarned === 1 ? '1 point' : `${pointsEarned} points`
+      tradeInSummaryParts.push(`• ${player.name} turned in ${setDescriptions.join(' and ')} for ${pointText}.`)
+    }
     
     // Remove traded-in cards from collection
     const tradedInCardIds = new Set(
@@ -1863,6 +1877,13 @@ export function processThingTradeins(state: GameState): GameState {
   })
   
   newState.discardPile = [...state.discardPile, ...tradedInCards]
+  
+  // Append trade-in summary to previousRoundSummary if there were any trade-ins
+  if (tradeInSummaryParts.length > 0) {
+    const existingSummary = newState.previousRoundSummary || ''
+    const tradeInSummary = tradeInSummaryParts.join('\n')
+    newState.previousRoundSummary = existingSummary ? `${existingSummary}\n${tradeInSummary}` : tradeInSummary
+  }
   
   return newState
 }
