@@ -432,7 +432,7 @@ export const GameBoard: React.FC = () => {
             return (
               <div className="add-one-effect-controls">
                 <div className="add-one-effect-header">
-                  <strong>{addOnePlayer?.name}</strong> selected <strong>{selectedCard?.name}</strong>: Now select an offer to add it to
+                  <strong>{addOnePlayer?.name}</strong> selected a card: Now select an offer to add it to
                 </div>
                 <div className="add-one-selection-info">
                   <span>Click on any offer below to add the card face-down</span>
