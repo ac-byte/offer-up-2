@@ -1,11 +1,13 @@
 .App {
   text-align: center;
+  height: 100vh;
+  overflow-x: hidden;
 }
 
 /* Join Game Screen Styles */
 .join-game-screen {
   max-width: 400px;
-  margin: 50px auto;
+  margin: 2rem auto;
   padding: 20px;
   border: 1px solid #ddd;
   border-radius: 8px;
@@ -85,7 +87,7 @@
 
 .join-game-error {
   max-width: 400px;
-  margin: 50px auto;
+  margin: 2rem auto;
   padding: 20px;
   border: 1px solid #dc3545;
   border-radius: 8px;
