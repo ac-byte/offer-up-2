@@ -34,6 +34,9 @@ export interface GameState {
   phaseInstructions: string
   autoFollowPerspective: boolean
   
+  // Card Counts (for multiplayer filtering)
+  cardsInPlay?: number // Optional for backward compatibility
+  
   // Previous Round Summary
   previousRoundSummary: string | null
   

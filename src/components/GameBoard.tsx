@@ -731,7 +731,7 @@ export const GameBoard: React.FC = () => {
           </div>
           <div className="header-game-stats">
             <div className="stat-item">
-              <span>Cards in Play: {gameState.players.reduce((total, player) => 
+              <span>Cards in Play: {gameState.cardsInPlay ?? gameState.players.reduce((total, player) => 
                 total + player.hand.length + player.collection.length + player.offer.length, 0
               )}</span>
             </div>

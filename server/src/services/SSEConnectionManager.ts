@@ -209,10 +209,17 @@ export class SSEConnectionManager {
     // For playing games, filter sensitive information
     const gamePlayerIndex = connectedPlayer.gamePlayerIndex ?? 0
     
+    // Calculate total cards in play before filtering (so all players see the same count)
+    const cardsInPlay = gameState.players?.reduce((total, player) => 
+      total + player.hand.length + player.collection.length + player.offer.length, 0
+    ) ?? 0
+    
     const filteredState = {
       ...gameState,
       // Set perspective to this player's game index
       selectedPerspective: gamePlayerIndex,
+      // Add the correct cards in play count
+      cardsInPlay,
       // Hide other players' hands (keep only this player's hand visible)
       players: gameState.players?.map((player, index) => ({
         ...player,
