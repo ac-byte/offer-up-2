@@ -387,9 +387,38 @@ function playActionCard(state: GameState, playerId: number, cardId: string): Gam
       break
     
     case 'Steal A Point':
-      newState.stealAPointEffectState = {
-        playerId,
-        awaitingTargetSelection: true
+      // Check if there are any valid targets (players with more points)
+      const currentPlayer = newState.players[playerId]
+      const validTargets = newState.players.filter(p => 
+        p.id !== playerId && p.points > currentPlayer.points
+      )
+      
+      if (validTargets.length === 0) {
+        // No valid targets - clear effect and advance player immediately
+        // Check if player has no more action cards (auto-mark as done)
+        const isBuyer = playerId === newState.currentBuyerIndex
+        
+        if (!playerHasValidActions(currentPlayer, GamePhase.ACTION_PHASE, isBuyer)) {
+          // Player has no more action cards, mark as done
+          const stateWithPlayerDone = markPlayerAsDone(newState, playerId)
+          
+          // Check if action phase should end
+          if (shouldEndActionPhase(stateWithPlayerDone)) {
+            return endActionPhaseAndAdvance(stateWithPlayerDone)
+          }
+          
+          // Advance to next eligible player
+          return advanceToNextEligiblePlayerInActionPhase(stateWithPlayerDone)
+        }
+
+        // Advance to next eligible player since the effect had no impact
+        return advanceToNextEligiblePlayerInActionPhase(newState)
+      } else {
+        // Valid targets exist - set up effect state
+        newState.stealAPointEffectState = {
+          playerId,
+          awaitingTargetSelection: true
+        }
       }
       break
     
