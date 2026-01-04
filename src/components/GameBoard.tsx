@@ -66,8 +66,15 @@ export const GameBoard: React.FC = () => {
   }
 
   const handleResetGame = () => {
-    const action: GameAction = { type: 'RESET_GAME' }
-    dispatch(action) // Always local for reset
+    if (multiplayerState.mode === 'multiplayer') {
+      // In multiplayer mode, reset by leaving the game and going back to home
+      // This will trigger the multiplayer context to reset and show the home screen
+      window.location.reload() // Simple solution: reload the page to reset everything
+    } else {
+      // Local mode: reset the game state
+      const action: GameAction = { type: 'RESET_GAME' }
+      dispatch(action) // Always local for reset
+    }
   }
 
   const handleAdvancePhase = async () => {
