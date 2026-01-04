@@ -573,6 +573,9 @@ function selectAddOneHandCard(state: GameState, cardId: string): GameState {
     awaitingOfferSelection: true
   }
 
+  // Update phase instructions without revealing card name
+  newState.phaseInstructions = `${player.name} selected a card. Now select an offer to add it to.`
+
   return newState
 }
 
