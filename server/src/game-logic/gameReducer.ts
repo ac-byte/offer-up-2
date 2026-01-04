@@ -324,11 +324,8 @@ function selectOffer(state: GameState, buyerId: number, sellerId: number): GameS
     offer: []
   }
 
-  // Advance to next phase
-  newState.currentPhase = GamePhase.OFFER_DISTRIBUTION
-  newState.phaseInstructions = 'Distributing purchased offer...'
-  
-  return newState
+  // Advance to next phase using proper initialization
+  return advanceToNextPhaseWithInitialization(newState)
 }
 
 /**
