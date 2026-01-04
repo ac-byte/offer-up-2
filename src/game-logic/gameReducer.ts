@@ -15,6 +15,8 @@ export function createInitialGameState(): GameState {
     drawPile: [],
     discardPile: [],
     actionPhaseDoneStates: [],
+    offerDistributionSummary: null,
+    offerDistributionAcknowledged: [],
     gotchaEffectState: null,
     flipOneEffectState: null,
     addOneEffectState: null,
@@ -879,22 +881,32 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         throw new Error('Selected seller has no offer to select')
       }
       
+      // Create offer distribution summary
+      const cardsReceived: { playerName: string; cards: Card[] }[] = []
+      
       // Create new state
       const newState = { ...state }
       newState.players = state.players.map((player, playerIndex) => {
         if (playerIndex === buyerId) {
           // Buyer: remove money bag, add selected offer to collection
+          const receivedCards = selectedSeller.offer.map(offerCard => ({
+            id: offerCard.id,
+            type: offerCard.type,
+            subtype: offerCard.subtype,
+            name: offerCard.name,
+            setSize: offerCard.setSize,
+            effect: offerCard.effect
+          }))
+          
+          cardsReceived.push({
+            playerName: player.name,
+            cards: receivedCards
+          })
+          
           return {
             ...player,
             hasMoney: false,
-            collection: [...player.collection, ...selectedSeller.offer.map(offerCard => ({
-              id: offerCard.id,
-              type: offerCard.type,
-              subtype: offerCard.subtype,
-              name: offerCard.name,
-              setSize: offerCard.setSize,
-              effect: offerCard.effect
-            }))]
+            collection: [...player.collection, ...receivedCards]
           }
         } else if (playerIndex === sellerId) {
           // Selected seller: receive money bag, clear offer
@@ -914,6 +926,13 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
             effect: offerCard.effect
           }))
           
+          if (returnedCards.length > 0) {
+            cardsReceived.push({
+              playerName: player.name,
+              cards: returnedCards
+            })
+          }
+          
           return {
             ...player,
             collection: [...player.collection, ...returnedCards],
@@ -926,13 +945,18 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       // But keep current buyer index unchanged for this round
       newState.nextBuyerIndex = sellerId
       
-      // Advance to offer distribution phase and automatically handle it
-      const stateAfterPhaseAdvance = advanceToNextPhaseWithInitialization(newState)
-      
-      // Automatically handle offer distribution phase since it requires no user interaction
-      if (stateAfterPhaseAdvance.currentPhase === GamePhase.OFFER_DISTRIBUTION) {
-        return handleOfferDistributionPhase(stateAfterPhaseAdvance)
+      // Create offer distribution summary
+      newState.offerDistributionSummary = {
+        buyerName: state.players[buyerId].name,
+        selectedSellerName: selectedSeller.name,
+        cardsReceived
       }
+      
+      // Initialize acknowledgment system - all players need to acknowledge
+      newState.offerDistributionAcknowledged = new Array(state.players.length).fill(false)
+      
+      // Advance to offer distribution phase
+      const stateAfterPhaseAdvance = advanceToNextPhaseWithInitialization(newState)
       
       return stateAfterPhaseAdvance
     }
@@ -957,6 +981,45 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       
       // Advance to next eligible player with automatic skipping for other phases
       return advanceToNextEligiblePlayer(state)
+    }
+    
+    case 'ACKNOWLEDGE_OFFER_DISTRIBUTION': {
+      const { playerId } = action
+      
+      // Validate player exists
+      if (playerId < 0 || playerId >= state.players.length) {
+        throw new Error(`Invalid player ID: ${playerId}`)
+      }
+      
+      // Validate that we're in offer distribution phase with active summary
+      if (state.currentPhase !== GamePhase.OFFER_DISTRIBUTION || !state.offerDistributionSummary) {
+        throw new Error('No offer distribution summary to acknowledge')
+      }
+      
+      // Mark player as acknowledged
+      const newAcknowledged = [...state.offerDistributionAcknowledged]
+      newAcknowledged[playerId] = true
+      
+      const newState = {
+        ...state,
+        offerDistributionAcknowledged: newAcknowledged
+      }
+      
+      // Check if all players have acknowledged
+      const allAcknowledged = newAcknowledged.every(ack => ack === true)
+      
+      if (allAcknowledged) {
+        // Clear the summary and advance to next phase
+        const clearedState = {
+          ...newState,
+          offerDistributionSummary: null,
+          offerDistributionAcknowledged: []
+        }
+        
+        return advanceToNextPhaseWithInitialization(clearedState)
+      }
+      
+      return newState
     }
     
     case 'SELECT_GOTCHA_CARD': {

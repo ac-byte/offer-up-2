@@ -68,6 +68,9 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     case 'SELECT_STEAL_A_POINT_TARGET':
       return selectStealAPointTarget(state, action.targetPlayerId)
     
+    case 'ACKNOWLEDGE_OFFER_DISTRIBUTION':
+      return acknowledgeOfferDistribution(state, action.playerId)
+    
     // Add more actions as needed
     default:
       console.warn(`Unhandled action type: ${action.type}`)
@@ -112,6 +115,9 @@ function validatePhaseAction(phase: GamePhase, action: GameAction): boolean {
     case 'SELECT_REMOVE_TWO_CARD':
     case 'SELECT_STEAL_A_POINT_TARGET':
       return phase === GamePhase.ACTION_PHASE
+    
+    case 'ACKNOWLEDGE_OFFER_DISTRIBUTION':
+      return phase === GamePhase.OFFER_DISTRIBUTION
     
     default:
       return true
@@ -236,23 +242,33 @@ function selectOffer(state: GameState, buyerId: number, sellerId: number): GameS
     throw new Error('Selected seller has no offer to select')
   }
 
+  // Create offer distribution summary
+  const cardsReceived: { playerName: string; cards: Card[] }[] = []
+
   const newState = { ...state }
   
   // Process all players according to their role in the transaction
   newState.players = state.players.map((player, playerIndex) => {
     if (playerIndex === buyerId) {
       // Buyer: remove money bag, add selected offer to collection
+      const receivedCards = selectedSeller.offer.map(offerCard => ({
+        id: offerCard.id,
+        type: offerCard.type,
+        subtype: offerCard.subtype,
+        name: offerCard.name,
+        setSize: offerCard.setSize,
+        effect: offerCard.effect
+      }))
+      
+      cardsReceived.push({
+        playerName: player.name,
+        cards: receivedCards
+      })
+      
       return {
         ...player,
         hasMoney: false,
-        collection: [...player.collection, ...selectedSeller.offer.map(offerCard => ({
-          id: offerCard.id,
-          type: offerCard.type,
-          subtype: offerCard.subtype,
-          name: offerCard.name,
-          setSize: offerCard.setSize,
-          effect: offerCard.effect
-        }))]
+        collection: [...player.collection, ...receivedCards]
       }
     } else if (playerIndex === sellerId) {
       // Selected seller: receive money bag, clear offer
@@ -272,6 +288,13 @@ function selectOffer(state: GameState, buyerId: number, sellerId: number): GameS
         effect: offerCard.effect
       }))
       
+      if (returnedCards.length > 0) {
+        cardsReceived.push({
+          playerName: player.name,
+          cards: returnedCards
+        })
+      }
+      
       return {
         ...player,
         collection: [...player.collection, ...returnedCards],
@@ -283,6 +306,16 @@ function selectOffer(state: GameState, buyerId: number, sellerId: number): GameS
   // Update next buyer index to the selected seller (money bag holder)
   // But keep current buyer index unchanged for this round
   newState.nextBuyerIndex = sellerId
+
+  // Create offer distribution summary
+  newState.offerDistributionSummary = {
+    buyerName: state.players[buyerId].name,
+    selectedSellerName: selectedSeller.name,
+    cardsReceived
+  }
+  
+  // Initialize acknowledgment system - all players need to acknowledge
+  newState.offerDistributionAcknowledged = new Array(state.players.length).fill(false)
 
   // Advance to next phase using proper initialization
   return advanceToNextPhaseWithInitialization(newState)
@@ -771,6 +804,46 @@ function selectStealAPointTarget(state: GameState, targetPlayerId: number): Game
 }
 
 /**
+ * Acknowledge offer distribution summary
+ */
+function acknowledgeOfferDistribution(state: GameState, playerId: number): GameState {
+  // Validate player exists
+  if (playerId < 0 || playerId >= state.players.length) {
+    throw new Error(`Invalid player ID: ${playerId}`)
+  }
+  
+  // Validate that we're in offer distribution phase with active summary
+  if (state.currentPhase !== GamePhase.OFFER_DISTRIBUTION || !state.offerDistributionSummary) {
+    throw new Error('No offer distribution summary to acknowledge')
+  }
+  
+  // Mark player as acknowledged
+  const newAcknowledged = [...state.offerDistributionAcknowledged]
+  newAcknowledged[playerId] = true
+  
+  const newState = {
+    ...state,
+    offerDistributionAcknowledged: newAcknowledged
+  }
+  
+  // Check if all players have acknowledged
+  const allAcknowledged = newAcknowledged.every(ack => ack === true)
+  
+  if (allAcknowledged) {
+    // Clear the summary and advance to next phase
+    const clearedState = {
+      ...newState,
+      offerDistributionSummary: null,
+      offerDistributionAcknowledged: []
+    }
+    
+    return advanceToNextPhaseWithInitialization(clearedState)
+  }
+  
+  return newState
+}
+
+/**
  * Initialize game state for multiplayer
  */
 export function initializeMultiplayerGame(playerNames: string[]): GameState {
@@ -802,6 +875,8 @@ export function initializeMultiplayerGame(playerNames: string[]): GameState {
     drawPile: deck,
     discardPile: [],
     actionPhaseDoneStates: new Array(players.length).fill(false),
+    offerDistributionSummary: null,
+    offerDistributionAcknowledged: [],
     gotchaEffectState: null,
     flipOneEffectState: null,
     addOneEffectState: null,

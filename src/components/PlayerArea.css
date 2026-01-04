@@ -732,3 +732,37 @@
     font-size: 0.75em;
   }
 }
+
+/* Offer Distribution Acknowledgment styles */
+.player-area__acknowledge-button {
+  margin-top: 8px;
+}
+
+.acknowledge-button {
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.acknowledge-button:hover {
+  background-color: #45a049;
+}
+
+.acknowledge-button:active {
+  background-color: #3d8b40;
+}
+
+.player-area__acknowledged-status {
+  margin-top: 8px;
+}
+
+.acknowledged-indicator {
+  color: #4CAF50;
+  font-weight: 500;
+  font-size: 14px;
+}
