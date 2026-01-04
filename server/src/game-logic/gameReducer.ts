@@ -880,18 +880,32 @@ function moveCardToOffer(state: GameState, playerId: number, cardId: string): Ga
     return state
   }
 
-  // Validate that offer creation is active for this player
-  if (!state.offerCreationState || state.offerCreationState.playerId !== playerId || state.offerCreationState.mode !== 'selecting') {
-    return state
-  }
-
-  const newState = { ...state }
-  const playerIndex = newState.players.findIndex(p => p.id === playerId)
+  const playerIndex = state.players.findIndex(p => p.id === playerId)
   
   if (playerIndex === -1 || playerIndex === state.currentBuyerIndex) {
     return state // Invalid player or buyer can't place offers
   }
 
+  // If no offer creation state exists, or it's for a different player, initialize it for this player
+  // This allows multiple sellers to create offers simultaneously
+  let workingState = state
+  if (!state.offerCreationState || state.offerCreationState.playerId !== playerId) {
+    // Check if this player is eligible (is a seller and hasn't completed their offer)
+    const player = state.players[playerIndex]
+    if (player.offer.length === 0 || (player.offer.length < 3 && !player.offer.some(card => card.faceUp))) {
+      // Initialize offer creation for this player
+      workingState = initializeOfferCreation(state, playerId)
+    } else {
+      return state // Player has already completed their offer
+    }
+  }
+
+  // Validate that we're in selecting mode
+  if (workingState.offerCreationState?.mode !== 'selecting') {
+    return state
+  }
+
+  const newState = { ...workingState }
   const player = newState.players[playerIndex]
   const cardIndex = player.hand.findIndex(c => c.id === cardId)
   
@@ -983,11 +997,6 @@ function lockOfferForFlipping(state: GameState, playerId: number): GameState {
     return state
   }
 
-  // Validate that offer creation is active for this player and in selecting mode
-  if (!state.offerCreationState || state.offerCreationState.playerId !== playerId || state.offerCreationState.mode !== 'selecting') {
-    return state
-  }
-
   const playerIndex = state.players.findIndex(p => p.id === playerId)
   
   if (playerIndex === -1 || playerIndex === state.currentBuyerIndex) {
@@ -1001,9 +1010,27 @@ function lockOfferForFlipping(state: GameState, playerId: number): GameState {
     return state
   }
 
+  // If no offer creation state exists for this player, or it's for a different player,
+  // initialize it in selecting mode first, then transition to flipping
+  let workingState = state
+  if (!state.offerCreationState || state.offerCreationState.playerId !== playerId) {
+    workingState = {
+      ...state,
+      offerCreationState: {
+        playerId,
+        mode: 'selecting'
+      }
+    }
+  }
+
+  // Validate that we're in selecting mode
+  if (workingState.offerCreationState?.mode !== 'selecting') {
+    return state
+  }
+
   // Transition to flipping mode
   return {
-    ...state,
+    ...workingState,
     offerCreationState: {
       playerId,
       mode: 'flipping'
@@ -1102,6 +1129,7 @@ export function initializeMultiplayerGame(playerNames: string[]): GameState {
     removeOneEffectState: null,
     removeTwoEffectState: null,
     stealAPointEffectState: null,
+    offerCreationState: null,
     selectedPerspective: 0,
     phaseInstructions: 'Game starting...',
     autoFollowPerspective: true,
