@@ -21,6 +21,7 @@ export function createInitialGameState(): GameState {
     removeOneEffectState: null,
     removeTwoEffectState: null,
     stealAPointEffectState: null,
+    offerCreationState: null,
     selectedPerspective: 0,
     phaseInstructions: 'Waiting for game to start...',
     autoFollowPerspective: true,
@@ -211,6 +212,13 @@ export function validatePhaseAction(phase: GamePhase, action: GameAction): boole
       // Steal A Point target selection is only allowed during action phase when effect is active
       return phase === GamePhase.ACTION_PHASE
     
+    case 'MOVE_CARD_TO_OFFER':
+    case 'MOVE_CARD_TO_HAND':
+    case 'LOCK_OFFER_FOR_FLIPPING':
+    case 'FLIP_OFFER_CARD':
+      // Offer creation actions are only allowed during offer phase
+      return phase === GamePhase.OFFER_PHASE
+    
     case 'REPLACE_STATE':
       // State replacement is always allowed (for multiplayer synchronization)
       return true
@@ -312,9 +320,56 @@ export function handleWinnerDeterminationPhase(state: GameState): GameState {
 }
 
 /**
- * Checks if all sellers have completed their offers during offer phase
+ * Initializes offer creation for a seller during offer phase
  */
-export function areAllOffersComplete(state: GameState): boolean {
+export function initializeOfferCreation(state: GameState, playerId: number): GameState {
+  const player = state.players[playerId]
+  
+  // Handle edge case: if player has 3 or fewer cards, auto-move all to offer and go to flipping mode
+  if (player.hand.length <= 3) {
+    const newState = { ...state }
+    newState.players = state.players.map((p, index) => {
+      if (index !== playerId) {
+        return p
+      }
+      
+      // Move all cards from hand to offer as face-down
+      const newOffer = p.hand.map((card, cardIndex) => ({
+        ...card,
+        faceUp: false,
+        position: cardIndex
+      }))
+      
+      return {
+        ...p,
+        hand: [],
+        offer: newOffer
+      }
+    })
+    
+    // Set offer creation state to flipping mode
+    newState.offerCreationState = {
+      playerId,
+      mode: 'flipping'
+    }
+    
+    return newState
+  } else {
+    // Normal case: enter selecting mode
+    return {
+      ...state,
+      offerCreationState: {
+        playerId,
+        mode: 'selecting'
+      }
+    }
+  }
+}
+
+/**
+ * Checks if offer creation is complete for all sellers
+ */
+export function areAllOfferCreationsComplete(state: GameState): boolean {
   if (state.currentPhase !== GamePhase.OFFER_PHASE) {
     return false
   }
@@ -322,8 +377,10 @@ export function areAllOffersComplete(state: GameState): boolean {
   // Get all sellers (players who are not the buyer)
   const sellers = state.players.filter((_, index) => index !== state.currentBuyerIndex)
   
-  // Check if all sellers have placed offers (offer array has 3 cards)
-  return sellers.every(seller => seller.offer.length === 3)
+  // Check if all sellers have completed offers (offer array has 3 cards and at least one is face up)
+  return sellers.every(seller => 
+    seller.offer.length === 3 && seller.offer.some(card => card.faceUp)
+  )
 }
 
 /**
@@ -679,7 +736,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       })
       
       // Check if all sellers have now completed their offers
-      if (areAllOffersComplete(newState)) {
+      if (areAllOfferCreationsComplete(newState)) {
         // Automatically advance to buyer-flip phase
         const { nextPhase, nextRound } = advanceToNextPhase(newState.currentPhase, newState.round)
         
@@ -1463,6 +1520,268 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       // Replace the entire state with the new state from the server
       // This is used for multiplayer synchronization
       return action.newState
+    }
+    
+    case 'MOVE_CARD_TO_OFFER': {
+      const { playerId, cardId } = action
+      
+      // Validate player exists
+      if (playerId < 0 || playerId >= state.players.length) {
+        throw new Error(`Invalid player ID: ${playerId}`)
+      }
+      
+      // Validate that we're in offer creation mode for this player
+      if (!state.offerCreationState || state.offerCreationState.playerId !== playerId) {
+        throw new Error('Player is not in offer creation mode')
+      }
+      
+      // Validate that we're in selecting mode
+      if (state.offerCreationState.mode !== 'selecting') {
+        throw new Error('Cannot move cards when offer is locked')
+      }
+      
+      const player = state.players[playerId]
+      
+      // Validate that player has fewer than 3 cards in offer
+      if (player.offer.length >= 3) {
+        throw new Error('Offer already has 3 cards')
+      }
+      
+      // Find the card in player's hand
+      const cardToMove = player.hand.find(card => card.id === cardId)
+      if (!cardToMove) {
+        throw new Error(`Card with ID ${cardId} not found in player's hand`)
+      }
+      
+      // Create new state with card moved from hand to offer
+      const newState = { ...state }
+      newState.players = state.players.map((p, index) => {
+        if (index !== playerId) {
+          return p
+        }
+        
+        // Remove card from hand
+        const newHand = p.hand.filter(card => card.id !== cardId)
+        
+        // Add card to offer as face-down
+        const newOfferCard = {
+          ...cardToMove,
+          faceUp: false,
+          position: p.offer.length // Add at the end
+        }
+        const newOffer = [...p.offer, newOfferCard]
+        
+        return {
+          ...p,
+          hand: newHand,
+          offer: newOffer
+        }
+      })
+      
+      return newState
+    }
+    
+    case 'MOVE_CARD_TO_HAND': {
+      const { playerId, cardId } = action
+      
+      // Validate player exists
+      if (playerId < 0 || playerId >= state.players.length) {
+        throw new Error(`Invalid player ID: ${playerId}`)
+      }
+      
+      // Validate that we're in offer creation mode for this player
+      if (!state.offerCreationState || state.offerCreationState.playerId !== playerId) {
+        throw new Error('Player is not in offer creation mode')
+      }
+      
+      // Validate that we're in selecting mode
+      if (state.offerCreationState.mode !== 'selecting') {
+        throw new Error('Cannot move cards when offer is locked')
+      }
+      
+      const player = state.players[playerId]
+      
+      // Find the card in player's offer
+      const cardToMove = player.offer.find(card => card.id === cardId)
+      if (!cardToMove) {
+        throw new Error(`Card with ID ${cardId} not found in player's offer`)
+      }
+      
+      // Create new state with card moved from offer to hand
+      const newState = { ...state }
+      newState.players = state.players.map((p, index) => {
+        if (index !== playerId) {
+          return p
+        }
+        
+        // Remove card from offer
+        const newOffer = p.offer.filter(card => card.id !== cardId)
+        // Update positions for remaining cards
+        const updatedOffer = newOffer.map((card, index) => ({
+          ...card,
+          position: index
+        }))
+        
+        // Add card back to hand (convert back to regular Card)
+        const regularCard = {
+          id: cardToMove.id,
+          type: cardToMove.type,
+          subtype: cardToMove.subtype,
+          name: cardToMove.name,
+          setSize: cardToMove.setSize,
+          effect: cardToMove.effect
+        }
+        const newHand = [...p.hand, regularCard]
+        
+        return {
+          ...p,
+          hand: newHand,
+          offer: updatedOffer
+        }
+      })
+      
+      return newState
+    }
+    
+    case 'LOCK_OFFER_FOR_FLIPPING': {
+      const { playerId } = action
+      
+      // Validate player exists
+      if (playerId < 0 || playerId >= state.players.length) {
+        throw new Error(`Invalid player ID: ${playerId}`)
+      }
+      
+      // Validate that we're in offer creation mode for this player
+      if (!state.offerCreationState || state.offerCreationState.playerId !== playerId) {
+        throw new Error('Player is not in offer creation mode')
+      }
+      
+      // Validate that we're in selecting mode
+      if (state.offerCreationState.mode !== 'selecting') {
+        throw new Error('Offer is already locked')
+      }
+      
+      const player = state.players[playerId]
+      
+      // Validate that player has exactly 3 cards in offer
+      if (player.offer.length !== 3) {
+        throw new Error('Must have exactly 3 cards in offer to lock')
+      }
+      
+      // Update offer creation state to flipping mode
+      return {
+        ...state,
+        offerCreationState: {
+          ...state.offerCreationState,
+          mode: 'flipping'
+        }
+      }
+    }
+    
+    case 'FLIP_OFFER_CARD': {
+      const { playerId, cardIndex } = action
+      
+      // Validate player exists
+      if (playerId < 0 || playerId >= state.players.length) {
+        throw new Error(`Invalid player ID: ${playerId}`)
+      }
+      
+      // Validate that we're in offer creation mode for this player
+      if (!state.offerCreationState || state.offerCreationState.playerId !== playerId) {
+        throw new Error('Player is not in offer creation mode')
+      }
+      
+      // Validate that we're in flipping mode
+      if (state.offerCreationState.mode !== 'flipping') {
+        throw new Error('Must lock offer before flipping cards')
+      }
+      
+      const player = state.players[playerId]
+      
+      // Validate cardIndex
+      if (cardIndex < 0 || cardIndex >= player.offer.length) {
+        throw new Error(`Invalid card index: ${cardIndex}`)
+      }
+      
+      const targetCard = player.offer[cardIndex]
+      
+      // Validate that the card is face down
+      if (targetCard.faceUp) {
+        throw new Error('Card is already face up')
+      }
+      
+      // Create new state with the flipped card and completed offer creation
+      const newState = { ...state }
+      newState.players = state.players.map((p, index) => {
+        if (index !== playerId) {
+          return p
+        }
+        
+        // Flip the selected card
+        const newOffer = p.offer.map((card, index) => {
+          if (index === cardIndex) {
+            return { ...card, faceUp: true }
+          }
+          return card
+        })
+        
+        return {
+          ...p,
+          offer: newOffer
+        }
+      })
+      
+      // Clear offer creation state
+      newState.offerCreationState = null
+      
+      // Check if all sellers have now completed their offers
+      if (areAllOfferCreationsComplete(newState)) {
+        // Automatically advance to buyer-flip phase
+        const { nextPhase, nextRound } = advanceToNextPhase(newState.currentPhase, newState.round)
+        
+        // Create state with advanced phase
+        const stateWithNewPhase = {
+          ...newState,
+          currentPhase: nextPhase,
+          round: nextRound,
+          phaseInstructions: getPhaseInstructions(nextPhase)
+        }
+        
+        // Set current player to first eligible player for the new phase
+        const firstEligiblePlayer = getNextEligiblePlayer(-1, stateWithNewPhase, new Set())
+        
+        let finalState = {
+          ...stateWithNewPhase,
+          currentPlayerIndex: firstEligiblePlayer !== null ? firstEligiblePlayer : 0
+        }
+        
+        // Apply automatic perspective following if enabled
+        if (firstEligiblePlayer !== null) {
+          finalState = updatePerspectiveForActivePlayer(finalState, firstEligiblePlayer)
+        }
+        
+        return finalState
+      } else {
+        // Not all offers complete yet - advance to next eligible seller
+        const nextEligiblePlayer = getNextEligiblePlayer(playerId, newState, new Set())
+        
+        if (nextEligiblePlayer !== null) {
+          // Initialize offer creation for next seller
+          let stateWithNextPlayer = initializeOfferCreation(newState, nextEligiblePlayer)
+          stateWithNextPlayer = {
+            ...stateWithNextPlayer,
+            currentPlayerIndex: nextEligiblePlayer
+          }
+          
+          // Apply automatic perspective following if enabled
+          stateWithNextPlayer = updatePerspectiveForActivePlayer(stateWithNextPlayer, nextEligiblePlayer)
+          
+          return stateWithNextPlayer
+        } else {
+          // No more eligible sellers - this shouldn't happen, but handle gracefully
+          return newState
+        }
+      }
     }
     
     default:
@@ -2345,6 +2664,12 @@ export function advanceToNextPhaseWithInitialization(state: GameState): GameStat
   let stateWithInitializedPhase = stateWithNewPhase
   if (nextPhase === GamePhase.ACTION_PHASE) {
     stateWithInitializedPhase = initializeActionPhase(stateWithNewPhase)
+  } else if (nextPhase === GamePhase.OFFER_PHASE) {
+    // Initialize offer creation for first eligible seller
+    const firstEligibleSeller = getNextEligiblePlayer(-1, stateWithNewPhase, new Set())
+    if (firstEligibleSeller !== null && firstEligibleSeller !== stateWithNewPhase.currentBuyerIndex) {
+      stateWithInitializedPhase = initializeOfferCreation(stateWithNewPhase, firstEligibleSeller)
+    }
   } else if (nextPhase === GamePhase.DEAL) {
     // Automatically handle deal phase
     stateWithInitializedPhase = handleDealPhase(stateWithNewPhase)

@@ -1,4 +1,4 @@
-import { GameState, GameAction, GamePhase, Player, Card, OfferCard } from '../types'
+import { GameState, GameAction, GamePhase, Player, Card, OfferCard, OfferCreationState } from '../types'
 import { createShuffledDeck, shuffleArray, identifyGotchaSetsInOrder, identifyThingSets } from './cards'
 
 /**
@@ -6,6 +6,70 @@ import { createShuffledDeck, shuffleArray, identifyGotchaSetsInOrder, identifyTh
  */
 export function selectRandomBuyer(playerCount: number): number {
   return Math.floor(Math.random() * playerCount)
+}
+
+/**
+ * Initializes offer creation for a seller during offer phase
+ */
+export function initializeOfferCreation(state: GameState, playerId: number): GameState {
+  const player = state.players[playerId]
+  
+  // Handle edge case: if player has 3 or fewer cards, auto-move all to offer and go to flipping mode
+  if (player.hand.length <= 3) {
+    const newState = { ...state }
+    newState.players = state.players.map((p, index) => {
+      if (index !== playerId) {
+        return p
+      }
+      
+      // Move all cards from hand to offer as face-down
+      const newOffer = p.hand.map((card, cardIndex) => ({
+        ...card,
+        faceUp: false,
+        position: cardIndex
+      }))
+      
+      return {
+        ...p,
+        hand: [],
+        offer: newOffer
+      }
+    })
+    
+    // Set offer creation state to flipping mode
+    newState.offerCreationState = {
+      playerId,
+      mode: 'flipping'
+    }
+    
+    return newState
+  } else {
+    // Normal case: enter selecting mode
+    return {
+      ...state,
+      offerCreationState: {
+        playerId,
+        mode: 'selecting'
+      }
+    }
+  }
+}
+
+/**
+ * Checks if offer creation is complete for all sellers
+ */
+export function areAllOfferCreationsComplete(state: GameState): boolean {
+  if (state.currentPhase !== GamePhase.OFFER_PHASE) {
+    return false
+  }
+  
+  // Get all sellers (players who are not the buyer)
+  const sellers = state.players.filter((_, index) => index !== state.currentBuyerIndex)
+  
+  // Check if all sellers have completed offers (offer array has 3 cards and at least one is face up)
+  return sellers.every(seller => 
+    seller.offer.length === 3 && seller.offer.some(card => card.faceUp)
+  )
 }
 
 /**
@@ -68,6 +132,18 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     case 'SELECT_STEAL_A_POINT_TARGET':
       return selectStealAPointTarget(state, action.targetPlayerId)
     
+    case 'MOVE_CARD_TO_OFFER':
+      return moveCardToOffer(state, action.playerId, action.cardId)
+    
+    case 'MOVE_CARD_TO_HAND':
+      return moveCardToHand(state, action.playerId, action.cardId)
+    
+    case 'LOCK_OFFER_FOR_FLIPPING':
+      return lockOfferForFlipping(state, action.playerId)
+    
+    case 'FLIP_OFFER_CARD':
+      return flipOfferCard(state, action.playerId, action.cardIndex)
+    
     // Add more actions as needed
     default:
       console.warn(`Unhandled action type: ${action.type}`)
@@ -112,6 +188,12 @@ function validatePhaseAction(phase: GamePhase, action: GameAction): boolean {
     case 'SELECT_REMOVE_TWO_CARD':
     case 'SELECT_STEAL_A_POINT_TARGET':
       return phase === GamePhase.ACTION_PHASE
+    
+    case 'MOVE_CARD_TO_OFFER':
+    case 'MOVE_CARD_TO_HAND':
+    case 'LOCK_OFFER_FOR_FLIPPING':
+    case 'FLIP_OFFER_CARD':
+      return phase === GamePhase.OFFER_PHASE
     
     default:
       return true
@@ -791,6 +873,198 @@ function selectStealAPointTarget(state: GameState, targetPlayerId: number): Game
 }
 
 /**
+ * Move a card from player's hand to their offer area
+ */
+function moveCardToOffer(state: GameState, playerId: number, cardId: string): GameState {
+  if (state.currentPhase !== GamePhase.OFFER_PHASE) {
+    return state
+  }
+
+  // Validate that offer creation is active for this player
+  if (!state.offerCreationState || state.offerCreationState.playerId !== playerId || state.offerCreationState.mode !== 'selecting') {
+    return state
+  }
+
+  const newState = { ...state }
+  const playerIndex = newState.players.findIndex(p => p.id === playerId)
+  
+  if (playerIndex === -1 || playerIndex === state.currentBuyerIndex) {
+    return state // Invalid player or buyer can't place offers
+  }
+
+  const player = newState.players[playerIndex]
+  const cardIndex = player.hand.findIndex(c => c.id === cardId)
+  
+  if (cardIndex === -1) {
+    return state // Card not found in hand
+  }
+
+  // Check if offer already has 3 cards
+  if (player.offer.length >= 3) {
+    return state // Offer is full
+  }
+
+  const card = player.hand[cardIndex]
+  
+  // Remove card from hand
+  newState.players[playerIndex].hand = player.hand.filter(c => c.id !== cardId)
+  
+  // Add card to offer as face-down
+  const offerCard = {
+    ...card,
+    faceUp: false,
+    position: player.offer.length
+  }
+  
+  newState.players[playerIndex].offer = [...player.offer, offerCard]
+
+  return newState
+}
+
+/**
+ * Move a card from player's offer area back to their hand
+ */
+function moveCardToHand(state: GameState, playerId: number, cardId: string): GameState {
+  if (state.currentPhase !== GamePhase.OFFER_PHASE) {
+    return state
+  }
+
+  // Validate that offer creation is active for this player and in selecting mode
+  if (!state.offerCreationState || state.offerCreationState.playerId !== playerId || state.offerCreationState.mode !== 'selecting') {
+    return state
+  }
+
+  const newState = { ...state }
+  const playerIndex = newState.players.findIndex(p => p.id === playerId)
+  
+  if (playerIndex === -1 || playerIndex === state.currentBuyerIndex) {
+    return state // Invalid player or buyer can't place offers
+  }
+
+  const player = newState.players[playerIndex]
+  const cardIndex = player.offer.findIndex(c => c.id === cardId)
+  
+  if (cardIndex === -1) {
+    return state // Card not found in offer
+  }
+
+  const offerCard = player.offer[cardIndex]
+  
+  // Convert back to regular card (remove offer-specific properties)
+  const card = {
+    id: offerCard.id,
+    type: offerCard.type,
+    subtype: offerCard.subtype,
+    name: offerCard.name,
+    setSize: offerCard.setSize,
+    effect: offerCard.effect
+  }
+  
+  // Remove card from offer
+  newState.players[playerIndex].offer = player.offer.filter(c => c.id !== cardId)
+  
+  // Reposition remaining cards
+  newState.players[playerIndex].offer = newState.players[playerIndex].offer.map((card, index) => ({
+    ...card,
+    position: index
+  }))
+  
+  // Add card back to hand
+  newState.players[playerIndex].hand = [...player.hand, card]
+
+  return newState
+}
+
+/**
+ * Lock the offer for flipping (transition from selecting to flipping mode)
+ */
+function lockOfferForFlipping(state: GameState, playerId: number): GameState {
+  if (state.currentPhase !== GamePhase.OFFER_PHASE) {
+    return state
+  }
+
+  // Validate that offer creation is active for this player and in selecting mode
+  if (!state.offerCreationState || state.offerCreationState.playerId !== playerId || state.offerCreationState.mode !== 'selecting') {
+    return state
+  }
+
+  const playerIndex = state.players.findIndex(p => p.id === playerId)
+  
+  if (playerIndex === -1 || playerIndex === state.currentBuyerIndex) {
+    return state // Invalid player or buyer can't place offers
+  }
+
+  const player = state.players[playerIndex]
+  
+  // Validate that player has exactly 3 cards in offer
+  if (player.offer.length !== 3) {
+    return state
+  }
+
+  // Transition to flipping mode
+  return {
+    ...state,
+    offerCreationState: {
+      playerId,
+      mode: 'flipping'
+    }
+  }
+}
+
+/**
+ * Flip a card in the player's offer during offer creation
+ */
+function flipOfferCard(state: GameState, playerId: number, cardIndex: number): GameState {
+  if (state.currentPhase !== GamePhase.OFFER_PHASE) {
+    return state
+  }
+
+  // Validate that offer creation is active for this player and in flipping mode
+  if (!state.offerCreationState || state.offerCreationState.playerId !== playerId || state.offerCreationState.mode !== 'flipping') {
+    return state
+  }
+
+  const newState = { ...state }
+  const playerIndex = newState.players.findIndex(p => p.id === playerId)
+  
+  if (playerIndex === -1 || playerIndex === state.currentBuyerIndex) {
+    return state // Invalid player or buyer can't place offers
+  }
+
+  const player = newState.players[playerIndex]
+  
+  // Validate card index
+  if (cardIndex < 0 || cardIndex >= player.offer.length) {
+    return state
+  }
+
+  // Flip the selected card
+  const updatedOffer = [...player.offer]
+  updatedOffer[cardIndex] = {
+    ...updatedOffer[cardIndex],
+    faceUp: true
+  }
+  
+  newState.players[playerIndex].offer = updatedOffer
+
+  // Complete the offer creation
+  newState.offerCreationState = {
+    playerId,
+    mode: 'complete'
+  }
+
+  // Check if all sellers have completed their offers
+  if (areAllOfferCreationsComplete(newState)) {
+    // Clear offer creation state and advance to buyer flip phase
+    newState.offerCreationState = null
+    newState.currentPhase = GamePhase.BUYER_FLIP
+    newState.phaseInstructions = 'Buyer: Flip cards to see what you want to buy'
+  }
+
+  return newState
+}
+
+/**
  * Initialize game state for multiplayer
  */
 export function initializeMultiplayerGame(playerNames: string[]): GameState {
@@ -928,6 +1202,16 @@ export function advanceToNextPhaseWithInitialization(state: GameState): GameStat
   let stateWithInitializedPhase = stateWithNewPhase
   if (nextPhase === GamePhase.ACTION_PHASE) {
     stateWithInitializedPhase = initializeActionPhase(stateWithNewPhase)
+  } else if (nextPhase === GamePhase.OFFER_PHASE) {
+    // Initialize offer creation for the first eligible seller
+    const sellers = stateWithNewPhase.players.filter((_, index) => index !== stateWithNewPhase.currentBuyerIndex)
+    if (sellers.length > 0) {
+      // Find first seller and initialize their offer creation
+      const firstSellerIndex = stateWithNewPhase.players.findIndex((_, index) => index !== stateWithNewPhase.currentBuyerIndex)
+      if (firstSellerIndex !== -1) {
+        stateWithInitializedPhase = initializeOfferCreation(stateWithNewPhase, firstSellerIndex)
+      }
+    }
   } else if (nextPhase === GamePhase.DEAL) {
     // Automatically handle deal phase
     stateWithInitializedPhase = handleDealPhase(stateWithNewPhase)

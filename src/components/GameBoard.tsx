@@ -218,6 +218,46 @@ export const GameBoard: React.FC = () => {
     }
   }
 
+  const handleMoveCardToOffer = async (playerId: number, cardId: string) => {
+    const action: GameAction = { type: 'MOVE_CARD_TO_OFFER', playerId, cardId }
+    try {
+      await handleAction(action)
+    } catch (error) {
+      console.error('Error moving card to offer:', error)
+      // In a real app, you'd show this error to the user
+    }
+  }
+
+  const handleMoveCardToHand = async (playerId: number, cardId: string) => {
+    const action: GameAction = { type: 'MOVE_CARD_TO_HAND', playerId, cardId }
+    try {
+      await handleAction(action)
+    } catch (error) {
+      console.error('Error moving card to hand:', error)
+      // In a real app, you'd show this error to the user
+    }
+  }
+
+  const handleLockOfferForFlipping = async (playerId: number) => {
+    const action: GameAction = { type: 'LOCK_OFFER_FOR_FLIPPING', playerId }
+    try {
+      await handleAction(action)
+    } catch (error) {
+      console.error('Error locking offer for flipping:', error)
+      // In a real app, you'd show this error to the user
+    }
+  }
+
+  const handleFlipOfferCard = async (playerId: number, cardIndex: number) => {
+    const action: GameAction = { type: 'FLIP_OFFER_CARD', playerId, cardIndex }
+    try {
+      await handleAction(action)
+    } catch (error) {
+      console.error('Error flipping offer card:', error)
+      // In a real app, you'd show this error to the user
+    }
+  }
+
   const formatPhaseName = (phase: GamePhase): string => {
     const words = phase.replace(/_/g, ' ').split(' ')
     return words.map((word, index) => 
@@ -747,6 +787,10 @@ export const GameBoard: React.FC = () => {
                 onFlipOneCardSelect={(cardIndex) => handleFlipOneCardSelect(activePlayerIndex, cardIndex)}
                 onAddOneHandCardSelect={handleAddOneHandCardSelect}
                 onAddOneOfferSelect={() => handleAddOneOfferSelect(activePlayerIndex)}
+                onMoveCardToOffer={(cardId) => handleMoveCardToOffer(activePlayer.id, cardId)}
+                onMoveCardToHand={(cardId) => handleMoveCardToHand(activePlayer.id, cardId)}
+                onLockOfferForFlipping={() => handleLockOfferForFlipping(activePlayer.id)}
+                onFlipOfferCard={(cardIndex) => handleFlipOfferCard(activePlayer.id, cardIndex)}
                 canFlipCards={gameState.currentPhase === GamePhase.BUYER_FLIP && gameState.selectedPerspective === gameState.currentBuyerIndex}
                 canSelectOffer={gameState.currentPhase === GamePhase.OFFER_SELECTION && gameState.selectedPerspective === gameState.currentBuyerIndex && activePlayerIndex !== gameState.currentBuyerIndex && activePlayer.offer.length > 0}
                 canSelectGotchaCards={
@@ -828,6 +872,10 @@ export const GameBoard: React.FC = () => {
                 onFlipOneCardSelect={(cardIndex) => handleFlipOneCardSelect(index, cardIndex)}
                 onAddOneHandCardSelect={handleAddOneHandCardSelect}
                 onAddOneOfferSelect={() => handleAddOneOfferSelect(index)}
+                onMoveCardToOffer={(cardId) => handleMoveCardToOffer(player.id, cardId)}
+                onMoveCardToHand={(cardId) => handleMoveCardToHand(player.id, cardId)}
+                onLockOfferForFlipping={() => handleLockOfferForFlipping(player.id)}
+                onFlipOfferCard={(cardIndex) => handleFlipOfferCard(player.id, cardIndex)}
                 canFlipCards={gameState.currentPhase === GamePhase.BUYER_FLIP && gameState.selectedPerspective === gameState.currentBuyerIndex}
                 canSelectOffer={gameState.currentPhase === GamePhase.OFFER_SELECTION && gameState.selectedPerspective === gameState.currentBuyerIndex && index !== gameState.currentBuyerIndex && player.offer.length > 0}
                 canSelectGotchaCards={

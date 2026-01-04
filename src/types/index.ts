@@ -26,6 +26,9 @@ export interface GameState {
   removeTwoEffectState: RemoveTwoEffectState | null
   stealAPointEffectState: StealAPointEffectState | null
   
+  // Offer Creation State
+  offerCreationState: OfferCreationState | null
+  
   // UI State
   selectedPerspective: number
   phaseInstructions: string
@@ -102,6 +105,11 @@ export interface StealAPointEffectState {
   awaitingTargetSelection: boolean
 }
 
+export interface OfferCreationState {
+  playerId: number // Player who is creating the offer
+  mode: 'selecting' | 'locked' | 'flipping' | 'complete'
+}
+
 export enum GamePhase {
   BUYER_ASSIGNMENT = 'buyer_assignment',
   DEAL = 'deal',
@@ -136,6 +144,10 @@ export type GameAction =
   | { type: 'SELECT_REMOVE_ONE_CARD'; offerId: number; cardIndex: number }
   | { type: 'SELECT_REMOVE_TWO_CARD'; offerId: number; cardIndex: number }
   | { type: 'SELECT_STEAL_A_POINT_TARGET'; targetPlayerId: number }
+  | { type: 'MOVE_CARD_TO_OFFER'; playerId: number; cardId: string }
+  | { type: 'MOVE_CARD_TO_HAND'; playerId: number; cardId: string }
+  | { type: 'LOCK_OFFER_FOR_FLIPPING'; playerId: number }
+  | { type: 'FLIP_OFFER_CARD'; playerId: number; cardIndex: number }
   | { type: 'REPLACE_STATE'; newState: GameState }
 
 // Card display states
