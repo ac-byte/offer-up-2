@@ -1,5 +1,5 @@
 import { GameState, GameAction, GamePhase, Player, Card, OfferCard } from '../types'
-import { createShuffledDeck, shuffleArray, identifyGotchaSetsInOrder } from './cards'
+import { createShuffledDeck, shuffleArray, identifyGotchaSetsInOrder, identifyThingSets } from './cards'
 
 /**
  * Randomly selects a buyer from the players
@@ -1578,6 +1578,57 @@ export function processGotchaTradeins(state: GameState): GameState {
 }
 
 /**
+ * Processes automatic Thing trade-ins for all players
+ * Removes complete Thing sets from collections and awards points
+ */
+export function processThingTradeins(state: GameState): GameState {
+  const newState = { ...state }
+  newState.players = state.players.map(player => {
+    const playerCopy = { ...player, collection: [...player.collection] }
+    
+    // Identify complete Thing sets
+    const completeSets = identifyThingSets(playerCopy.collection)
+    
+    if (completeSets.length === 0) {
+      return playerCopy
+    }
+    
+    // Calculate points for complete sets
+    // 1 Giant = 1 point, 2 Big = 1 point, 3 Medium = 1 point, 4 Tiny = 1 point
+    const pointsEarned = completeSets.length // Each complete set = 1 point
+    
+    // Remove traded-in cards from collection
+    const tradedInCardIds = new Set(
+      completeSets.flat().map(card => card.id)
+    )
+    
+    playerCopy.collection = playerCopy.collection.filter(
+      card => !tradedInCardIds.has(card.id)
+    )
+    
+    // Award points
+    playerCopy.points += pointsEarned
+    
+    return playerCopy
+  })
+  
+  // Add traded-in cards to discard pile
+  const tradedInCards = newState.players.flatMap(player => {
+    const originalPlayer = state.players.find(p => p.id === player.id)!
+    const originalCardIds = new Set(originalPlayer.collection.map(card => card.id))
+    const currentCardIds = new Set(player.collection.map(card => card.id))
+    
+    return originalPlayer.collection.filter(card => 
+      originalCardIds.has(card.id) && !currentCardIds.has(card.id)
+    )
+  })
+  
+  newState.discardPile = [...state.discardPile, ...tradedInCards]
+  
+  return newState
+}
+
+/**
  * Handles the deal phase automatically
  */
 function handleDealPhase(state: GameState): GameState {
@@ -1672,14 +1723,17 @@ function handleGotchaTradeinsPhase(state: GameState): GameState {
 }
 
 /**
- * Handles the Thing trade-ins phase automatically (simplified version)
+ * Handles the Thing trade-ins phase automatically
  */
 function handleThingTradeinsPhase(state: GameState): GameState {
   if (state.currentPhase !== GamePhase.THING_TRADEINS) {
     return state
   }
 
-  // For now, just return the state (full Thing logic can be added later)
-  // The main advanceToNextPhaseWithInitialization function will handle advancement
-  return state
+  // Process Thing trade-ins for all players
+  const newState = processThingTradeins(state)
+  
+  // Processing is complete, but don't auto-advance
+  // Let the caller (advanceToNextPhaseWithInitialization) handle phase advancement
+  return newState
 }
