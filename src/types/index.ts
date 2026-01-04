@@ -16,10 +16,6 @@ export interface GameState {
   // Action Phase Done System
   actionPhaseDoneStates: boolean[] // Array indexed by player ID, true if player is done
   
-  // Offer Distribution Summary System
-  offerDistributionSummary: OfferDistributionSummary | null
-  offerDistributionAcknowledged: boolean[] // Array indexed by player ID, true if player acknowledged
-  
   // Gotcha Effects State
   gotchaEffectState: GotchaEffectState | null
   
@@ -103,12 +99,6 @@ export interface StealAPointEffectState {
   awaitingTargetSelection: boolean
 }
 
-export interface OfferDistributionSummary {
-  buyerName: string
-  selectedSellerName: string
-  cardsReceived: { playerName: string; cards: Card[] }[] // What each player received
-}
-
 export enum GamePhase {
   BUYER_ASSIGNMENT = 'buyer_assignment',
   DEAL = 'deal',
@@ -135,7 +125,6 @@ export type GameAction =
   | { type: 'CHANGE_PERSPECTIVE'; playerId: number }
   | { type: 'TOGGLE_AUTO_FOLLOW' }
   | { type: 'DECLARE_DONE'; playerId: number }
-  | { type: 'ACKNOWLEDGE_OFFER_DISTRIBUTION'; playerId: number }
   | { type: 'SELECT_GOTCHA_CARD'; cardId: string }
   | { type: 'CHOOSE_GOTCHA_ACTION'; action: 'steal' | 'discard' }
   | { type: 'SELECT_FLIP_ONE_CARD'; offerId: number; cardIndex: number }

@@ -218,16 +218,6 @@ export const GameBoard: React.FC = () => {
     }
   }
 
-  const handleAcknowledgeOfferDistribution = async (playerId: number) => {
-    const action: GameAction = { type: 'ACKNOWLEDGE_OFFER_DISTRIBUTION', playerId }
-    try {
-      await handleAction(action)
-    } catch (error) {
-      console.error('Error acknowledging offer distribution:', error)
-      // In a real app, you'd show this error to the user
-    }
-  }
-
   const formatPhaseName = (phase: GamePhase): string => {
     const words = phase.replace(/_/g, ' ').split(' ')
     return words.map((word, index) => 
@@ -268,10 +258,6 @@ export const GameBoard: React.FC = () => {
         )
         return sellersWithOffers.length > 0
       
-      case GamePhase.OFFER_DISTRIBUTION:
-        // Show if there's an active offer distribution summary
-        return gameState.offerDistributionSummary !== null
-      
       case GamePhase.GOTCHA_TRADEINS:
         // Show if there's an active Gotcha effect requiring user input
         return gameState.gotchaEffectState !== null
@@ -288,6 +274,7 @@ export const GameBoard: React.FC = () => {
         )
       
       case GamePhase.BUYER_ASSIGNMENT:
+      case GamePhase.OFFER_DISTRIBUTION:
       case GamePhase.THING_TRADEINS:
       case GamePhase.WINNER_DETERMINATION:
       case GamePhase.OFFER_PHASE:
@@ -340,42 +327,10 @@ export const GameBoard: React.FC = () => {
         )
       
       case GamePhase.BUYER_ASSIGNMENT:
+      case GamePhase.OFFER_DISTRIBUTION:
       case GamePhase.THING_TRADEINS:
       case GamePhase.WINNER_DETERMINATION:
         return null // Debug controls moved to AdminFooter
-      
-      case GamePhase.OFFER_DISTRIBUTION:
-        // Show offer distribution summary if available
-        if (gameState.offerDistributionSummary) {
-          const summary = gameState.offerDistributionSummary
-          return (
-            <div className="offer-distribution-summary">
-              <div className="offer-distribution-header">
-                <h3>Offer Distribution Summary</h3>
-                <p><strong>{summary.buyerName}</strong> selected <strong>{summary.selectedSellerName}</strong>'s offer</p>
-              </div>
-              <div className="cards-received-list">
-                <h4>Cards Received:</h4>
-                {summary.cardsReceived.map((playerCards, index) => (
-                  <div key={index} className="player-cards-received">
-                    <strong>{playerCards.playerName}:</strong>
-                    <div className="received-cards">
-                      {playerCards.cards.map((card, cardIndex) => (
-                        <span key={cardIndex} className="received-card">
-                          {card.name}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="acknowledgment-note">
-                <p>All players must acknowledge this summary before continuing.</p>
-              </div>
-            </div>
-          )
-        }
-        return null
       
       case GamePhase.GOTCHA_TRADEINS:
         // Check if there's a pending Gotcha effect
@@ -822,7 +777,6 @@ export const GameBoard: React.FC = () => {
                   activePlayer.offer.length > 0
                 }
                 onDeclareDone={() => handleDeclareDone(activePlayer.id)}
-                onAcknowledgeOfferDistribution={() => handleAcknowledgeOfferDistribution(activePlayer.id)}
                 isDone={gameState.actionPhaseDoneStates[activePlayerIndex] || false}
                 canDeclareDone={
                   gameState.currentPhase === GamePhase.ACTION_PHASE &&
@@ -830,12 +784,6 @@ export const GameBoard: React.FC = () => {
                   activePlayer.collection.some(card => card.type === 'action') &&
                   !(gameState.actionPhaseDoneStates[activePlayerIndex] || false)
                 }
-                canAcknowledgeOfferDistribution={
-                  gameState.currentPhase === GamePhase.OFFER_DISTRIBUTION &&
-                  gameState.offerDistributionSummary !== null &&
-                  !gameState.offerDistributionAcknowledged[activePlayerIndex]
-                }
-                hasAcknowledgedOfferDistribution={gameState.offerDistributionAcknowledged[activePlayerIndex] || false}
               />
             );
           })()}
@@ -910,7 +858,6 @@ export const GameBoard: React.FC = () => {
                   player.offer.length > 0
                 }
                 onDeclareDone={() => handleDeclareDone(player.id)}
-                onAcknowledgeOfferDistribution={() => handleAcknowledgeOfferDistribution(player.id)}
                 isDone={gameState.actionPhaseDoneStates[index] || false}
                 canDeclareDone={
                   gameState.currentPhase === GamePhase.ACTION_PHASE &&
@@ -918,12 +865,6 @@ export const GameBoard: React.FC = () => {
                   player.collection.some(card => card.type === 'action') &&
                   !(gameState.actionPhaseDoneStates[index] || false)
                 }
-                canAcknowledgeOfferDistribution={
-                  gameState.currentPhase === GamePhase.OFFER_DISTRIBUTION &&
-                  gameState.offerDistributionSummary !== null &&
-                  !gameState.offerDistributionAcknowledged[index]
-                }
-                hasAcknowledgedOfferDistribution={gameState.offerDistributionAcknowledged[index] || false}
               />
             ))}
         </div>

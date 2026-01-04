@@ -22,7 +22,6 @@ interface PlayerAreaProps {
   onRemoveOneCardSelect?: (cardIndex: number) => void;
   onRemoveTwoCardSelect?: (cardIndex: number) => void;
   onDeclareDone?: () => void;
-  onAcknowledgeOfferDistribution?: () => void;
   canFlipCards: boolean;
   canSelectOffer: boolean;
   canSelectGotchaCards?: boolean;
@@ -33,8 +32,6 @@ interface PlayerAreaProps {
   canSelectRemoveTwoCards?: boolean;
   isDone?: boolean;
   canDeclareDone?: boolean;
-  canAcknowledgeOfferDistribution?: boolean;
-  hasAcknowledgedOfferDistribution?: boolean;
 }
 
 interface HandProps {
@@ -310,7 +307,6 @@ export const PlayerArea: React.FC<PlayerAreaProps> = ({
   onRemoveOneCardSelect,
   onRemoveTwoCardSelect,
   onDeclareDone,
-  onAcknowledgeOfferDistribution,
   canFlipCards,
   canSelectOffer,
   canSelectGotchaCards = false,
@@ -320,9 +316,7 @@ export const PlayerArea: React.FC<PlayerAreaProps> = ({
   canSelectRemoveOneCards = false,
   canSelectRemoveTwoCards = false,
   isDone = false,
-  canDeclareDone = false,
-  canAcknowledgeOfferDistribution = false,
-  hasAcknowledgedOfferDistribution = false
+  canDeclareDone = false
 }) => {
   const isOwnPerspective = player.id === perspective;
   const [selectedCards, setSelectedCards] = React.useState<Card[]>([])
@@ -568,25 +562,6 @@ export const PlayerArea: React.FC<PlayerAreaProps> = ({
               />
               <span className="done-checkbox__text">I'm done</span>
             </label>
-          </div>
-        )}
-        
-        {/* Offer Distribution Acknowledgment button */}
-        {canAcknowledgeOfferDistribution && !hasAcknowledgedOfferDistribution && (
-          <div className="player-area__acknowledge-button">
-            <button 
-              className="acknowledge-button"
-              onClick={onAcknowledgeOfferDistribution}
-            >
-              Got it!
-            </button>
-          </div>
-        )}
-        
-        {/* Show acknowledgment status */}
-        {hasAcknowledgedOfferDistribution && phase === GamePhase.OFFER_DISTRIBUTION && (
-          <div className="player-area__acknowledged-status">
-            <span className="acknowledged-indicator">✓ Acknowledged</span>
           </div>
         )}
         
