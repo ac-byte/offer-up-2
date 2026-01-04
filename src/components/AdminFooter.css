@@ -241,13 +241,3 @@
     font-size: 0.7rem;
   }
 }
-
-/* Ensure main content has bottom padding to account for fixed footer */
-body {
-  padding-bottom: 60px; /* Adjust based on collapsed footer height */
-}
-
-/* When expanded, add more padding */
-.admin-footer.expanded ~ * {
-  padding-bottom: 200px; /* Adjust based on expanded footer height */
-}

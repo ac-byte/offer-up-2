@@ -37,6 +37,9 @@
   background-color: #f5f5f5;
   min-height: 100vh;
   
+  /* Add padding for AdminFooter */
+  padding-bottom: 80px; /* Account for collapsed admin footer */
+  
   /* Performance optimizations */
   contain: layout style;
   will-change: auto;
