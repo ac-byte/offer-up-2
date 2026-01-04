@@ -876,23 +876,13 @@ function selectStealAPointTarget(state: GameState, targetPlayerId: number): Game
  * Move a card from player's hand to their offer area
  */
 function moveCardToOffer(state: GameState, playerId: number, cardId: string): GameState {
-  console.log('Server: moveCardToOffer called:', { 
-    playerId, 
-    cardId, 
-    currentPhase: state.currentPhase,
-    offerCreationState: state.offerCreationState,
-    currentBuyerIndex: state.currentBuyerIndex
-  });
-
   if (state.currentPhase !== GamePhase.OFFER_PHASE) {
-    console.log('Server: Not in OFFER_PHASE, returning unchanged state');
     return state
   }
 
   const playerIndex = state.players.findIndex(p => p.id === playerId)
   
   if (playerIndex === -1 || playerIndex === state.currentBuyerIndex) {
-    console.log('Server: Invalid player or buyer trying to place offer, returning unchanged state');
     return state // Invalid player or buyer can't place offers
   }
 
@@ -900,22 +890,18 @@ function moveCardToOffer(state: GameState, playerId: number, cardId: string): Ga
   // This allows multiple sellers to create offers simultaneously
   let workingState = state
   if (!state.offerCreationState || state.offerCreationState.playerId !== playerId) {
-    console.log('Server: Initializing offer creation for player', playerId);
     // Check if this player is eligible (is a seller and hasn't completed their offer)
     const player = state.players[playerIndex]
     if (player.offer.length === 0 || (player.offer.length < 3 && !player.offer.some(card => card.faceUp))) {
       // Initialize offer creation for this player
       workingState = initializeOfferCreation(state, playerId)
-      console.log('Server: Offer creation initialized:', workingState.offerCreationState);
     } else {
-      console.log('Server: Player has already completed their offer');
       return state // Player has already completed their offer
     }
   }
 
   // Validate that we're in selecting mode
   if (workingState.offerCreationState?.mode !== 'selecting') {
-    console.log('Server: Not in selecting mode, returning unchanged state');
     return state
   }
 

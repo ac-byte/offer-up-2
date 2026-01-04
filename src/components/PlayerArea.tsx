@@ -345,25 +345,6 @@ export const PlayerArea: React.FC<PlayerAreaProps> = ({
   };
 
   const handleCardClick = (card: Card) => {
-    // Debug logging for multiplayer troubleshooting
-    console.log('handleCardClick called:', {
-      cardId: card.id,
-      phase,
-      isOwnPerspective,
-      isBuyer,
-      playerId: player.id,
-      offerCreationState,
-      hasOnMoveCardToOffer: !!onMoveCardToOffer,
-      conditions: {
-        isOfferPhase: phase === GamePhase.OFFER_PHASE,
-        isOwnPerspective,
-        isNotBuyer: !isBuyer,
-        hasOfferCreationState: !!offerCreationState,
-        isCorrectPlayer: offerCreationState?.playerId === player.id,
-        isSelectingMode: offerCreationState?.mode === 'selecting'
-      }
-    });
-
     // Handle Add One hand card selection during action phase
     if (canSelectAddOneHandCards && onAddOneHandCardSelect) {
       onAddOneHandCardSelect(card.id);
@@ -380,19 +361,7 @@ export const PlayerArea: React.FC<PlayerAreaProps> = ({
                             offerCreationState.playerId !== player.id ||
                             offerCreationState.mode === 'selecting';
       
-      console.log('Offer creation check:', {
-        canCreateOffer,
-        offerCreationState,
-        playerId: player.id,
-        reasoning: {
-          noState: !offerCreationState,
-          differentPlayer: offerCreationState?.playerId !== player.id,
-          selectingMode: offerCreationState?.mode === 'selecting'
-        }
-      });
-      
       if (canCreateOffer) {
-        console.log('Moving card to offer:', card.id);
         onMoveCardToOffer(card.id);
         return;
       }

@@ -13,20 +13,6 @@ export const GameBoard: React.FC = () => {
   const { state: multiplayerState, submitAction } = useMultiplayer()
   const [localGameStarting, setLocalGameStarting] = React.useState(false)
 
-  // Debug: Log game state changes, especially offer creation state
-  React.useEffect(() => {
-    if (gameState.currentPhase === GamePhase.OFFER_PHASE) {
-      console.log('OFFER_PHASE game state:', {
-        currentPhase: gameState.currentPhase,
-        offerCreationState: gameState.offerCreationState,
-        selectedPerspective: gameState.selectedPerspective,
-        currentBuyerIndex: gameState.currentBuyerIndex,
-        multiplayerMode: multiplayerState.mode,
-        playerId: multiplayerState.playerId
-      });
-    }
-  }, [gameState.currentPhase, gameState.offerCreationState, multiplayerState.mode]);
-
   // Auto-set perspective for multiplayer mode
   React.useEffect(() => {
     if (multiplayerState.mode === 'multiplayer' && multiplayerState.playerId) {
@@ -233,17 +219,9 @@ export const GameBoard: React.FC = () => {
   }
 
   const handleMoveCardToOffer = async (playerId: number, cardId: string) => {
-    console.log('handleMoveCardToOffer called:', { 
-      playerId, 
-      cardId, 
-      offerCreationState: gameState.offerCreationState,
-      multiplayerMode: multiplayerState.mode,
-      currentPhase: gameState.currentPhase
-    });
     const action: GameAction = { type: 'MOVE_CARD_TO_OFFER', playerId, cardId }
     try {
       await handleAction(action)
-      console.log('Action submitted successfully');
     } catch (error) {
       console.error('Error moving card to offer:', error)
       // In a real app, you'd show this error to the user
