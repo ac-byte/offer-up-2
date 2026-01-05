@@ -111,7 +111,20 @@ export type ServerSentEvent =
 export class MultiplayerApiClient {
   private baseUrl: string
 
-  constructor(baseUrl: string = 'http://localhost:3000/api') {
+  constructor(baseUrl?: string) {
+    // Auto-detect API URL based on environment
+    if (baseUrl) {
+      this.baseUrl = baseUrl
+    } else if (process.env.REACT_APP_API_URL) {
+      this.baseUrl = process.env.REACT_APP_API_URL
+    } else if (window.location.hostname !== 'localhost') {
+      // In production, try to use a relative path or detect backend URL
+      this.baseUrl = process.env.NODE_ENV === 'production' 
+        ? 'https://offer-up-2-backend-production.up.railway.app/api'
+        : 'http://localhost:3000/api'
+    } else {
+      this.baseUrl = 'http://localhost:3000/api'
+    }
     this.baseUrl = baseUrl
   }
 
