@@ -16,7 +16,10 @@ export class GameManager {
    */
   createGame(hostName: string): { gameId: string; gameCode: string; joinUrl: string } {
     const { gameId, gameCode } = this.gameStorage.createGame(hostName)
-    const joinUrl = `${config.clientUrl}/join?game=${gameCode}`
+    
+    // Ensure no double slashes in the join URL
+    const baseUrl = config.clientUrl.replace(/\/$/, '') // Remove trailing slash if present
+    const joinUrl = `${baseUrl}/join?game=${gameCode}`
     
     return { gameId, gameCode, joinUrl }
   }
