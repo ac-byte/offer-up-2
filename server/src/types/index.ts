@@ -37,6 +37,14 @@ export interface GameState {
   
   // Card Counts (for multiplayer filtering)
   cardsInPlay?: number // Optional for backward compatibility
+  cardTracking?: {
+    drawPile: number
+    discardPile: number
+    cardsInPlay: number
+    playerHandCounts: number[]
+    playerCollectionCounts: number[]
+    playerOfferCounts: number[]
+  }
   
   // Previous Round Summary
   previousRoundSummary: string | null

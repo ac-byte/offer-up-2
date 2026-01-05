@@ -65,6 +65,36 @@
   color: white;
 }
 
+.detailed-breakdown {
+  margin: 8px 0;
+  padding: 4px 0;
+  border-top: 1px solid #444;
+  border-bottom: 1px solid #444;
+}
+
+.breakdown-header {
+  font-size: 11px;
+  color: #aaa;
+  margin-bottom: 4px;
+}
+
+.player-breakdown {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  margin: 1px 0;
+}
+
+.player-label {
+  color: #aaa;
+  min-width: 20px;
+}
+
+.card-counts {
+  color: white;
+  font-family: monospace;
+}
+
 .card-history {
   border-top: 1px solid #444;
   padding-top: 8px;

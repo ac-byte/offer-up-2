@@ -7,13 +7,26 @@ interface CardTrackerProps {
 }
 
 export const CardTracker: React.FC<CardTrackerProps> = ({ gameState }) => {
-  // Calculate card counts
-  const drawPileCount = gameState.drawPile.length;
-  const discardPileCount = gameState.discardPile.length;
+  // Use server-provided card tracking if available (multiplayer), otherwise calculate locally (single-player)
+  const cardTracking = gameState.cardTracking;
   
-  const cardsInPlay = gameState.players.reduce((total, player) => 
-    total + player.hand.length + player.collection.length + player.offer.length, 0
-  );
+  let drawPileCount: number;
+  let discardPileCount: number;
+  let cardsInPlay: number;
+  
+  if (cardTracking) {
+    // Use server-provided accurate counts (multiplayer mode)
+    drawPileCount = cardTracking.drawPile;
+    discardPileCount = cardTracking.discardPile;
+    cardsInPlay = cardTracking.cardsInPlay;
+  } else {
+    // Calculate locally (single-player mode)
+    drawPileCount = gameState.drawPile.length;
+    discardPileCount = gameState.discardPile.length;
+    cardsInPlay = gameState.players.reduce((total, player) => 
+      total + player.hand.length + player.collection.length + player.offer.length, 0
+    );
+  }
   
   const totalCards = drawPileCount + discardPileCount + cardsInPlay;
   const expectedTotal = 120;
@@ -78,6 +91,21 @@ export const CardTracker: React.FC<CardTrackerProps> = ({ gameState }) => {
           <span className="value">{cardsInPlay}</span>
         </div>
       </div>
+      
+      {/* Show detailed breakdown if server tracking is available */}
+      {cardTracking && (
+        <div className="detailed-breakdown">
+          <div className="breakdown-header">Player Cards:</div>
+          {cardTracking.playerHandCounts.map((handCount, index) => (
+            <div key={index} className="player-breakdown">
+              <span className="player-label">P{index}:</span>
+              <span className="card-counts">
+                H:{handCount} C:{cardTracking.playerCollectionCounts[index]} O:{cardTracking.playerOfferCounts[index]}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
       
       {cardHistory.length > 0 && (
         <div className="card-history">
