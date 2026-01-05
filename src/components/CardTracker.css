@@ -1,0 +1,110 @@
+.card-tracker {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  padding: 12px;
+  border-radius: 8px;
+  font-family: monospace;
+  font-size: 12px;
+  z-index: 1000;
+  min-width: 200px;
+  max-width: 300px;
+}
+
+.card-tracker-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  border-bottom: 1px solid #444;
+  padding-bottom: 4px;
+}
+
+.card-tracker-header h4 {
+  margin: 0;
+  font-size: 14px;
+  color: #ccc;
+}
+
+.total-cards {
+  font-weight: bold;
+  color: #4CAF50;
+}
+
+.total-cards.card-loss {
+  color: #f44336;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.current-counts {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.count-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.count-item .label {
+  font-size: 10px;
+  color: #aaa;
+}
+
+.count-item .value {
+  font-weight: bold;
+  color: white;
+}
+
+.card-history {
+  border-top: 1px solid #444;
+  padding-top: 8px;
+}
+
+.history-header {
+  font-size: 11px;
+  color: #aaa;
+  margin-bottom: 4px;
+}
+
+.history-list {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.history-entry {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2px 0;
+  font-size: 10px;
+}
+
+.history-entry.has-loss {
+  background: rgba(244, 67, 54, 0.2);
+  padding: 2px 4px;
+  border-radius: 3px;
+}
+
+.phase-info {
+  color: #aaa;
+  min-width: 80px;
+}
+
+.counts {
+  color: white;
+}
+
+.loss {
+  color: #f44336;
+  font-weight: bold;
+}

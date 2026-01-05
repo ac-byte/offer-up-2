@@ -5,6 +5,7 @@ import { PerspectiveSelector } from './PerspectiveSelector'
 import { PlayerArea } from './PlayerArea'
 import { HomeScreen } from './HomeScreen'
 import { AdminFooter } from './AdminFooter'
+import { CardTracker } from './CardTracker'
 import { GameAction, GamePhase, Card } from '../types'
 import './GameBoard.css'
 
@@ -956,6 +957,9 @@ export const GameBoard: React.FC = () => {
       <AdminFooter>
         {getDebugControls()}
       </AdminFooter>
+
+      {/* Card Tracker for debugging card loss */}
+      <CardTracker gameState={gameState} />
     </div>
   )
 }

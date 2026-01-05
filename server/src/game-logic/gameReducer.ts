@@ -209,21 +209,49 @@ function dealCards(state: GameState): GameState {
   }
 
   const newState = { ...state }
-  const cardsPerPlayer = 5 // Deal 5 cards per player initially
+  newState.players = state.players.map(player => ({ ...player, hand: [...player.hand] }))
+  newState.drawPile = [...state.drawPile]
+  newState.discardPile = [...state.discardPile]
 
-  // Deal cards sequentially to each player
-  let cardIndex = 0
-  newState.players = newState.players.map(player => {
-    const playerCards = newState.drawPile.slice(cardIndex, cardIndex + cardsPerPlayer)
-    cardIndex += cardsPerPlayer
-    return {
-      ...player,
-      hand: playerCards
+  // Calculate how many cards each player needs (bring to 5 cards)
+  const playersNeedingCards = newState.players.map((player, index) => ({
+    playerIndex: index,
+    cardsNeeded: Math.max(0, 5 - player.hand.length)
+  })).filter(p => p.cardsNeeded > 0)
+
+  // Deal cards sequentially (one card per player per round)
+  let maxCardsNeeded = Math.max(...playersNeedingCards.map(p => p.cardsNeeded), 0)
+  
+  for (let round = 0; round < maxCardsNeeded; round++) {
+    for (const playerInfo of playersNeedingCards) {
+      const { playerIndex, cardsNeeded } = playerInfo
+      
+      // Skip if this player already has enough cards
+      if (round >= cardsNeeded) {
+        continue
+      }
+
+      // Check if we need to reshuffle
+      if (newState.drawPile.length === 0) {
+        if (newState.discardPile.length === 0) {
+          // No more cards available - stop dealing
+          console.warn('No more cards available for dealing')
+          break
+        }
+        
+        // Reshuffle discard pile into draw pile
+        console.log('Reshuffling discard pile into draw pile:', newState.discardPile.length, 'cards')
+        newState.drawPile = shuffleArray(newState.discardPile)
+        newState.discardPile = []
+      }
+
+      // Deal one card to this player
+      if (newState.drawPile.length > 0) {
+        const card = newState.drawPile.shift()! // Take from beginning of array
+        newState.players[playerIndex].hand.push(card)
+      }
     }
-  })
-
-  // Remove dealt cards from draw pile
-  newState.drawPile = newState.drawPile.slice(cardIndex)
+  }
   
   // Advance to next phase
   newState.currentPhase = GamePhase.OFFER_PHASE
