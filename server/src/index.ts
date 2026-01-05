@@ -9,7 +9,6 @@ const PORT = config.port
 // Middleware
 app.use(cors({
   origin: [
-    config.clientUrl,
     'https://offer-up-2-frontend-production.up.railway.app',
     'http://localhost:3001'
   ],
