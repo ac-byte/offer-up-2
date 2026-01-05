@@ -48,9 +48,19 @@ export class GameStorage {
       removeOneEffectState: null,
       removeTwoEffectState: null,
       stealAPointEffectState: null,
+      
+      // Offer Creation State
+      offerCreationState: null,
+      
+      // UI State
       selectedPerspective: 0,
       phaseInstructions: '',
       autoFollowPerspective: true,
+      
+      // Previous Round Summary
+      previousRoundSummary: null,
+      
+      // Game Status
       winner: null,
       gameStarted: false,
       
