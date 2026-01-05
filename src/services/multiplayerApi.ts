@@ -125,7 +125,6 @@ export class MultiplayerApiClient {
     } else {
       this.baseUrl = 'http://localhost:3000/api'
     }
-    this.baseUrl = baseUrl
   }
 
   /**
