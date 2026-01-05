@@ -319,11 +319,18 @@ router.get('/:gameId/events', validateSSEParams, (req, res) => {
     }
     
     // Set up Server-Sent Events headers
+    const allowedOrigins = [
+      'https://offer-up-2-frontend-production.up.railway.app',
+      'http://localhost:3001'
+    ]
+    const origin = req.headers.origin
+    const allowedOrigin = allowedOrigins.includes(origin || '') ? origin : allowedOrigins[0]
+    
     res.writeHead(200, {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
       'Connection': 'keep-alive',
-      'Access-Control-Allow-Origin': config.clientUrl,
+      'Access-Control-Allow-Origin': allowedOrigin,
       'Access-Control-Allow-Credentials': 'true'
     })
     
