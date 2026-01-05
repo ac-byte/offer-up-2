@@ -958,8 +958,8 @@ export const GameBoard: React.FC = () => {
         {getDebugControls()}
       </AdminFooter>
 
-      {/* Card Tracker for debugging card loss */}
-      <CardTracker gameState={gameState} />
+      {/* Card Tracker for debugging card loss - Hidden but available for future debugging */}
+      {/* <CardTracker gameState={gameState} /> */}
     </div>
   )
 }
