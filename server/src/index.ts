@@ -7,11 +7,27 @@ const app = express()
 const PORT = config.port
 
 // Middleware
+const getAllowedOrigins = () => {
+  const origins = []
+  
+  // Add CLIENT_URL if set
+  if (config.clientUrl) {
+    origins.push(config.clientUrl)
+  }
+  
+  // Add localhost for development
+  origins.push('http://localhost:3001')
+  
+  // Add production fallback if no CLIENT_URL is set
+  if (!process.env.CLIENT_URL && process.env.NODE_ENV === 'production') {
+    origins.push('https://offer-up-2-frontend-production.up.railway.app')
+  }
+  
+  return origins
+}
+
 app.use(cors({
-  origin: [
-    'https://offer-up-2-frontend-production.up.railway.app',
-    'http://localhost:3001'
-  ],
+  origin: getAllowedOrigins(),
   credentials: true
 }))
 app.use(express.json())

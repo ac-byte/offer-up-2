@@ -115,14 +115,14 @@ export class MultiplayerApiClient {
     // Auto-detect API URL based on environment
     if (baseUrl) {
       this.baseUrl = baseUrl
-    } else if (process.env.REACT_APP_API_URL) {
-      this.baseUrl = process.env.REACT_APP_API_URL
-    } else if (window.location.hostname !== 'localhost') {
-      // In production, try to use a relative path or detect backend URL
-      this.baseUrl = process.env.NODE_ENV === 'production' 
-        ? 'https://offer-up-2-backend-production.up.railway.app/api'
-        : 'http://localhost:3000/api'
+    } else if (process.env.REACT_APP_SERVER_URL) {
+      // Use explicit server URL environment variable
+      this.baseUrl = `${process.env.REACT_APP_SERVER_URL}/api`
+    } else if (process.env.NODE_ENV === 'production') {
+      // Production fallback - try to detect from current domain
+      this.baseUrl = `${window.location.protocol}//${window.location.hostname}/api`
     } else {
+      // Development fallback
       this.baseUrl = 'http://localhost:3000/api'
     }
   }
