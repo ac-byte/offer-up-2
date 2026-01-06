@@ -84,6 +84,61 @@ Set these in your backend hosting service:
 4. Use PM2 or similar to manage the processes
 5. Set up nginx as a reverse proxy
 
+## SPA Routing Configuration
+
+Since this is a Single Page Application (SPA), you need to configure your hosting platform to serve `index.html` for all routes (instead of 404). Here's how for each platform:
+
+### Netlify
+Uses `public/_redirects` file (already included):
+```
+/*    /index.html   200
+```
+
+### Render
+Uses `public/_redirects` file (already included):
+```
+/*    /index.html   200
+```
+
+### Vercel
+Uses `vercel.json` in project root:
+```json
+{
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
+```
+
+### Firebase Hosting
+Uses `firebase.json`:
+```json
+{
+  "hosting": {
+    "rewrites": [
+      { "source": "**", "destination": "/index.html" }
+    ]
+  }
+}
+```
+
+### Apache (.htaccess)
+```apache
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . /index.html [L]
+```
+
+### Nginx
+```nginx
+location / {
+  try_files $uri $uri/ /index.html;
+}
+```
+
+**Note**: The `public/_redirects` file works for Netlify and Render but will be ignored by other platforms.
+
 ## Local Development
 
 For local development, no environment variables are needed. The app will automatically use:
@@ -91,9 +146,9 @@ For local development, no environment variables are needed. The app will automat
 - Backend: `http://localhost:3000`
 
 ## Testing Your Deployment
+## Testing Your Deployment
 
 1. **Frontend loads**: Visit your frontend URL
-2. **Backend health**: Visit `https://your-backend-url/api/health`
 3. **Create game**: Try creating an online game
 4. **Join URL**: Check that the join URL is correct (no double slashes)
 5. **Multiplayer**: Test with multiple browser tabs/devices
