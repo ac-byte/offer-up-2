@@ -57,11 +57,6 @@ Set these in your backend hosting service:
 - Environment Variables:
   - `CLIENT_URL=https://your-frontend.onrender.com`
 
-**Important for Render Backend:**
-- Make sure "Root Directory" is set to `server` in the service settings
-- The build will run from the server directory, so it will use server/package.json
-- Node.js version should be 18+ (set in service settings if needed)
-
 ### Netlify + Heroku
 
 **Netlify (Frontend):**
