@@ -49,6 +49,7 @@ Set these in your backend hosting service:
 - Publish Directory: `build`
 - Environment Variables:
   - `REACT_APP_SERVER_URL=https://your-backend.onrender.com`
+  - `DANGEROUSLY_DISABLE_HOST_CHECK=true` (fixes "Invalid Host header" error)
 
 **Backend (Web Service):**
 - Root Directory: `server`
@@ -56,6 +57,11 @@ Set these in your backend hosting service:
 - Start Command: `npm start`
 - Environment Variables:
   - `CLIENT_URL=https://your-frontend.onrender.com`
+
+**Important for Render:**
+- Frontend: Use Static Site service type, not Web Service
+- Backend: Make sure "Root Directory" is set to `server`
+- The "Invalid Host header" error is fixed by the DANGEROUSLY_DISABLE_HOST_CHECK variable
 
 ### Netlify + Heroku
 
