@@ -95,10 +95,13 @@ Uses `public/_redirects` file (already included):
 ```
 
 ### Render
-Uses `public/_redirects` file (already included):
-```
-/*    /index.html   200
-```
+Uses Render dashboard redirect settings (not _redirects file):
+- Go to your Static Site settings → Redirects/Rewrites
+- Add rule: `/*` → `/` with status `200`
+
+Alternative rules to try if the first doesn't work:
+- `/join*` → `/` with status `200`
+- `/*` → `/index.html` with status `200`
 
 ### Vercel
 Uses `vercel.json` in project root:
