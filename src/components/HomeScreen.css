@@ -216,6 +216,11 @@
   transition: color 0.2s ease;
 }
 
+.about-text a strong {
+  color: inherit;
+  font-weight: 600;
+}
+
 .about-text a:hover {
   color: #764ba2;
   text-decoration: underline;
