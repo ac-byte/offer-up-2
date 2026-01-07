@@ -232,6 +232,29 @@
   border-radius: 2px;
 }
 
+.detailed-rules {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e9ecef;
+}
+
+.rules-list {
+  margin: 0.75rem 0 0 1.5rem;
+  padding: 0;
+  color: #495057;
+  line-height: 1.6;
+}
+
+.rules-list li {
+  margin-bottom: 0.75rem;
+}
+
+.rules-list em {
+  font-style: italic;
+  color: #667eea;
+  font-weight: 500;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .home-screen {
@@ -315,11 +338,15 @@
 
 /* Primary Actions */
 .primary-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
   margin-bottom: 2rem;
   align-items: center;
+}
+
+.button-row {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  align-items: stretch;
 }
 
 .primary-button {
@@ -327,7 +354,7 @@
   color: white;
   border: none;
   border-radius: 12px;
-  padding: 1.5rem 2.5rem;
+  padding: 1.5rem 2rem;
   cursor: pointer;
   transition: all 0.3s ease;
   text-align: center;
@@ -336,9 +363,8 @@
   align-items: center;
   gap: 0.5rem;
   box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-  min-width: 280px;
-  max-width: 400px;
-  width: 100%;
+  flex: 1;
+  max-width: 280px;
 }
 
 .primary-button:hover {
@@ -355,7 +381,7 @@
   color: #2c3e50;
   border: 2px solid #667eea;
   border-radius: 12px;
-  padding: 1.25rem 2rem;
+  padding: 1.25rem 1.75rem;
   cursor: pointer;
   transition: all 0.3s ease;
   text-align: center;
@@ -363,9 +389,8 @@
   flex-direction: column;
   align-items: center;
   gap: 0.5rem;
-  min-width: 280px;
-  max-width: 400px;
-  width: 100%;
+  flex: 1;
+  max-width: 280px;
 }
 
 .secondary-button:hover {
@@ -660,18 +685,19 @@
 
 /* Responsive Design for Primary Actions */
 @media (max-width: 768px) {
-  .primary-actions {
+  .button-row {
+    flex-direction: column;
     gap: 0.75rem;
   }
   
   .primary-button {
     padding: 1.25rem 2rem;
-    min-width: 250px;
+    max-width: none;
   }
   
   .secondary-button {
     padding: 1rem 1.75rem;
-    min-width: 250px;
+    max-width: none;
   }
   
   .button-icon {
@@ -722,14 +748,16 @@
 }
 
 @media (max-width: 480px) {
+  .button-row {
+    gap: 0.5rem;
+  }
+  
   .primary-button {
     padding: 1rem 1.5rem;
-    min-width: 220px;
   }
   
   .secondary-button {
     padding: 0.875rem 1.5rem;
-    min-width: 220px;
   }
   
   .button-icon {

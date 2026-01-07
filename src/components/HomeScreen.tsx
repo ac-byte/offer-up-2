@@ -164,23 +164,25 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onStartGame, onEnterLobb
           <>
             {/* Primary Online Game Buttons */}
             <div className="primary-actions">
-              <button
-                onClick={() => setGameMode('create')}
-                className="primary-button host-game-button"
-              >
-                <div className="button-icon">🌐</div>
-                <div className="button-title">Host a Game</div>
-                <div className="button-description">Create an online game for friends</div>
-              </button>
-              
-              <button
-                onClick={() => setGameMode('join')}
-                className="secondary-button join-game-button"
-              >
-                <div className="button-icon">🔗</div>
-                <div className="button-title">Join a Game</div>
-                <div className="button-description">Join a friend's game</div>
-              </button>
+              <div className="button-row">
+                <button
+                  onClick={() => setGameMode('create')}
+                  className="primary-button host-game-button"
+                >
+                  <div className="button-icon">🌐</div>
+                  <div className="button-title">Host a Game</div>
+                  <div className="button-description">Create an online game for friends</div>
+                </button>
+                
+                <button
+                  onClick={() => setGameMode('join')}
+                  className="secondary-button join-game-button"
+                >
+                  <div className="button-icon">🔗</div>
+                  <div className="button-title">Join a Game</div>
+                  <div className="button-description">Join a friend's game</div>
+                </button>
+              </div>
             </div>
 
             {/* About Offer Up */}
@@ -192,6 +194,15 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onStartGame, onEnterLobb
                 </div>
                 <div className="rule-item">
                   <strong>Strategy:</strong> Create attractive offers and use hidden information to your advantage.
+                </div>
+                <div className="rule-item detailed-rules">
+                  <strong>Rules:</strong> In each round one player is the buyer all others are sellers.
+                  <ol className="rules-list">
+                    <li>Each seller makes an Offer of 3 cards from their hand, with one card face up. The buyer then flips one more offer card face up.</li>
+                    <li>Players with Action cards <em>in their collection</em> can play them until all players pass</li>
+                    <li>The buyer selects one seller's offer. That seller will become the next buyer. The buyer puts that seller's offer in their own collection. All other sellers' offers go to their collections.</li>
+                    <li>All complete Gotcha sets must be traded in, causing consequences. Then then all complete Thing sets are traded in, gaining 1 point for each set.</li>
+                  </ol>
                 </div>
                 <div className="rule-item about-text">
                   This game was inspired by the{' '}
