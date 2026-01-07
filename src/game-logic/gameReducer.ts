@@ -1223,11 +1223,12 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
             hand: player.hand.filter(card => card.id !== selectedCard.id)
           }
         } else if (playerIndex === offerId) {
-          // Add selected card face down to target player's offer
+          // Add selected card face down to target player's offer (hidden from owner)
           const newOfferCard = {
             ...selectedCard,
             faceUp: false,
-            position: player.offer.length // Add at the end
+            position: player.offer.length, // Add at the end
+            hiddenFromOwner: true
           }
           return {
             ...player,

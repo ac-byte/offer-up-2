@@ -75,6 +75,7 @@ export interface Card {
 export interface OfferCard extends Card {
   faceUp: boolean
   position: number // 0, 1, or 2
+  hiddenFromOwner?: boolean // Cards added by Add One should be hidden even from offer owner
 }
 
 export interface GotchaEffectState {

@@ -724,12 +724,13 @@ function selectAddOneOffer(state: GameState, offerId: number): GameState {
   // Remove card from player's hand
   newState.players[playerId].hand = newState.players[playerId].hand.filter(c => c.id !== selectedCard.id)
   
-  // Add card to the selected offer (face down)
+  // Add card to the selected offer (face down and hidden from owner)
   if (offerId < newState.players.length) {
     const offerCard: OfferCard = {
       ...selectedCard,
       faceUp: false,
-      position: newState.players[offerId].offer.length
+      position: newState.players[offerId].offer.length,
+      hiddenFromOwner: true
     }
     
     newState.players[offerId].offer.push(offerCard)

@@ -229,10 +229,26 @@ export class SSEConnectionManager {
       cardsInPlay: cardTracking.cardsInPlay,
       // Add comprehensive card tracking for debugging
       cardTracking,
-      // Hide other players' hands (keep only this player's hand visible)
+      // Hide other players' hands and filter offer cards
       players: gameState.players?.map((player, index) => ({
         ...player,
-        hand: index === gamePlayerIndex ? player.hand : [] // Hide other players' hands
+        hand: index === gamePlayerIndex ? player.hand : [], // Hide other players' hands
+        offer: player.offer.map(offerCard => {
+          // If this card is hidden from owner and this is the offer owner, hide the card details
+          if (offerCard.hiddenFromOwner && index === gamePlayerIndex && !offerCard.faceUp) {
+            return {
+              id: offerCard.id,
+              type: 'unknown' as any,
+              subtype: 'unknown' as any,
+              name: 'Hidden Card',
+              setSize: 0,
+              faceUp: offerCard.faceUp,
+              position: offerCard.position,
+              hiddenFromOwner: offerCard.hiddenFromOwner
+            }
+          }
+          return offerCard
+        })
       }))
     }
 
