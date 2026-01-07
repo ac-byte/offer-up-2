@@ -7,10 +7,8 @@ interface FeedbackModalProps {
 }
 
 export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose }) => {
-  // Convert the Google Forms link to embeddable format
-  // From: https://forms.gle/HG58bQsv34MxcPJU6
-  // To: https://docs.google.com/forms/d/e/1FAIpQLSf.../viewform?embedded=true
-  const FORM_EMBED_URL = "https://docs.google.com/forms/d/e/1FAIpQLSdHG58bQsv34MxcPJU6/viewform?embedded=true";
+  // Use the full Google Forms embed URL provided
+  const FORM_EMBED_URL = "https://docs.google.com/forms/d/e/1FAIpQLSeeDEPDYY_kRYNEazEmkLeSBq10-b-iPxpixauft-LeRqYOcQ/viewform?embedded=true";
 
   const handleBackdropClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
