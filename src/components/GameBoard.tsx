@@ -283,7 +283,41 @@ export const GameBoard: React.FC = () => {
     const buyer = getCurrentBuyer()
     const currentPlayer = getCurrentPlayer()
     
-    return `💰 Buyer: ${buyer?.name} | ⭐ Current Player: ${currentPlayer?.name}`
+    return `💰 Buyer: ${buyer?.name} | ⭐ Active Player: ${currentPlayer?.name}`
+  }
+
+  // Function to get phase title and description
+  const getPhaseInfo = () => {
+    const buyer = getCurrentBuyer()
+    
+    switch (gameState.currentPhase) {
+      case GamePhase.OFFER_PHASE:
+        return {
+          title: 'Offer Phase',
+          description: `Sellers (everyone but ${buyer?.name}) select 3 cards to offer. After you've locked in your three cards, select one to show face up.`
+        }
+      
+      case GamePhase.BUYER_FLIP:
+        return {
+          title: 'Buyer Flip',
+          description: `Buyer (${buyer?.name}) select one card from the offers to turn face up.`
+        }
+      
+      case GamePhase.ACTION_PHASE:
+        return {
+          title: 'Action Phase',
+          description: `Active player may play an action card from their collection, or select "I'm done". Continue till all players with action cards have passed.`
+        }
+      
+      case GamePhase.OFFER_SELECTION:
+        return {
+          title: 'Offer Selection',
+          description: `Buyer (${buyer?.name}): Select one offer to purchase.`
+        }
+      
+      default:
+        return null
+    }
   }
 
   // Function to determine if game actions should be visible
@@ -293,8 +327,13 @@ export const GameBoard: React.FC = () => {
         return true // Show deal cards button
       
       case GamePhase.OFFER_PHASE:
-        // Show if there's a previous round summary to display
-        return gameState.previousRoundSummary !== null
+        return true // Show phase description
+      
+      case GamePhase.BUYER_FLIP:
+        return true // Show phase description
+      
+      case GamePhase.ACTION_PHASE:
+        return true // Show phase description
       
       case GamePhase.OFFER_SELECTION:
         // Show if there are offers to select
@@ -307,28 +346,18 @@ export const GameBoard: React.FC = () => {
         // Show if there's an active Gotcha effect requiring user input
         return gameState.gotchaEffectState !== null
       
-      case GamePhase.ACTION_PHASE:
-        // Show if there's any pending action card effect requiring user input
-        return !!(
-          gameState.flipOneEffectState?.awaitingCardSelection ||
-          gameState.addOneEffectState?.awaitingHandCardSelection ||
-          gameState.addOneEffectState?.awaitingOfferSelection ||
-          gameState.removeOneEffectState?.awaitingCardSelection ||
-          gameState.removeTwoEffectState?.awaitingCardSelection ||
-          gameState.stealAPointEffectState?.awaitingTargetSelection
-        )
-      
       case GamePhase.BUYER_ASSIGNMENT:
       case GamePhase.OFFER_DISTRIBUTION:
       case GamePhase.THING_TRADEINS:
       case GamePhase.WINNER_DETERMINATION:
-      case GamePhase.BUYER_FLIP:
       default:
         return false // No user interaction required
     }
   }
 
   const getPhaseActions = () => {
+    const phaseInfo = getPhaseInfo()
+    
     switch (gameState.currentPhase) {
       case GamePhase.DEAL:
         return (
@@ -338,18 +367,44 @@ export const GameBoard: React.FC = () => {
         )
       
       case GamePhase.OFFER_PHASE:
-        // Show previous round summary if available
-        if (gameState.previousRoundSummary) {
-          return (
-            <div className="previous-round-summary">
-              <div className="summary-content">
-                <strong>Previous Round Summary</strong>
-                {'\n'}{gameState.previousRoundSummary}
+        return (
+          <div className="phase-description">
+            <p>{phaseInfo?.description}</p>
+            {gameState.previousRoundSummary && (
+              <div className="previous-round-summary">
+                <div className="summary-content">
+                  <strong>Previous Round Summary</strong>
+                  {'\n'}{gameState.previousRoundSummary}
+                </div>
               </div>
-            </div>
-          )
-        }
-        return null
+            )}
+          </div>
+        )
+      
+      case GamePhase.BUYER_FLIP:
+        return (
+          <div className="phase-description">
+            <p>{phaseInfo?.description}</p>
+          </div>
+        )
+      
+      case GamePhase.ACTION_PHASE:
+        return (
+          <div className="phase-description">
+            <p>{phaseInfo?.description}</p>
+            {/* Show any pending action card effects */}
+            {(gameState.flipOneEffectState?.awaitingCardSelection ||
+              gameState.addOneEffectState?.awaitingHandCardSelection ||
+              gameState.addOneEffectState?.awaitingOfferSelection ||
+              gameState.removeOneEffectState?.awaitingCardSelection ||
+              gameState.removeTwoEffectState?.awaitingCardSelection ||
+              gameState.stealAPointEffectState?.awaitingTargetSelection) && (
+              <div className="action-card-effects">
+                {/* Action card effect UI would go here */}
+              </div>
+            )}
+          </div>
+        )
       
       case GamePhase.OFFER_SELECTION:
         const buyer = getCurrentBuyer()
@@ -372,8 +427,8 @@ export const GameBoard: React.FC = () => {
           // Show buttons for the buyer
           return (
             <div className="offer-selection-controls">
-              <div className="offer-selection-header">
-                <strong>{buyer?.name}</strong> (Buyer): Select one offer to purchase
+              <div className="phase-description">
+                <p>{phaseInfo?.description}</p>
               </div>
               <div className="offer-selection-buttons">
                 {sellersWithOffers.map((seller) => (
@@ -392,7 +447,7 @@ export const GameBoard: React.FC = () => {
           // Show waiting message for non-buyers
           return (
             <div className="phase-waiting">
-              <span>Waiting for <strong>{buyer?.name}</strong> (Buyer) to select an offer</span>
+              <span>Waiting for <strong>{buyer?.name}</strong> to select an offer</span>
             </div>
           )
         }
@@ -769,7 +824,7 @@ export const GameBoard: React.FC = () => {
       {shouldShowGameActions() && (
         <div className="game-actions">
           <div className="actions-header">
-            <h3>Game Actions</h3>
+            <h3>{getPhaseInfo()?.title || 'Game Actions'}</h3>
           </div>
           <div className="actions-content">
             {getPhaseActions()}

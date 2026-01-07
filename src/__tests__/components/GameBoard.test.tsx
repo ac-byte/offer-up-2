@@ -115,7 +115,7 @@ describe('GameBoard Interactive Messages', () => {
     renderGameBoardWithState(gameState)
     
     // Look specifically in the game actions area
-    const gameActions = screen.getByText('Game Actions').closest('.game-actions')
+    const gameActions = screen.getByText('Action Phase').closest('.game-actions')
     expect(gameActions).toBeInTheDocument()
     expect(gameActions).toHaveTextContent('Alice played Flip One')
     expect(screen.getByText(/Select a face-down card from any offer to flip/)).toBeInTheDocument()
@@ -126,7 +126,7 @@ describe('GameBoard Interactive Messages', () => {
     renderGameBoardWithState(gameState)
     
     // Look specifically in the game actions area
-    const gameActions = screen.getByText('Game Actions').closest('.game-actions')
+    const gameActions = screen.getByText('Action Phase').closest('.game-actions')
     expect(gameActions).toBeInTheDocument()
     expect(gameActions).toHaveTextContent('Alice played Add One')
     expect(screen.getByText(/Select a card from your hand to add to an offer/)).toBeInTheDocument()
@@ -137,7 +137,7 @@ describe('GameBoard Interactive Messages', () => {
     renderGameBoardWithState(gameState)
     
     // Look specifically in the game actions area
-    const gameActions = screen.getByText('Game Actions').closest('.game-actions')
+    const gameActions = screen.getByText('Action Phase').closest('.game-actions')
     expect(gameActions).toBeInTheDocument()
     expect(gameActions).toHaveTextContent('Alice played Remove One')
     expect(screen.getByText(/Select a card from any offer to remove/)).toBeInTheDocument()
@@ -148,7 +148,7 @@ describe('GameBoard Interactive Messages', () => {
     renderGameBoardWithState(gameState)
     
     // Look specifically in the game actions area
-    const gameActions = screen.getByText('Game Actions').closest('.game-actions')
+    const gameActions = screen.getByText('Action Phase').closest('.game-actions')
     expect(gameActions).toBeInTheDocument()
     expect(gameActions).toHaveTextContent('Alice played Remove Two')
     expect(screen.getByText(/Select exactly 2 cards from any offers to remove/)).toBeInTheDocument()
@@ -160,7 +160,7 @@ describe('GameBoard Interactive Messages', () => {
     renderGameBoardWithState(gameState)
     
     // Look specifically in the game actions area
-    const gameActions = screen.getByText('Game Actions').closest('.game-actions')
+    const gameActions = screen.getByText('Action Phase').closest('.game-actions')
     expect(gameActions).toBeInTheDocument()
     expect(gameActions).toHaveTextContent('Alice played Steal A Point')
     expect(screen.getByText(/No players have more points than you/)).toBeInTheDocument()
@@ -186,5 +186,8 @@ describe('GameBoard Interactive Messages', () => {
     
     // Game actions section should not be present
     expect(screen.queryByText('Game Actions')).not.toBeInTheDocument()
+    expect(screen.queryByText('Offer Phase')).not.toBeInTheDocument()
+    expect(screen.queryByText('Action Phase')).not.toBeInTheDocument()
+    expect(screen.queryByText('Offer Selection')).not.toBeInTheDocument()
   })
 })

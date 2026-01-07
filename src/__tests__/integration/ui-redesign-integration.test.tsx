@@ -84,7 +84,7 @@ describe('UI Redesign Integration Tests', () => {
 
       // Check buyer/player status
       expect(screen.getByText(/💰 Buyer: Alice/)).toBeInTheDocument()
-      expect(screen.getByText(/⭐ Current Player: Alice/)).toBeInTheDocument()
+      expect(screen.getByText(/⭐ Active Player: Alice/)).toBeInTheDocument()
 
       // Check card counts
       expect(screen.getByText('Draw Pile: 2')).toBeInTheDocument()
@@ -119,7 +119,7 @@ describe('UI Redesign Integration Tests', () => {
       expect(screen.getByText('Action phase')).toBeInTheDocument()
       expect(screen.getByText('Round 4')).toBeInTheDocument()
       expect(screen.getByText(/💰 Buyer: Bob/)).toBeInTheDocument()
-      expect(screen.getByText(/⭐ Current Player: Bob/)).toBeInTheDocument()
+      expect(screen.getByText(/⭐ Active Player: Bob/)).toBeInTheDocument()
     })
   })
 
@@ -130,6 +130,9 @@ describe('UI Redesign Integration Tests', () => {
       const { rerender } = renderGameBoardWithState(noActionState)
 
       expect(screen.queryByText('Game Actions')).not.toBeInTheDocument()
+      expect(screen.queryByText('Offer Phase')).not.toBeInTheDocument()
+      expect(screen.queryByText('Action Phase')).not.toBeInTheDocument()
+      expect(screen.queryByText('Offer Selection')).not.toBeInTheDocument()
 
       // Phase with user interaction required
       const actionState = createGameState({ 
@@ -153,12 +156,11 @@ describe('UI Redesign Integration Tests', () => {
       })
       renderGameBoardWithState(gameState)
 
-      expect(screen.getByText('Game Actions')).toBeInTheDocument()
+      expect(screen.getByText('Offer Selection')).toBeInTheDocument()
       
       // The text is split across multiple elements, so use a more flexible matcher
-      const gameActions = screen.getByText('Game Actions').closest('.game-actions')
-      expect(gameActions).toHaveTextContent('Alice')
-      expect(gameActions).toHaveTextContent('(Buyer): Select one offer to purchase')
+      const gameActions = screen.getByText('Offer Selection').closest('.game-actions')
+      expect(gameActions).toHaveTextContent('Buyer (Alice): Select one offer to purchase')
       expect(screen.getByText("Select Bob's Offer")).toBeInTheDocument()
     })
   })
