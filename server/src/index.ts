@@ -13,6 +13,7 @@ const getAllowedOrigins = () => {
   // Add CLIENT_URL if set
   if (config.clientUrl) {
     origins.push(config.clientUrl)
+    console.log(`🔒 CORS: Added CLIENT_URL origin: ${config.clientUrl}`)
   }
   
   // Add localhost for development
@@ -21,8 +22,10 @@ const getAllowedOrigins = () => {
   // Add production fallback if no CLIENT_URL is set
   if (!process.env.CLIENT_URL && process.env.NODE_ENV === 'production') {
     origins.push('https://offer-up-2-frontend-production.up.railway.app')
+    console.log('🔒 CORS: Added production fallback origin')
   }
   
+  console.log(`🔒 CORS: All allowed origins:`, origins)
   return origins
 }
 
