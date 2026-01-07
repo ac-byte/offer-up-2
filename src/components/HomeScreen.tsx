@@ -199,7 +199,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onStartGame, onEnterLobb
                   <strong>Rules:</strong> In each round one player is the buyer all others are sellers.
                   <ol className="rules-list">
                     <li>Each seller makes an Offer of 3 cards from their hand, with one card face up. The buyer then flips one more offer card face up.</li>
-                    <li>Players with Action cards <em>in their collection</em> can play them until all players pass</li>
+                    <li>Players with Action cards in their collection can play them until all players pass</li>
                     <li>The buyer selects one seller's offer. That seller will become the next buyer. The buyer puts that seller's offer in their own collection. All other sellers' offers go to their collections.</li>
                     <li>All complete Gotcha sets must be traded in, causing consequences. Then then all complete Thing sets are traded in, gaining 1 point for each set.</li>
                   </ol>
