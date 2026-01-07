@@ -215,7 +215,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onStartGame, onEnterLobb
                   </a>
                   . I recommend reading/listening to the series to learn more about how the game was created and the economics principle behind it. You can see{' '}
                   <a href="https://cdn.shopify.com/s/files/1/0345/9180/1483/files/Planet_Money_Game_Instructions_v2.pdf?v=1761334791" target="_blank" rel="noopener noreferrer">
-                    <strong>the rules</strong>
+                    <strong>the more detailed rules</strong>
                   </a>
                   , and if you playtest it, please provide them{' '}
                   <a href="https://npr.formstack.com/forms/help_planet_money_make_a_game" target="_blank" rel="noopener noreferrer">
