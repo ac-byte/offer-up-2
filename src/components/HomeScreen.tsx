@@ -371,19 +371,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onStartGame, onEnterLobb
             </div>
           </div>
         )}
-
-        {/* Game Rules Summary */}
-        <div className="rules-summary">
-          <h4>Quick Rules:</h4>
-          <div className="rules-grid">
-            <div className="rule-item">
-              <strong>Objective:</strong> Collect card sets to earn points. First to 5+ points wins!
-            </div>
-            <div className="rule-item">
-              <strong>Strategy:</strong> Create attractive offers and use hidden information to your advantage.
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   )
