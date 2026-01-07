@@ -1,0 +1,137 @@
+/* Feedback Button Styles */
+
+.feedback-button {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 999;
+  user-select: none;
+}
+
+.feedback-button:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
+  background: linear-gradient(135deg, #0056b3, #004085);
+}
+
+.feedback-button:active {
+  transform: translateY(0) scale(0.98);
+  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+}
+
+.feedback-button:focus {
+  outline: none;
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3), 0 0 0 3px rgba(0, 123, 255, 0.2);
+}
+
+/* Pulse animation to draw attention */
+.feedback-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 50%;
+  background: rgba(0, 123, 255, 0.3);
+  animation: feedbackPulse 2s infinite;
+  z-index: -1;
+}
+
+@keyframes feedbackPulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1.4);
+    opacity: 0;
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .feedback-button {
+    bottom: 20px;
+    right: 20px;
+    width: 52px;
+    height: 52px;
+    font-size: 1.4rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .feedback-button {
+    bottom: 16px;
+    right: 16px;
+    width: 48px;
+    height: 48px;
+    font-size: 1.3rem;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .feedback-button {
+    background: #000;
+    border: 2px solid #fff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  }
+  
+  .feedback-button:hover {
+    background: #333;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.7);
+  }
+  
+  .feedback-button::before {
+    background: rgba(255, 255, 255, 0.3);
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .feedback-button {
+    transition: none;
+  }
+  
+  .feedback-button:hover {
+    transform: none;
+  }
+  
+  .feedback-button:active {
+    transform: none;
+  }
+  
+  .feedback-button::before {
+    animation: none;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .feedback-button {
+    background: linear-gradient(135deg, #0d6efd, #0a58ca);
+    box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
+  }
+  
+  .feedback-button:hover {
+    background: linear-gradient(135deg, #0a58ca, #084298);
+    box-shadow: 0 6px 20px rgba(13, 110, 253, 0.4);
+  }
+}

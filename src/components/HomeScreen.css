@@ -872,3 +872,33 @@
   outline: 2px solid #667eea;
   outline-offset: 2px;
 }
+
+/* Feedback Link Button */
+.feedback-link-button {
+  background: none;
+  border: none;
+  color: #007bff;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: inherit;
+  font-family: inherit;
+  padding: 0;
+  margin: 0;
+  display: inline;
+  transition: color 0.2s ease;
+}
+
+.feedback-link-button:hover {
+  color: #0056b3;
+  text-decoration: none;
+}
+
+.feedback-link-button:focus {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.feedback-link-button:active {
+  color: #004085;
+}

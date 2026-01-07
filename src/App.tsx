@@ -4,6 +4,7 @@ import './App.css';
 import { GameBoard } from './components/GameBoard';
 import { HomeScreen } from './components/HomeScreen';
 import { GameLobby } from './components/GameLobby';
+import { FeedbackModal, FeedbackButton } from './components';
 import { GameProvider, useGameContext } from './contexts';
 import { MultiplayerProvider, useMultiplayer } from './contexts/MultiplayerContext';
 import { GameAction } from './types';
@@ -12,6 +13,7 @@ type AppScreen = 'home' | 'lobby' | 'game'
 
 function AppContent() {
   const [currentScreen, setCurrentScreen] = useState<AppScreen>('home')
+  const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false)
   const { state, leaveGame } = useMultiplayer()
   const { dispatch } = useGameContext()
   const navigate = useNavigate()
@@ -32,6 +34,14 @@ function AppContent() {
     navigate('/')
   }
 
+  const handleOpenFeedback = () => {
+    setIsFeedbackModalOpen(true)
+  }
+
+  const handleCloseFeedback = () => {
+    setIsFeedbackModalOpen(false)
+  }
+
   // Auto-navigate to game when multiplayer game starts
   useEffect(() => {
     if (state.mode === 'multiplayer' && state.gameStarted) {
@@ -47,6 +57,7 @@ function AppContent() {
             <HomeScreen 
               onStartGame={handleStartLocalGame}
               onEnterLobby={handleEnterLobby}
+              onOpenFeedback={handleOpenFeedback}
             />
           ) : currentScreen === 'lobby' ? (
             <GameLobby 
@@ -67,6 +78,13 @@ function AppContent() {
           />
         } />
       </Routes>
+      
+      {/* Global Feedback System */}
+      <FeedbackButton onClick={handleOpenFeedback} />
+      <FeedbackModal 
+        isOpen={isFeedbackModalOpen} 
+        onClose={handleCloseFeedback} 
+      />
     </div>
   )
 }

@@ -10,12 +10,13 @@ import './HomeScreen.css'
 export interface HomeScreenProps {
   onStartGame: (action: GameAction) => void
   onEnterLobby: () => void
+  onOpenFeedback?: () => void
 }
 
 // Default names as specified in requirements
 const DEFAULT_NAMES = ['Alice', 'Bob', 'Charlie', 'Diana', 'Eric', 'Fran']
 
-export const HomeScreen: React.FC<HomeScreenProps> = ({ onStartGame, onEnterLobby }) => {
+export const HomeScreen: React.FC<HomeScreenProps> = ({ onStartGame, onEnterLobby, onOpenFeedback }) => {
   const [gameMode, setGameMode] = useState<'main' | 'create' | 'join'>('main')
   const [playerCount, setPlayerCount] = useState<number>(4) // Default to 4 players
   const [playerNames, setPlayerNames] = useState<string[]>([])
@@ -221,10 +222,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onStartGame, onEnterLobb
                   <a href="https://npr.formstack.com/forms/help_planet_money_make_a_game" target="_blank" rel="noopener noreferrer">
                     feedback
                   </a>
-                  , but only about the game itself. For feedback about this implementation go to{' '}
-                  <a href="https://github.com/ac-byte/offer-up-2/issues" target="_blank" rel="noopener noreferrer">
-                    my github
-                  </a>
+                  , but only about the game itself. For feedback about this implementation{' '}
+                  <button 
+                    onClick={onOpenFeedback}
+                    className="feedback-link-button"
+                    type="button"
+                  >
+                    send it to me
+                  </button>
                   . Hope you enjoy it. This version was made to support playtesting and is still a little rough around the edges. But hopefully you can still have fun.
                 </div>
               </div>
