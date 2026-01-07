@@ -283,6 +283,130 @@
   outline-offset: 2px;
 }
 
+/* Primary Actions */
+.primary-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  align-items: center;
+}
+
+.primary-button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 1.5rem 2.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  min-width: 280px;
+  max-width: 400px;
+  width: 100%;
+}
+
+.primary-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+}
+
+.primary-button:active {
+  transform: translateY(0);
+}
+
+.secondary-button {
+  background: white;
+  color: #2c3e50;
+  border: 2px solid #667eea;
+  border-radius: 12px;
+  padding: 1.25rem 2rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 280px;
+  max-width: 400px;
+  width: 100%;
+}
+
+.secondary-button:hover {
+  background: #667eea;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.secondary-button:active {
+  transform: translateY(0);
+}
+
+.button-icon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.button-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.button-description {
+  font-size: 0.9rem;
+  opacity: 0.9;
+  line-height: 1.4;
+}
+
+/* Local Game Section */
+.local-game-section {
+  margin-top: 2rem;
+}
+
+.local-game-content {
+  padding: 0;
+}
+
+.start-local-game-button {
+  background: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.875rem 2rem;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 180px;
+}
+
+.start-local-game-button.enabled:hover {
+  background: #5a6268;
+  transform: translateY(-1px);
+}
+
+.start-local-game-button.enabled:active {
+  transform: translateY(0);
+}
+
+.start-local-game-button.disabled {
+  background: #e9ecef;
+  color: #6c757d;
+  cursor: not-allowed;
+}
+
+.start-local-game-button.disabled:hover {
+  transform: none;
+}
+
 /* Game Mode Selection */
 .game-mode-selection {
   margin-bottom: 2rem;
@@ -504,8 +628,40 @@
   cursor: not-allowed;
 }
 
-/* Responsive Design for Multiplayer */
+/* Responsive Design for Primary Actions */
 @media (max-width: 768px) {
+  .primary-actions {
+    gap: 0.75rem;
+  }
+  
+  .primary-button {
+    padding: 1.25rem 2rem;
+    min-width: 250px;
+  }
+  
+  .secondary-button {
+    padding: 1rem 1.75rem;
+    min-width: 250px;
+  }
+  
+  .button-icon {
+    font-size: 1.75rem;
+  }
+  
+  .button-title {
+    font-size: 1.1rem;
+  }
+  
+  .button-description {
+    font-size: 0.85rem;
+  }
+  
+  .start-local-game-button {
+    padding: 0.75rem 1.75rem;
+    font-size: 0.95rem;
+    min-width: 160px;
+  }
+  
   .mode-buttons {
     grid-template-columns: 1fr;
     gap: 0.75rem;
@@ -536,6 +692,34 @@
 }
 
 @media (max-width: 480px) {
+  .primary-button {
+    padding: 1rem 1.5rem;
+    min-width: 220px;
+  }
+  
+  .secondary-button {
+    padding: 0.875rem 1.5rem;
+    min-width: 220px;
+  }
+  
+  .button-icon {
+    font-size: 1.5rem;
+  }
+  
+  .button-title {
+    font-size: 1rem;
+  }
+  
+  .button-description {
+    font-size: 0.8rem;
+  }
+  
+  .start-local-game-button {
+    padding: 0.625rem 1.25rem;
+    font-size: 0.9rem;
+    min-width: 140px;
+  }
+  
   .mode-button {
     padding: 1rem;
   }
@@ -561,8 +745,20 @@
   }
 }
 
-/* Accessibility for multiplayer elements */
+/* Accessibility for primary actions */
 @media (prefers-reduced-motion: reduce) {
+  .primary-button,
+  .secondary-button,
+  .start-local-game-button {
+    transition: none;
+  }
+  
+  .primary-button:hover,
+  .secondary-button:hover,
+  .start-local-game-button.enabled:hover {
+    transform: none;
+  }
+  
   .mode-button,
   .create-game-button,
   .join-game-button,
@@ -578,7 +774,10 @@
   }
 }
 
-/* Focus styles for multiplayer elements */
+/* Focus styles for primary actions and multiplayer elements */
+.primary-button:focus,
+.secondary-button:focus,
+.start-local-game-button:focus,
 .mode-button:focus,
 .create-game-button:focus,
 .join-game-button:focus,
@@ -587,6 +786,9 @@
   outline-offset: 2px;
 }
 
+.primary-button:focus:not(:focus-visible),
+.secondary-button:focus:not(:focus-visible),
+.start-local-game-button:focus:not(:focus-visible),
 .mode-button:focus:not(:focus-visible),
 .create-game-button:focus:not(:focus-visible),
 .join-game-button:focus:not(:focus-visible),
@@ -594,6 +796,9 @@
   outline: none;
 }
 
+.primary-button:focus-visible,
+.secondary-button:focus-visible,
+.start-local-game-button:focus-visible,
 .mode-button:focus-visible,
 .create-game-button:focus-visible,
 .join-game-button:focus-visible,

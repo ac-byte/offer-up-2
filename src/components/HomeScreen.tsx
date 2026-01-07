@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { PlayerCountSlider } from './PlayerCountSlider'
 import { PlayerNameInputs } from './PlayerNameInputs'
+import { CollapsibleSection } from './CollapsibleSection'
 import { GameAction } from '../types'
 import { useMultiplayer } from '../contexts/MultiplayerContext'
 import { MultiplayerApiClient } from '../services/multiplayerApi'
@@ -15,7 +16,7 @@ export interface HomeScreenProps {
 const DEFAULT_NAMES = ['Alice', 'Bob', 'Charlie', 'Diana', 'Eric', 'Fran']
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({ onStartGame, onEnterLobby }) => {
-  const [gameMode, setGameMode] = useState<'local' | 'create' | 'join'>('local')
+  const [gameMode, setGameMode] = useState<'main' | 'create' | 'join'>('main')
   const [playerCount, setPlayerCount] = useState<number>(4) // Default to 4 players
   const [playerNames, setPlayerNames] = useState<string[]>([])
   const [validationErrors, setValidationErrors] = useState<string[]>([])
@@ -140,7 +141,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onStartGame, onEnterLobb
   }
 
   const resetToMainMenu = () => {
-    setGameMode('local')
+    setGameMode('main')
     setError(null)
     setHostName('')
     setJoinPlayerName('')
@@ -158,97 +159,105 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onStartGame, onEnterLobb
           </p>
         </div>
 
-        {/* Game Mode Selection */}
-        {gameMode === 'local' && (
+        {/* Main Menu */}
+        {gameMode === 'main' && (
           <>
-            {/* Game Mode Buttons */}
-            <div className="game-mode-selection">
-              <h3>Choose Game Mode</h3>
-              <div className="mode-buttons">
-                <button
-                  onClick={() => setGameMode('local')}
-                  className="mode-button local-mode active"
-                >
-                  <div className="mode-icon">🏠</div>
-                  <div className="mode-title">Local Game</div>
-                  <div className="mode-description">Play on this device with friends</div>
-                </button>
-                
-                <button
-                  onClick={() => setGameMode('create')}
-                  className="mode-button multiplayer-mode"
-                >
-                  <div className="mode-icon">🌐</div>
-                  <div className="mode-title">Create Online Game</div>
-                  <div className="mode-description">Host a game for remote players</div>
-                </button>
-                
-                <button
-                  onClick={() => setGameMode('join')}
-                  className="mode-button join-mode"
-                >
-                  <div className="mode-icon">🔗</div>
-                  <div className="mode-title">Join Online Game</div>
-                  <div className="mode-description">Join a friend's game</div>
-                </button>
-              </div>
-            </div>
-
-            {/* Local Game Configuration */}
-            <div className="player-configuration">
-              {/* Player Count Slider */}
-              <div className="config-section">
-                <PlayerCountSlider
-                  playerCount={playerCount}
-                  onChange={handlePlayerCountChange}
-                />
-              </div>
-
-              {/* Player Name Inputs */}
-              <div className="config-section">
-                <PlayerNameInputs
-                  playerCount={playerCount}
-                  playerNames={playerNames}
-                  onChange={handlePlayerNamesChange}
-                />
-              </div>
-            </div>
-
-            {/* Validation Errors Display */}
-            {validationErrors.length > 0 && (
-              <div className="validation-errors">
-                <div className="error-header">
-                  <span className="error-icon">⚠️</span>
-                  <span>Please fix the following issues:</span>
-                </div>
-                <ul className="error-list">
-                  {validationErrors.map((error, index) => (
-                    <li key={index} className="error-item">
-                      {error}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* Start Local Game Button */}
-            <div className="start-game-section">
+            {/* Primary Online Game Buttons */}
+            <div className="primary-actions">
               <button
-                onClick={handleStartGame}
-                disabled={!isStartButtonEnabled}
-                className={`start-game-button ${isStartButtonEnabled ? 'enabled' : 'disabled'}`}
-                aria-describedby="start-button-help"
+                onClick={() => setGameMode('create')}
+                className="primary-button host-game-button"
               >
-                {isStartButtonEnabled ? 'Start Local Game' : 'Complete Setup to Start'}
+                <div className="button-icon">🌐</div>
+                <div className="button-title">Host a Game</div>
+                <div className="button-description">Create an online game for friends</div>
               </button>
               
-              <div id="start-button-help" className="start-button-help">
-                {isStartButtonEnabled 
-                  ? `Ready to start with ${playerCount} players!`
-                  : 'Fill in all player names with unique values to enable the start button'
-                }
+              <button
+                onClick={() => setGameMode('join')}
+                className="secondary-button join-game-button"
+              >
+                <div className="button-icon">🔗</div>
+                <div className="button-title">Join a Game</div>
+                <div className="button-description">Join a friend's game</div>
+              </button>
+            </div>
+
+            {/* Quick Rules */}
+            <div className="rules-summary">
+              <h4>Quick Rules:</h4>
+              <div className="rules-grid">
+                <div className="rule-item">
+                  <strong>Objective:</strong> Collect card sets to earn points. First to 5+ points wins!
+                </div>
+                <div className="rule-item">
+                  <strong>Strategy:</strong> Create attractive offers and use hidden information to your advantage.
+                </div>
               </div>
             </div>
+
+            {/* Local Game Section (Collapsed) */}
+            <CollapsibleSection
+              id="local-game"
+              title="Local game (for testing only)"
+              isExpanded={false}
+              className="local-game-section"
+            >
+              <div className="local-game-content">
+                {/* Player Count Slider */}
+                <div className="config-section">
+                  <PlayerCountSlider
+                    playerCount={playerCount}
+                    onChange={handlePlayerCountChange}
+                  />
+                </div>
+
+                {/* Player Name Inputs */}
+                <div className="config-section">
+                  <PlayerNameInputs
+                    playerCount={playerCount}
+                    playerNames={playerNames}
+                    onChange={handlePlayerNamesChange}
+                  />
+                </div>
+
+                {/* Validation Errors Display */}
+                {validationErrors.length > 0 && (
+                  <div className="validation-errors">
+                    <div className="error-header">
+                      <span className="error-icon">⚠️</span>
+                      <span>Please fix the following issues:</span>
+                    </div>
+                    <ul className="error-list">
+                      {validationErrors.map((error, index) => (
+                        <li key={index} className="error-item">
+                          {error}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Start Local Game Button */}
+                <div className="start-game-section">
+                  <button
+                    onClick={handleStartGame}
+                    disabled={!isStartButtonEnabled}
+                    className={`start-local-game-button ${isStartButtonEnabled ? 'enabled' : 'disabled'}`}
+                    aria-describedby="start-button-help"
+                  >
+                    {isStartButtonEnabled ? 'Start Local Game' : 'Complete Setup to Start'}
+                  </button>
+                  
+                  <div id="start-button-help" className="start-button-help">
+                    {isStartButtonEnabled 
+                      ? `Ready to start with ${playerCount} players!`
+                      : 'Fill in all player names with unique values to enable the start button'
+                    }
+                  </div>
+                </div>
+              </div>
+            </CollapsibleSection>
           </>
         )}
 
@@ -256,8 +265,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onStartGame, onEnterLobb
         {gameMode === 'create' && (
           <div className="multiplayer-form">
             <div className="form-header">
-              <h3>Create Online Game</h3>
-              <p>Host a game that friends can join remotely</p>
+              <h3>Host a Game</h3>
+              <p>Create an online game that friends can join remotely</p>
             </div>
 
             <div className="form-section">
