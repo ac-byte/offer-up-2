@@ -258,6 +258,12 @@
   font-weight: 500;
 }
 
+.strategy-tip {
+  margin-top: 1rem;
+  text-align: left;
+  font-size: 0.9rem;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .home-screen {

@@ -192,9 +192,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onStartGame, onEnterLobb
                 <div className="rule-item">
                   <strong>Objective:</strong> Collect card sets to earn points. First to 5+ points wins!
                 </div>
-                <div className="rule-item">
-                  <strong>Strategy:</strong> Create attractive offers and use hidden information to your advantage.
-                </div>
                 <div className="rule-item detailed-rules">
                   <strong>Rules:</strong> In each round one player is the buyer all others are sellers.
                   <ol className="rules-list">
@@ -203,6 +200,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onStartGame, onEnterLobb
                     <li>The buyer selects one seller's offer. That seller will become the next buyer. The buyer puts that seller's offer in their own collection. All other sellers' offers go to their collections.</li>
                     <li>All complete Gotcha sets must be traded in, causing consequences. Then then all complete Thing sets are traded in, gaining 1 point for each set.</li>
                   </ol>
+                </div>
+                <div className="rule-item strategy-tip">
+                  <strong>Strategy:</strong> As a seller, remember that if your offer is not selected the cards go to your collection. So chose with care.
                 </div>
                 <div className="rule-item about-text">
                   This game was inspired by the{' '}
