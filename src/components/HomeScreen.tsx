@@ -183,15 +183,38 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onStartGame, onEnterLobb
               </button>
             </div>
 
-            {/* Quick Rules */}
+            {/* About Offer Up */}
             <div className="rules-summary">
-              <h4>Quick Rules:</h4>
+              <h4>About Offer Up</h4>
               <div className="rules-grid">
                 <div className="rule-item">
                   <strong>Objective:</strong> Collect card sets to earn points. First to 5+ points wins!
                 </div>
                 <div className="rule-item">
                   <strong>Strategy:</strong> Create attractive offers and use hidden information to your advantage.
+                </div>
+                <div className="rule-item about-text">
+                  This game was inspired by the{' '}
+                  <a href="https://www.npr.org/sections/money/" target="_blank" rel="noopener noreferrer">
+                    <strong>Planet Money</strong>
+                  </a>{' '}
+                  podcast, and their series{' '}
+                  <a href="https://www.npr.org/series/g-s1-89455/planet-money-makes-a-boardgame" target="_blank" rel="noopener noreferrer">
+                    "Planet Money Makes a Boardgame"
+                  </a>
+                  . I recommend reading/listening to the series to learn more about how the game was created and the economics principle behind it. You can see{' '}
+                  <a href="https://cdn.shopify.com/s/files/1/0345/9180/1483/files/Planet_Money_Game_Instructions_v2.pdf?v=1761334791" target="_blank" rel="noopener noreferrer">
+                    <strong>the rules</strong>
+                  </a>
+                  , and if you playtest it, please provide them{' '}
+                  <a href="https://npr.formstack.com/forms/help_planet_money_make_a_game" target="_blank" rel="noopener noreferrer">
+                    feedback
+                  </a>
+                  , but only about the game itself. For feedback about this implementation go to{' '}
+                  <a href="https://github.com/ac-byte/offer-up-2/issues" target="_blank" rel="noopener noreferrer">
+                    my github
+                  </a>
+                  . Hope you enjoy it. This version was made to support playtesting and is still a little rough around the edges. But hopefully you can still have fun.
                 </div>
               </div>
             </div>

@@ -202,6 +202,31 @@
   color: #2c3e50;
 }
 
+.about-text {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e9ecef;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.about-text a {
+  color: #667eea;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.about-text a:hover {
+  color: #764ba2;
+  text-decoration: underline;
+}
+
+.about-text a:focus {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .home-screen {
