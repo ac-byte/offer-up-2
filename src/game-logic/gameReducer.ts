@@ -2167,7 +2167,8 @@ export function processThingTradeins(state: GameState): GameState {
         count === 1 ? setType : `${count} sets of ${setType}`
       )
       const pointText = pointsEarned === 1 ? '1 point' : `${pointsEarned} points`
-      tradeInSummaryParts.push(`• ${player.name} turned in ${setDescriptions.join(' and ')} for ${pointText}.`)
+      const totalPointsText = playerCopy.points === 1 ? '1 point' : `${playerCopy.points} points`
+      tradeInSummaryParts.push(`• ${player.name} turned in ${setDescriptions.join(' and ')} for ${pointText}. They now have ${totalPointsText}.`)
     }
     
     // Remove traded-in cards from collection
