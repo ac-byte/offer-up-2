@@ -283,7 +283,7 @@ export const GameBoard: React.FC = () => {
     const buyer = getCurrentBuyer()
     const currentPlayer = getCurrentPlayer()
     
-    return `💰 Buyer: ${buyer?.name} | 🎯 Current Player: ${currentPlayer?.name}`
+    return `💰 Buyer: ${buyer?.name} | ⭐ Current Player: ${currentPlayer?.name}`
   }
 
   // Function to determine if game actions should be visible

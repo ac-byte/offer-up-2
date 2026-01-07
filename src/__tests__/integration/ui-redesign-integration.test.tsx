@@ -84,7 +84,7 @@ describe('UI Redesign Integration Tests', () => {
 
       // Check buyer/player status
       expect(screen.getByText(/💰 Buyer: Alice/)).toBeInTheDocument()
-      expect(screen.getByText(/🎯 Current Player: Alice/)).toBeInTheDocument()
+      expect(screen.getByText(/⭐ Current Player: Alice/)).toBeInTheDocument()
 
       // Check card counts
       expect(screen.getByText('Draw Pile: 2')).toBeInTheDocument()
@@ -119,7 +119,7 @@ describe('UI Redesign Integration Tests', () => {
       expect(screen.getByText('Action phase')).toBeInTheDocument()
       expect(screen.getByText('Round 4')).toBeInTheDocument()
       expect(screen.getByText(/💰 Buyer: Bob/)).toBeInTheDocument()
-      expect(screen.getByText(/🎯 Current Player: Bob/)).toBeInTheDocument()
+      expect(screen.getByText(/⭐ Current Player: Bob/)).toBeInTheDocument()
     })
   })
 
