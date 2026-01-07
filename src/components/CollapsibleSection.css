@@ -86,7 +86,7 @@
 }
 
 .collapsible-section--expanded .collapsible-section__content {
-  max-height: 1000px; /* Large enough to accommodate most content */
+  max-height: 2000px; /* Increased to accommodate larger content */
 }
 
 .collapsible-section__body {

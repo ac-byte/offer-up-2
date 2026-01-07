@@ -568,22 +568,24 @@ export const PlayerArea: React.FC<PlayerAreaProps> = ({
           />
         </CollapsibleSection>
 
-        {/* Hand Section (Bottom) */}
-        <CollapsibleSection
-          id={`hand-${player.id}`}
-          title={`Hand (${player.hand.length})`}
-          isExpanded={sectionStates.hand}
-          onToggle={handleSectionToggle}
-          className="player-area__hand-section"
-        >
-          <Hand
-            cards={player.hand}
-            isOwnHand={isOwnPerspective}
-            onCardDrag={handleCardDrag}
-            onCardClick={handleCardClick}
-            canSelectAddOneCards={canSelectAddOneHandCards}
-          />
-        </CollapsibleSection>
+        {/* Hand Section (Bottom) - Only show for active player */}
+        {isActivePlayer && (
+          <CollapsibleSection
+            id={`hand-${player.id}`}
+            title={`Hand (${player.hand.length})`}
+            isExpanded={sectionStates.hand}
+            onToggle={handleSectionToggle}
+            className="player-area__hand-section"
+          >
+            <Hand
+              cards={player.hand}
+              isOwnHand={isOwnPerspective}
+              onCardDrag={handleCardDrag}
+              onCardClick={handleCardClick}
+              canSelectAddOneCards={canSelectAddOneHandCards}
+            />
+          </CollapsibleSection>
+        )}
       </div>
     </div>
   );
