@@ -295,14 +295,17 @@ export const PlayerArea: React.FC<PlayerAreaProps> = ({
   const [offerManualOverride, setOfferManualOverride] = React.useState<boolean | null>(null);
 
   const handleSectionToggle = (sectionId: string, isExpanded: boolean) => {
-    if (sectionId === 'offer' && shouldExpandOffers) {
+    // Extract the section type from the full ID (e.g., "collection-0" -> "collection")
+    const sectionType = sectionId.split('-')[0];
+    
+    if (sectionType === 'offer' && shouldExpandOffers) {
       // In relevant phases, track manual override for offer section
       setOfferManualOverride(isExpanded);
     }
     
     setSectionStates(prev => ({
       ...prev,
-      [sectionId]: isExpanded
+      [sectionType]: isExpanded
     }));
   };
 

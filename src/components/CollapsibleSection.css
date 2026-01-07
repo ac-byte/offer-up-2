@@ -80,13 +80,16 @@
 
 /* Content Styles */
 .collapsible-section__content {
-  max-height: 0;
   overflow: hidden;
-  transition: max-height 0.3s ease;
+  transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.collapsible-section--collapsed .collapsible-section__content {
+  max-height: 0;
 }
 
 .collapsible-section--expanded .collapsible-section__content {
-  max-height: 2000px; /* Increased to accommodate larger content */
+  max-height: 5000px; /* Very large value to accommodate any content */
 }
 
 .collapsible-section__body {
