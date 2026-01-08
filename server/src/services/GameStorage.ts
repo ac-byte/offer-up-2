@@ -100,6 +100,18 @@ export class GameStorage {
   }
 
   /**
+   * Get game code by game ID
+   */
+  getGameCodeById(gameId: string): string | null {
+    for (const [gameCode, id] of this.gameCodeToId.entries()) {
+      if (id === gameId) {
+        return gameCode
+      }
+    }
+    return null
+  }
+
+  /**
    * Update a game's state
    */
   updateGame(gameId: string, gameState: MultiplayerGameState): boolean {

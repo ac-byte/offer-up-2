@@ -152,8 +152,21 @@ export class GameManager {
       // Process the action using the game reducer
       const newGameState = gameReducer(game, action)
       
+      // Check if a winner was just determined
+      const hadWinner = game.winner !== null
+      const hasWinner = newGameState.winner !== null
+      
       // Merge the updated game state back into the multiplayer game state
       Object.assign(game, newGameState)
+      
+      // Log game end if winner was just determined
+      if (!hadWinner && hasWinner && game.winner !== null) {
+        const winner = game.players[game.winner]
+        const winnerPlayer = game.connectedPlayers.find(p => p.gamePlayerIndex === game.winner)
+        // Get game code from storage
+        const gameCode = this.gameStorage.getGameCodeById(game.gameId) || 'UNKNOWN'
+        console.log(`🏆 Game ${gameCode} (${game.gameId}) ended - Winner: ${winner.name} (${winnerPlayer?.playerId}) with ${winner.points} points`)
+      }
       
       // Update the game in storage
       this.updateGame(gameId, game)
@@ -197,6 +210,9 @@ export class GameManager {
       // If no players left, mark game as abandoned
       if (game.connectedPlayers.length === 0) {
         game.status = GameStatus.ABANDONED
+        // Get game code from storage
+        const gameCode = this.gameStorage.getGameCodeById(game.gameId) || 'UNKNOWN'
+        console.log(`🚪 Game ${gameCode} (${game.gameId}) abandoned - All players left lobby`)
         return { success: true, gameEnded: true }
       }
       
@@ -209,6 +225,9 @@ export class GameManager {
         // Not enough players, end the game
         game.status = GameStatus.ABANDONED
         game.winner = null // No winner due to disconnections
+        // Get game code from storage
+        const gameCode = this.gameStorage.getGameCodeById(game.gameId) || 'UNKNOWN'
+        console.log(`🔌 Game ${gameCode} (${game.gameId}) ended due to disconnections - Not enough players remaining (${connectedPlayers.length}/${config.minPlayersPerGame})`)
         return { success: true, gameEnded: true }
       }
       
