@@ -16,6 +16,11 @@ export function selectRandomBuyer(playerCount: number): number {
  * Get offer creation state for a specific player
  */
 export function getPlayerOfferCreationState(state: GameState, playerId: number): OfferCreationState | null {
+  // Handle legacy states that don't have offerCreationStates array
+  if (!state.offerCreationStates || !Array.isArray(state.offerCreationStates)) {
+    return null
+  }
+  
   if (playerId < 0 || playerId >= state.offerCreationStates.length) {
     return null
   }
@@ -30,7 +35,10 @@ export function setPlayerOfferCreationState(state: GameState, playerId: number, 
     throw new Error(`Invalid player ID: ${playerId}`)
   }
   
-  const newStates = [...state.offerCreationStates]
+  // Handle legacy states that don't have offerCreationStates array
+  const currentStates = state.offerCreationStates || []
+  const newStates = [...currentStates]
+  
   // Ensure array is large enough
   while (newStates.length <= playerId) {
     newStates.push(null)
