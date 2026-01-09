@@ -110,7 +110,7 @@ This implementation plan converts the single global `offerCreationState` to a pe
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 9. Update existing tests and add integration tests
-  - [ ] 9.1 Update existing unit tests
+  - [x] 9.1 Update existing unit tests
     - Fix all tests that reference the old `offerCreationState` field
     - Update test fixtures and mock data
     - _Requirements: All_

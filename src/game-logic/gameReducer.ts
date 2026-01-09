@@ -456,11 +456,19 @@ export function areAllOfferCreationsComplete(state: GameState): boolean {
     
     const playerOfferState = getPlayerOfferCreationState(state, index)
     
-    // Player has completed their offer if:
-    // 1. They have 3 cards in their offer and at least one is face up, OR
-    // 2. Their offer creation state is null (completed and cleared)
-    return (player.offer.length === 3 && player.offer.some(card => card.faceUp)) ||
-           playerOfferState === null
+    // Player has completed their offer if they have 3 cards and at least one is face up
+    const hasCompletedOffer = player.offer.length === 3 && player.offer.some(card => card.faceUp)
+    
+    // Player has started if they have any cards in offer OR have an active state
+    const hasStarted = player.offer.length > 0 || playerOfferState !== null
+    
+    // If they haven't started, they're not done yet
+    if (!hasStarted) {
+      return false
+    }
+    
+    // If they have started, they're done only if they completed their offer
+    return hasCompletedOffer
   })
 }
 
