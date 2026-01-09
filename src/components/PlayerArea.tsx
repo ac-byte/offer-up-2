@@ -399,11 +399,18 @@ export const PlayerArea: React.FC<PlayerAreaProps> = ({
     }
 
     // Handle interactive offer creation - move card back to hand (only in selecting mode)
-    if (phase === GamePhase.OFFER_PHASE && isOwnPerspective && !isBuyer && 
-        offerCreationState && offerCreationState.playerId === player.id && 
-        offerCreationState.mode === 'selecting' && onMoveCardToHand) {
-      onMoveCardToHand(offerCard.id);
-      return;
+    if (phase === GamePhase.OFFER_PHASE && isOwnPerspective && !isBuyer && onMoveCardToHand) {
+      // Allow moving cards back to hand if:
+      // 1. No offer creation state exists (not yet initialized), OR
+      // 2. Player is in selecting mode
+      const canMoveBackToHand = !offerCreationState || 
+                               (offerCreationState.playerId === player.id && 
+                                offerCreationState.mode === 'selecting');
+      
+      if (canMoveBackToHand) {
+        onMoveCardToHand(offerCard.id);
+        return;
+      }
     }
 
     // Handle Remove Two card selection during action phase

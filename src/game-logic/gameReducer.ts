@@ -1680,19 +1680,23 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       }
       
       // Get player's offer creation state
+      let workingState = state
       const playerOfferState = getPlayerOfferCreationState(state, playerId)
       
-      // Validate that we're in offer creation mode for this player
+      // If no offer creation state exists for this player, initialize it in selecting mode
       if (!playerOfferState || playerOfferState.playerId !== playerId) {
-        throw new Error('Player is not in offer creation mode')
+        workingState = initializePlayerOfferCreation(state, playerId)
       }
       
+      // Get the updated player offer state
+      const updatedPlayerOfferState = getPlayerOfferCreationState(workingState, playerId)
+      
       // Validate that we're in selecting mode
-      if (playerOfferState.mode !== 'selecting') {
+      if (!updatedPlayerOfferState || updatedPlayerOfferState.mode !== 'selecting') {
         throw new Error('Cannot move cards when offer is locked')
       }
       
-      const player = state.players[playerId]
+      const player = workingState.players[playerId]
       
       // Find the card in player's offer
       const cardToMove = player.offer.find(card => card.id === cardId)
@@ -1701,8 +1705,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       }
       
       // Create new state with card moved from offer to hand
-      const newState = { ...state }
-      newState.players = state.players.map((p, index) => {
+      const newState = { ...workingState }
+      newState.players = workingState.players.map((p, index) => {
         if (index !== playerId) {
           return p
         }
