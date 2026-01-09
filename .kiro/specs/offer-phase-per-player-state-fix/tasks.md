@@ -39,7 +39,7 @@ This implementation plan converts the single global `offerCreationState` to a pe
     - Update all test fixtures and mock states
     - _Requirements: 3.1_
 
-  - [ ] 3.2 Update offer-related action handlers
+  - [x] 3.2 Update offer-related action handlers
     - Modify `MOVE_CARD_TO_OFFER` handler to use per-player state
     - Modify `MOVE_CARD_TO_HAND` handler to use per-player state
     - Modify `LOCK_OFFER_FOR_FLIPPING` handler to use per-player state
@@ -50,7 +50,7 @@ This implementation plan converts the single global `offerCreationState` to a pe
     - **Property 3: Concurrent State Preservation**
     - **Validates: Requirements 1.2, 1.3**
 
-  - [ ] 3.4 Update phase transition logic
+  - [x] 3.4 Update phase transition logic
     - Modify `areAllOfferCreationsComplete()` to check per-player states
     - Update offer phase initialization logic
     - _Requirements: 3.5_
@@ -60,7 +60,7 @@ This implementation plan converts the single global `offerCreationState` to a pe
     - **Validates: Requirements 3.5**
 
 - [ ] 4. Update game reducer for server-side
-  - [ ] 4.1 Mirror client-side changes in server reducer
+  - [x] 4.1 Mirror client-side changes in server reducer
     - Update all offer-related action handlers
     - Update phase transition logic
     - Update state initialization
@@ -71,12 +71,12 @@ This implementation plan converts the single global `offerCreationState` to a pe
     - **Validates: Requirements 3.4**
 
 - [ ] 5. Update UI components
-  - [ ] 5.1 Update GameBoard component
+  - [x] 5.1 Update GameBoard component
     - Modify props passed to PlayerArea components to use per-player state
     - Update offer creation state access logic
     - _Requirements: 4.3, 4.4_
 
-  - [ ] 5.2 Update PlayerArea component
+  - [x] 5.2 Update PlayerArea component
     - Modify offer creation state checks to use player-specific state
     - Update UI rendering logic for offer creation modes
     - _Requirements: 4.3, 4.4_
@@ -97,7 +97,7 @@ This implementation plan converts the single global `offerCreationState` to a pe
     - _Requirements: 2.1, 2.3_
 
 - [ ] 7. Update multiplayer synchronization
-  - [ ] 7.1 Update server-side state broadcasting
+  - [x] 7.1 Update server-side state broadcasting
     - Ensure per-player offer states are properly synchronized
     - Update state validation for multiplayer actions
     - _Requirements: 5.1, 5.2, 5.3_

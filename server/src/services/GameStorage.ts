@@ -50,7 +50,7 @@ export class GameStorage {
       stealAPointEffectState: null,
       
       // Offer Creation State
-      offerCreationState: null,
+      offerCreationStates: [],
       
       // UI State
       selectedPerspective: 0,

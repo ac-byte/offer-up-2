@@ -7,6 +7,7 @@ import { HomeScreen } from './HomeScreen'
 import { AdminFooter } from './AdminFooter'
 import { CardTracker } from './CardTracker'
 import { GameAction, GamePhase, Card } from '../types'
+import { getPlayerOfferCreationState } from '../game-logic/gameReducer'
 import './GameBoard.css'
 
 export const GameBoard: React.FC = () => {
@@ -835,7 +836,7 @@ export const GameBoard: React.FC = () => {
                 perspective={gameState.selectedPerspective}
                 phase={gameState.currentPhase}
                 isActivePlayer={true}
-                offerCreationState={gameState.offerCreationState}
+                offerCreationState={getPlayerOfferCreationState(gameState, activePlayer.id)}
                 onCardPlay={(card) => handleCardPlay(activePlayer.id, card)}
                 onOfferPlace={(cards, faceUpIndex) => handleOfferPlace(activePlayer.id, cards, faceUpIndex)}
                 onCardFlip={(cardIndex) => handleCardFlip(activePlayerIndex, cardIndex)}
@@ -921,7 +922,7 @@ export const GameBoard: React.FC = () => {
                 perspective={gameState.selectedPerspective}
                 phase={gameState.currentPhase}
                 isActivePlayer={false}
-                offerCreationState={gameState.offerCreationState}
+                offerCreationState={getPlayerOfferCreationState(gameState, player.id)}
                 onCardPlay={(card) => handleCardPlay(player.id, card)}
                 onOfferPlace={(cards, faceUpIndex) => handleOfferPlace(player.id, cards, faceUpIndex)}
                 onCardFlip={(cardIndex) => handleCardFlip(index, cardIndex)}
