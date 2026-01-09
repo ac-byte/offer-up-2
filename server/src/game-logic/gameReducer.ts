@@ -128,17 +128,6 @@ export function initializeOfferCreation(state: GameState, playerId: number): Gam
   // This function is deprecated, redirect to the new function
   return initializePlayerOfferCreation(state, playerId)
 }
-  } else {
-    // Normal case: enter selecting mode
-    return {
-      ...state,
-      offerCreationState: {
-        playerId,
-        mode: 'selecting'
-      }
-    }
-  }
-}
 
 /**
  * Checks if offer creation is complete for all sellers
