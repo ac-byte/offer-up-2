@@ -1,4 +1,4 @@
-import { GameState, GameAction, GamePhase, Player, Card, GotchaEffectState, FlipOneEffectState, StealAPointEffectState } from '../types'
+import { GameState, GameAction, GamePhase, Player, Card, GotchaEffectState, FlipOneEffectState, StealAPointEffectState, OfferCreationState } from '../types'
 import { createShuffledDeck, shuffleArray, identifyGotchaSets, identifyThingSets, identifyGotchaSetsInOrder } from './cards'
 
 /**
@@ -21,7 +21,7 @@ export function createInitialGameState(): GameState {
     removeOneEffectState: null,
     removeTwoEffectState: null,
     stealAPointEffectState: null,
-    offerCreationState: null,
+    offerCreationStates: [],
     selectedPerspective: 0,
     phaseInstructions: 'Waiting for game to start...',
     autoFollowPerspective: true,
@@ -113,6 +113,111 @@ export function validatePlayerConfiguration(playerNames: string[]): { isValid: b
  */
 export function selectRandomBuyer(playerCount: number): number {
   return Math.floor(Math.random() * playerCount)
+}
+
+/**
+ * Offer Creation State Management Helpers
+ */
+
+/**
+ * Get offer creation state for a specific player
+ */
+export function getPlayerOfferCreationState(state: GameState, playerId: number): OfferCreationState | null {
+  if (playerId < 0 || playerId >= state.offerCreationStates.length) {
+    return null
+  }
+  return state.offerCreationStates[playerId] || null
+}
+
+/**
+ * Set offer creation state for a specific player
+ */
+export function setPlayerOfferCreationState(state: GameState, playerId: number, offerState: OfferCreationState | null): GameState {
+  if (playerId < 0 || playerId >= state.players.length) {
+    throw new Error(`Invalid player ID: ${playerId}`)
+  }
+  
+  const newStates = [...state.offerCreationStates]
+  // Ensure array is large enough
+  while (newStates.length <= playerId) {
+    newStates.push(null)
+  }
+  newStates[playerId] = offerState
+  
+  return {
+    ...state,
+    offerCreationStates: newStates
+  }
+}
+
+/**
+ * Initialize offer creation states array for all players
+ */
+export function initializeOfferCreationStates(playerCount: number): (OfferCreationState | null)[] {
+  return new Array(playerCount).fill(null)
+}
+
+/**
+ * Initialize offer creation for a specific player
+ */
+export function initializePlayerOfferCreation(state: GameState, playerId: number): GameState {
+  if (playerId < 0 || playerId >= state.players.length) {
+    throw new Error(`Invalid player ID: ${playerId}`)
+  }
+  
+  const player = state.players[playerId]
+  
+  // Handle edge case: if player has 3 or fewer cards, auto-move all to offer and go to flipping mode
+  if (player.hand.length <= 3) {
+    const newState = { ...state }
+    newState.players = state.players.map((p, index) => {
+      if (index !== playerId) {
+        return p
+      }
+      
+      // Move all cards from hand to offer as face-down
+      const newOffer = p.hand.map((card, cardIndex) => ({
+        ...card,
+        faceUp: false,
+        position: cardIndex
+      }))
+      
+      return {
+        ...p,
+        hand: [],
+        offer: newOffer
+      }
+    })
+    
+    // Set offer creation state to flipping mode
+    return setPlayerOfferCreationState(newState, playerId, {
+      playerId,
+      mode: 'flipping'
+    })
+  } else {
+    // Normal case: enter selecting mode
+    return setPlayerOfferCreationState(state, playerId, {
+      playerId,
+      mode: 'selecting'
+    })
+  }
+}
+
+/**
+ * Complete offer creation for a specific player
+ */
+export function completePlayerOfferCreation(state: GameState, playerId: number): GameState {
+  return setPlayerOfferCreationState(state, playerId, {
+    playerId,
+    mode: 'complete'
+  })
+}
+
+/**
+ * Clear offer creation state for a specific player
+ */
+export function clearPlayerOfferCreationState(state: GameState, playerId: number): GameState {
+  return setPlayerOfferCreationState(state, playerId, null)
 }
 
 /**
