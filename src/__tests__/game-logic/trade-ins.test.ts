@@ -22,6 +22,7 @@ describe('Trade-in Processing', () => {
     drawPile: [],
     discardPile: [],
     actionPhaseDoneStates: [],
+    offerCreationStates: [],
     gotchaEffectState: null,
     selectedPerspective: 0,
     phaseInstructions: '',

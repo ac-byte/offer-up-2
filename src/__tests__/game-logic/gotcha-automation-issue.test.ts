@@ -28,6 +28,7 @@ describe('Gotcha Trade-ins Automation Issue', () => {
     })),
     discardPile: [],
     actionPhaseDoneStates: [],
+    offerCreationStates: [],
     gotchaEffectState: null,
     flipOneEffectState: null,
     addOneEffectState: null,

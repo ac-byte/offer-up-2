@@ -27,6 +27,7 @@ describe.skip('User Action Simulation Tests', () => {
     })),
     discardPile: [],
     actionPhaseDoneStates: [],
+    offerCreationStates: [],
     gotchaEffectState: null,
     flipOneEffectState: null,
     addOneEffectState: null,

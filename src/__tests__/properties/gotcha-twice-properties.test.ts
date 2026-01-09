@@ -14,6 +14,7 @@ function createMockGameState(players: Player[]): GameState {
     drawPile: [],
     discardPile: [],
     actionPhaseDoneStates: [],
+    offerCreationStates: [],
     gotchaEffectState: null,
     selectedPerspective: 0,
     phaseInstructions: '',

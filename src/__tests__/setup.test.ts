@@ -31,6 +31,7 @@ describe('Project Setup', () => {
       drawPile: [testCard],
       discardPile: [],
       actionPhaseDoneStates: [],
+      offerCreationStates: [],
       selectedPerspective: 0,
       phaseInstructions: 'Test phase',
       autoFollowPerspective: true,

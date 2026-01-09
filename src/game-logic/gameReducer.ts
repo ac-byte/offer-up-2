@@ -425,50 +425,11 @@ export function handleWinnerDeterminationPhase(state: GameState): GameState {
 }
 
 /**
- * Initializes offer creation for a seller during offer phase
+ * Initialize offer creation for a specific player (DEPRECATED - use initializePlayerOfferCreation)
  */
 export function initializeOfferCreation(state: GameState, playerId: number): GameState {
-  const player = state.players[playerId]
-  
-  // Handle edge case: if player has 3 or fewer cards, auto-move all to offer and go to flipping mode
-  if (player.hand.length <= 3) {
-    const newState = { ...state }
-    newState.players = state.players.map((p, index) => {
-      if (index !== playerId) {
-        return p
-      }
-      
-      // Move all cards from hand to offer as face-down
-      const newOffer = p.hand.map((card, cardIndex) => ({
-        ...card,
-        faceUp: false,
-        position: cardIndex
-      }))
-      
-      return {
-        ...p,
-        hand: [],
-        offer: newOffer
-      }
-    })
-    
-    // Set offer creation state to flipping mode
-    newState.offerCreationState = {
-      playerId,
-      mode: 'flipping'
-    }
-    
-    return newState
-  } else {
-    // Normal case: enter selecting mode
-    return {
-      ...state,
-      offerCreationState: {
-        playerId,
-        mode: 'selecting'
-      }
-    }
-  }
+  // This function is deprecated, redirect to the new function
+  return initializePlayerOfferCreation(state, playerId)
 }
 
 /**
@@ -479,13 +440,20 @@ export function areAllOfferCreationsComplete(state: GameState): boolean {
     return false
   }
   
-  // Get all sellers (players who are not the buyer)
-  const sellers = state.players.filter((_, index) => index !== state.currentBuyerIndex)
+  const buyerIndex = state.currentBuyerIndex
   
-  // Check if all sellers have completed offers (offer array has 3 cards and at least one is face up)
-  return sellers.every(seller => 
-    seller.offer.length === 3 && seller.offer.some(card => card.faceUp)
-  )
+  // Check each player (except buyer) to see if they've completed their offer
+  return state.players.every((player, index) => {
+    if (index === buyerIndex) return true // Buyer doesn't create offers
+    
+    const playerOfferState = getPlayerOfferCreationState(state, index)
+    
+    // Player has completed their offer if:
+    // 1. They have 3 cards in their offer and at least one is face up, OR
+    // 2. Their offer creation state is null (completed and cleared)
+    return (player.offer.length === 3 && player.offer.some(card => card.faceUp)) ||
+           playerOfferState === null
+  })
 }
 
 /**
@@ -660,6 +628,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         drawPile,
         discardPile: [],
         actionPhaseDoneStates: [],
+        offerCreationStates: initializeOfferCreationStates(players.length),
         selectedPerspective: 0,
         phaseInstructions: getPhaseInstructions(GamePhase.BUYER_ASSIGNMENT),
         autoFollowPerspective: true,
@@ -1636,13 +1605,16 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         throw new Error(`Invalid player ID: ${playerId}`)
       }
       
+      // Get player's offer creation state
+      const playerOfferState = getPlayerOfferCreationState(state, playerId)
+      
       // Validate that we're in offer creation mode for this player
-      if (!state.offerCreationState || state.offerCreationState.playerId !== playerId) {
+      if (!playerOfferState || playerOfferState.playerId !== playerId) {
         throw new Error('Player is not in offer creation mode')
       }
       
       // Validate that we're in selecting mode
-      if (state.offerCreationState.mode !== 'selecting') {
+      if (playerOfferState.mode !== 'selecting') {
         throw new Error('Cannot move cards when offer is locked')
       }
       
@@ -1695,13 +1667,16 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         throw new Error(`Invalid player ID: ${playerId}`)
       }
       
+      // Get player's offer creation state
+      const playerOfferState = getPlayerOfferCreationState(state, playerId)
+      
       // Validate that we're in offer creation mode for this player
-      if (!state.offerCreationState || state.offerCreationState.playerId !== playerId) {
+      if (!playerOfferState || playerOfferState.playerId !== playerId) {
         throw new Error('Player is not in offer creation mode')
       }
       
       // Validate that we're in selecting mode
-      if (state.offerCreationState.mode !== 'selecting') {
+      if (playerOfferState.mode !== 'selecting') {
         throw new Error('Cannot move cards when offer is locked')
       }
       
@@ -1757,13 +1732,16 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         throw new Error(`Invalid player ID: ${playerId}`)
       }
       
+      // Get player's offer creation state
+      const playerOfferState = getPlayerOfferCreationState(state, playerId)
+      
       // Validate that we're in offer creation mode for this player
-      if (!state.offerCreationState || state.offerCreationState.playerId !== playerId) {
+      if (!playerOfferState || playerOfferState.playerId !== playerId) {
         throw new Error('Player is not in offer creation mode')
       }
       
       // Validate that we're in selecting mode
-      if (state.offerCreationState.mode !== 'selecting') {
+      if (playerOfferState.mode !== 'selecting') {
         throw new Error('Offer is already locked')
       }
       
@@ -1775,13 +1753,10 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       }
       
       // Update offer creation state to flipping mode
-      return {
-        ...state,
-        offerCreationState: {
-          ...state.offerCreationState,
-          mode: 'flipping'
-        }
-      }
+      return setPlayerOfferCreationState(state, playerId, {
+        playerId,
+        mode: 'flipping'
+      })
     }
     
     case 'FLIP_OFFER_CARD': {
@@ -1792,13 +1767,16 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         throw new Error(`Invalid player ID: ${playerId}`)
       }
       
+      // Get player's offer creation state
+      const playerOfferState = getPlayerOfferCreationState(state, playerId)
+      
       // Validate that we're in offer creation mode for this player
-      if (!state.offerCreationState || state.offerCreationState.playerId !== playerId) {
+      if (!playerOfferState || playerOfferState.playerId !== playerId) {
         throw new Error('Player is not in offer creation mode')
       }
       
       // Validate that we're in flipping mode
-      if (state.offerCreationState.mode !== 'flipping') {
+      if (playerOfferState.mode !== 'flipping') {
         throw new Error('Must lock offer before flipping cards')
       }
       
@@ -1837,17 +1815,17 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         }
       })
       
-      // Clear offer creation state
-      newState.offerCreationState = null
+      // Clear offer creation state for this player
+      const stateWithClearedOffer = clearPlayerOfferCreationState(newState, playerId)
       
       // Check if all sellers have now completed their offers
-      if (areAllOfferCreationsComplete(newState)) {
+      if (areAllOfferCreationsComplete(stateWithClearedOffer)) {
         // Automatically advance to buyer-flip phase
-        const { nextPhase, nextRound } = advanceToNextPhase(newState.currentPhase, newState.round)
+        const { nextPhase, nextRound } = advanceToNextPhase(stateWithClearedOffer.currentPhase, stateWithClearedOffer.round)
         
         // Create state with advanced phase
         const stateWithNewPhase = {
-          ...newState,
+          ...stateWithClearedOffer,
           currentPhase: nextPhase,
           round: nextRound,
           phaseInstructions: getPhaseInstructions(nextPhase)
@@ -1869,11 +1847,11 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         return finalState
       } else {
         // Not all offers complete yet - advance to next eligible seller
-        const nextEligiblePlayer = getNextEligiblePlayer(playerId, newState, new Set())
+        const nextEligiblePlayer = getNextEligiblePlayer(playerId, stateWithClearedOffer, new Set())
         
         if (nextEligiblePlayer !== null) {
           // Initialize offer creation for next seller
-          let stateWithNextPlayer = initializeOfferCreation(newState, nextEligiblePlayer)
+          let stateWithNextPlayer = initializePlayerOfferCreation(stateWithClearedOffer, nextEligiblePlayer)
           stateWithNextPlayer = {
             ...stateWithNextPlayer,
             currentPlayerIndex: nextEligiblePlayer
@@ -1885,7 +1863,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           return stateWithNextPlayer
         } else {
           // No more eligible sellers - this shouldn't happen, but handle gracefully
-          return newState
+          return stateWithClearedOffer
         }
       }
     }
@@ -2776,7 +2754,7 @@ export function advanceToNextPhaseWithInitialization(state: GameState): GameStat
     // Initialize offer creation for first eligible seller
     const firstEligibleSeller = getNextEligiblePlayer(-1, stateWithNewPhase, new Set())
     if (firstEligibleSeller !== null && firstEligibleSeller !== stateWithNewPhase.currentBuyerIndex) {
-      stateWithInitializedPhase = initializeOfferCreation(stateWithNewPhase, firstEligibleSeller)
+      stateWithInitializedPhase = initializePlayerOfferCreation(stateWithNewPhase, firstEligibleSeller)
     }
   } else if (nextPhase === GamePhase.DEAL) {
     // Automatically handle deal phase
