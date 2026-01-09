@@ -389,138 +389,6 @@ export const GameBoard: React.FC = () => {
         )
       
       case GamePhase.ACTION_PHASE:
-        return (
-          <div className="phase-description">
-            <p>{phaseInfo?.description}</p>
-            {/* Show any pending action card effects */}
-            {(gameState.flipOneEffectState?.awaitingCardSelection ||
-              gameState.addOneEffectState?.awaitingHandCardSelection ||
-              gameState.addOneEffectState?.awaitingOfferSelection ||
-              gameState.removeOneEffectState?.awaitingCardSelection ||
-              gameState.removeTwoEffectState?.awaitingCardSelection ||
-              gameState.stealAPointEffectState?.awaitingTargetSelection) && (
-              <div className="action-card-effects">
-                {/* Action card effect UI would go here */}
-              </div>
-            )}
-          </div>
-        )
-      
-      case GamePhase.OFFER_SELECTION:
-        const buyer = getCurrentBuyer()
-        const sellersWithOffers = gameState.players.filter((player, index) => 
-          index !== gameState.currentBuyerIndex && player.offer.length > 0
-        )
-        
-        if (sellersWithOffers.length === 0) {
-          return (
-            <div className="phase-waiting">
-              <span>No offers available to select</span>
-            </div>
-          )
-        }
-        
-        // Check if current player is the buyer
-        const isBuyer = gameState.selectedPerspective === gameState.currentBuyerIndex
-        
-        if (isBuyer) {
-          // Show buttons for the buyer
-          return (
-            <div className="offer-selection-controls">
-              <div className="phase-description">
-                <p>{phaseInfo?.description}</p>
-              </div>
-              <div className="offer-selection-buttons">
-                {sellersWithOffers.map((seller) => (
-                  <button
-                    key={seller.id}
-                    onClick={() => handleOfferSelect(seller.id)}
-                    className="action-button offer-select-button"
-                  >
-                    Select {seller.name}'s Offer
-                  </button>
-                ))}
-              </div>
-            </div>
-          )
-        } else {
-          // Show waiting message for non-buyers
-          return (
-            <div className="phase-waiting">
-              <span>Waiting for <strong>{buyer?.name}</strong> to select an offer</span>
-            </div>
-          )
-        }
-      
-      case GamePhase.BUYER_ASSIGNMENT:
-      case GamePhase.OFFER_DISTRIBUTION:
-      case GamePhase.THING_TRADEINS:
-      case GamePhase.WINNER_DETERMINATION:
-        return null // Debug controls moved to AdminFooter
-      
-      case GamePhase.GOTCHA_TRADEINS:
-        // Check if there's a pending Gotcha effect
-        if (gameState.gotchaEffectState) {
-          const { type, affectedPlayerIndex, selectedCards, awaitingBuyerChoice } = gameState.gotchaEffectState
-          const affectedPlayer = gameState.players[affectedPlayerIndex]
-          const buyer = getCurrentBuyer()
-          
-          if (awaitingBuyerChoice) {
-            // Buyer needs to choose steal or discard for selected cards
-            return (
-              <div className="gotcha-effect-controls">
-                <div className="gotcha-effect-header">
-                  <strong>{buyer?.name}</strong> (Buyer): Choose action for selected card(s)
-                </div>
-                <div className="selected-cards">
-                  <strong>Selected Cards:</strong>
-                  {selectedCards.map(card => (
-                    <span key={card.id} className="selected-card-name">{card.name}</span>
-                  ))}
-                </div>
-                <div className="gotcha-action-buttons">
-                  {affectedPlayerIndex !== gameState.currentBuyerIndex && (
-                    <button
-                      onClick={() => handleGotchaActionChoice('steal')}
-                      className="action-button gotcha-steal-button"
-                    >
-                      Steal to Collection
-                    </button>
-                  )}
-                  <button
-                    onClick={() => handleGotchaActionChoice('discard')}
-                    className="action-button gotcha-discard-button"
-                  >
-                    Discard
-                  </button>
-                </div>
-                {affectedPlayerIndex === gameState.currentBuyerIndex && (
-                  <div className="gotcha-self-effect-note">
-                    <em>Note: Cards from your own collection must be discarded</em>
-                  </div>
-                )}
-              </div>
-            )
-          } else {
-            // Buyer needs to select cards from affected player's collection
-            return (
-              <div className="gotcha-effect-controls">
-                <div className="gotcha-effect-header">
-                  <strong>{buyer?.name}</strong> (Buyer): Select {gameState.gotchaEffectState.cardsToSelect} card(s) from {affectedPlayer.name}'s collection
-                </div>
-                <div className="gotcha-selection-info">
-                  <span>Gotcha {type.charAt(0).toUpperCase() + type.slice(1)} effect</span>
-                  <span>Cards selected: {selectedCards.length} / {gameState.gotchaEffectState.cardsToSelect}</span>
-                </div>
-              </div>
-            )
-          }
-        } else {
-          // No pending Gotcha effect - continue processing
-          return null // Debug controls moved to AdminFooter
-        }
-      
-      case GamePhase.ACTION_PHASE:
         // Check if there's a pending Flip One effect
         if (gameState.flipOneEffectState && gameState.flipOneEffectState?.awaitingCardSelection === true) {
           const flipOnePlayer = gameState.players[gameState.flipOneEffectState.playerId]
@@ -651,7 +519,126 @@ export const GameBoard: React.FC = () => {
           )
         }
         
-        return null // No interactive actions needed
+        // If no action card effects are active, show the phase description
+        return (
+          <div className="phase-description">
+            <p>{phaseInfo?.description}</p>
+          </div>
+        )
+      
+      case GamePhase.OFFER_SELECTION:
+        const buyer = getCurrentBuyer()
+        const sellersWithOffers = gameState.players.filter((player, index) => 
+          index !== gameState.currentBuyerIndex && player.offer.length > 0
+        )
+        
+        if (sellersWithOffers.length === 0) {
+          return (
+            <div className="phase-waiting">
+              <span>No offers available to select</span>
+            </div>
+          )
+        }
+        
+        // Check if current player is the buyer
+        const isBuyer = gameState.selectedPerspective === gameState.currentBuyerIndex
+        
+        if (isBuyer) {
+          // Show buttons for the buyer
+          return (
+            <div className="offer-selection-controls">
+              <div className="phase-description">
+                <p>{phaseInfo?.description}</p>
+              </div>
+              <div className="offer-selection-buttons">
+                {sellersWithOffers.map((seller) => (
+                  <button
+                    key={seller.id}
+                    onClick={() => handleOfferSelect(seller.id)}
+                    className="action-button offer-select-button"
+                  >
+                    Select {seller.name}'s Offer
+                  </button>
+                ))}
+              </div>
+            </div>
+          )
+        } else {
+          // Show waiting message for non-buyers
+          return (
+            <div className="phase-waiting">
+              <span>Waiting for <strong>{buyer?.name}</strong> to select an offer</span>
+            </div>
+          )
+        }
+      
+      case GamePhase.BUYER_ASSIGNMENT:
+      case GamePhase.OFFER_DISTRIBUTION:
+      case GamePhase.THING_TRADEINS:
+      case GamePhase.WINNER_DETERMINATION:
+        return null // Debug controls moved to AdminFooter
+      
+      case GamePhase.GOTCHA_TRADEINS:
+        // Check if there's a pending Gotcha effect
+        if (gameState.gotchaEffectState) {
+          const { type, affectedPlayerIndex, selectedCards, awaitingBuyerChoice } = gameState.gotchaEffectState
+          const affectedPlayer = gameState.players[affectedPlayerIndex]
+          const buyer = getCurrentBuyer()
+          
+          if (awaitingBuyerChoice) {
+            // Buyer needs to choose steal or discard for selected cards
+            return (
+              <div className="gotcha-effect-controls">
+                <div className="gotcha-effect-header">
+                  <strong>{buyer?.name}</strong> (Buyer): Choose action for selected card(s)
+                </div>
+                <div className="selected-cards">
+                  <strong>Selected Cards:</strong>
+                  {selectedCards.map(card => (
+                    <span key={card.id} className="selected-card-name">{card.name}</span>
+                  ))}
+                </div>
+                <div className="gotcha-action-buttons">
+                  {affectedPlayerIndex !== gameState.currentBuyerIndex && (
+                    <button
+                      onClick={() => handleGotchaActionChoice('steal')}
+                      className="action-button gotcha-steal-button"
+                    >
+                      Steal to Collection
+                    </button>
+                  )}
+                  <button
+                    onClick={() => handleGotchaActionChoice('discard')}
+                    className="action-button gotcha-discard-button"
+                  >
+                    Discard
+                  </button>
+                </div>
+                {affectedPlayerIndex === gameState.currentBuyerIndex && (
+                  <div className="gotcha-self-effect-note">
+                    <em>Note: Cards from your own collection must be discarded</em>
+                  </div>
+                )}
+              </div>
+            )
+          } else {
+            // Buyer needs to select cards from affected player's collection
+            return (
+              <div className="gotcha-effect-controls">
+                <div className="gotcha-effect-header">
+                  <strong>{buyer?.name}</strong> (Buyer): Select {gameState.gotchaEffectState.cardsToSelect} card(s) from {affectedPlayer.name}'s collection
+                </div>
+                <div className="gotcha-selection-info">
+                  <span>Gotcha {type.charAt(0).toUpperCase() + type.slice(1)} effect</span>
+                  <span>Cards selected: {selectedCards.length} / {gameState.gotchaEffectState.cardsToSelect}</span>
+                </div>
+              </div>
+            )
+          }
+        } else {
+          // No pending Gotcha effect - continue processing
+          return null // Debug controls moved to AdminFooter
+        }
       
       default:
         return null // No interactive actions needed
