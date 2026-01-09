@@ -28,7 +28,7 @@ export interface GameState {
   stealAPointEffectState: StealAPointEffectState | null
   
   // Offer Creation State
-  offerCreationState: OfferCreationState | null
+  offerCreationStates: (OfferCreationState | null)[]
   
   // UI State
   selectedPerspective: number
