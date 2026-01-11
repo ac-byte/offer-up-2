@@ -318,6 +318,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onStartGame, onEnterLobb
                 placeholder="Enter your name"
                 maxLength={20}
                 disabled={isLoading}
+                autoFocus
               />
             </div>
 
@@ -366,6 +367,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onStartGame, onEnterLobb
                 placeholder="Enter your name"
                 maxLength={20}
                 disabled={isLoading}
+                autoFocus
               />
             </div>
 

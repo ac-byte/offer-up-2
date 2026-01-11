@@ -169,6 +169,7 @@ function JoinGameHandler({ onEnterLobby, onError }: { onEnterLobby: () => void, 
           maxLength={20}
           disabled={isJoining}
           onKeyDown={(e) => e.key === 'Enter' && handleJoinGame()}
+          autoFocus
         />
         
         <div className="join-actions">
