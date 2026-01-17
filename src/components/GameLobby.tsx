@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { useMultiplayer } from '../contexts/MultiplayerContext'
+import { ConnectionStatus } from './ConnectionStatus'
 import './GameLobby.css'
 
 export interface GameLobbyProps {
@@ -7,7 +8,7 @@ export interface GameLobbyProps {
 }
 
 export const GameLobby: React.FC<GameLobbyProps> = ({ onLeaveGame }) => {
-  const { state, startGame } = useMultiplayer()
+  const { state, startGame, manualRetry } = useMultiplayer()
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null)
 
   const handleStartGame = async () => {
@@ -128,13 +129,14 @@ export const GameLobby: React.FC<GameLobbyProps> = ({ onLeaveGame }) => {
         )}
 
         {/* Connection Status */}
-        <div className={`connection-status ${state.connectionStatus}`}>
+        <div className={`connection-status ${state.connectionState}`}>
           <div className="status-indicator"></div>
           <span className="status-text">
-            {state.connectionStatus === 'connected' && 'Connected'}
-            {state.connectionStatus === 'connecting' && 'Connecting...'}
-            {state.connectionStatus === 'error' && 'Connection Error'}
-            {state.connectionStatus === 'disconnected' && 'Disconnected'}
+            {state.connectionState === 'connected' && 'Connected'}
+            {state.connectionState === 'connecting' && 'Connecting...'}
+            {state.connectionState === 'failed' && 'Connection Failed'}
+            {state.connectionState === 'retrying' && `Retrying (${state.retryAttempt})...`}
+            {state.connectionState === 'disconnected' && 'Disconnected'}
           </span>
         </div>
 
@@ -234,6 +236,13 @@ export const GameLobby: React.FC<GameLobbyProps> = ({ onLeaveGame }) => {
           </div>
         </div>
       </div>
+
+      {/* Connection Status Overlay - Shows connection state and retry button when needed */}
+      <ConnectionStatus
+        connectionState={state.connectionState}
+        retryAttempt={state.retryAttempt}
+        onRetry={manualRetry}
+      />
     </div>
   )
 }

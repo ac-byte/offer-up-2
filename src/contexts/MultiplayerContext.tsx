@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useReducer, useEffect, useRef } from 'react'
 import { MultiplayerApiClient, LobbyState, ConnectedPlayer, ServerSentEvent } from '../services/multiplayerApi'
+import { ConnectionManager, ConnectionState, ConnectionMetrics } from '../services/ConnectionManager'
 
 // Multiplayer state types
 export interface MultiplayerState {
@@ -11,7 +12,10 @@ export interface MultiplayerState {
   playerId: string | null
   playerName: string | null
   lobbyState: LobbyState | null
-  connectionStatus: 'disconnected' | 'connecting' | 'connected' | 'error'
+  connectionState: ConnectionState
+  retryAttempt: number
+  connectionMetrics: ConnectionMetrics | null
+  showRetryButton: boolean
   error: string | null
   gameStarted: boolean
 }
@@ -19,7 +23,10 @@ export interface MultiplayerState {
 // Multiplayer actions
 export type MultiplayerAction =
   | { type: 'SET_MODE'; mode: 'local' | 'multiplayer' }
-  | { type: 'SET_CONNECTION_STATUS'; status: 'disconnected' | 'connecting' | 'connected' | 'error' }
+  | { type: 'CONNECTION_STATE_CHANGED'; state: ConnectionState }
+  | { type: 'RETRY_ATTEMPT'; attemptNumber: number }
+  | { type: 'METRICS_UPDATED'; metrics: ConnectionMetrics }
+  | { type: 'SHOW_RETRY_BUTTON'; show: boolean }
   | { type: 'SET_ERROR'; error: string | null }
   | { type: 'GAME_CREATED'; gameId: string; gameCode: string; joinUrl: string; playerId: string; playerName: string }
   | { type: 'GAME_JOINED'; gameId: string; playerId: string; playerName: string; lobbyState: LobbyState }
@@ -38,7 +45,10 @@ const initialState: MultiplayerState = {
   playerId: null,
   playerName: null,
   lobbyState: null,
-  connectionStatus: 'disconnected',
+  connectionState: 'disconnected',
+  retryAttempt: 0,
+  connectionMetrics: null,
+  showRetryButton: false,
   error: null,
   gameStarted: false
 }
@@ -48,8 +58,22 @@ function multiplayerReducer(state: MultiplayerState, action: MultiplayerAction):
     case 'SET_MODE':
       return { ...state, mode: action.mode }
     
-    case 'SET_CONNECTION_STATUS':
-      return { ...state, connectionStatus: action.status }
+    case 'CONNECTION_STATE_CHANGED':
+      return { 
+        ...state, 
+        connectionState: action.state,
+        // Show retry button when connection fails
+        showRetryButton: action.state === 'failed'
+      }
+    
+    case 'RETRY_ATTEMPT':
+      return { ...state, retryAttempt: action.attemptNumber }
+    
+    case 'METRICS_UPDATED':
+      return { ...state, connectionMetrics: action.metrics }
+    
+    case 'SHOW_RETRY_BUTTON':
+      return { ...state, showRetryButton: action.show }
     
     case 'SET_ERROR':
       return { ...state, error: action.error }
@@ -81,7 +105,7 @@ function multiplayerReducer(state: MultiplayerState, action: MultiplayerAction):
         playerId: action.playerId,
         playerName: action.playerName,
         lobbyState: hostLobbyState,
-        connectionStatus: 'connected',
+        connectionState: 'connected',
         error: null
       }
     
@@ -94,7 +118,7 @@ function multiplayerReducer(state: MultiplayerState, action: MultiplayerAction):
         playerId: action.playerId,
         playerName: action.playerName,
         lobbyState: action.lobbyState,
-        connectionStatus: 'connected',
+        connectionState: 'connected',
         error: null
       }
     
@@ -152,6 +176,7 @@ interface MultiplayerContextType {
   startGame: () => Promise<void>
   leaveGame: () => void
   submitAction: (action: any) => Promise<void>
+  manualRetry: () => Promise<void>
 }
 
 const MultiplayerContext = createContext<MultiplayerContextType | undefined>(undefined)
@@ -160,28 +185,28 @@ const MultiplayerContext = createContext<MultiplayerContextType | undefined>(und
 export const MultiplayerProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(multiplayerReducer, initialState)
   const apiClient = useRef(new MultiplayerApiClient()).current
-  const eventSourceRef = useRef<EventSource | null>(null)
+  const connectionManagerRef = useRef<ConnectionManager | null>(null)
 
-  // Clean up event source on unmount
+  // Clean up connection manager on unmount
   useEffect(() => {
     return () => {
-      if (eventSourceRef.current) {
-        eventSourceRef.current.close()
-        eventSourceRef.current = null
+      if (connectionManagerRef.current) {
+        connectionManagerRef.current.disconnect()
+        connectionManagerRef.current = null
       }
     }
   }, [])
 
-  // Set up SSE connection when we have gameId and playerId
+  // Set up ConnectionManager when we have gameId and playerId
   useEffect(() => {
     if (state.gameId && state.playerId && state.mode === 'multiplayer') {
       connectToGameEvents()
     }
 
     return () => {
-      if (eventSourceRef.current) {
-        eventSourceRef.current.close()
-        eventSourceRef.current = null
+      if (connectionManagerRef.current) {
+        connectionManagerRef.current.disconnect()
+        connectionManagerRef.current = null
       }
     }
   }, [state.gameId, state.playerId, state.mode])
@@ -189,35 +214,49 @@ export const MultiplayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const connectToGameEvents = () => {
     if (!state.gameId || !state.playerId) return
 
-    // Close existing connection
-    if (eventSourceRef.current) {
-      eventSourceRef.current.close()
+    // Disconnect existing connection
+    if (connectionManagerRef.current) {
+      connectionManagerRef.current.disconnect()
     }
 
-    dispatch({ type: 'SET_CONNECTION_STATUS', status: 'connecting' })
+    // Create new ConnectionManager instance
+    const connectionManager = new ConnectionManager(
+      apiClient,
+      state.gameId,
+      state.playerId
+    )
 
-    const eventSource = apiClient.connectToGameEvents(state.gameId, state.playerId)
-    eventSourceRef.current = eventSource
-
-    eventSource.onopen = () => {
-      dispatch({ type: 'SET_CONNECTION_STATUS', status: 'connected' })
-      dispatch({ type: 'SET_ERROR', error: null })
-    }
-
-    eventSource.onerror = (error) => {
-      console.error('SSE connection error:', error)
-      dispatch({ type: 'SET_CONNECTION_STATUS', status: 'error' })
-      dispatch({ type: 'SET_ERROR', error: 'Connection lost. Attempting to reconnect...' })
-    }
-
-    eventSource.onmessage = (event) => {
-      try {
-        const data: ServerSentEvent = JSON.parse(event.data)
-        handleServerEvent(data)
-      } catch (error) {
-        console.error('Failed to parse SSE message:', error)
+    // Wire up callbacks to dispatch actions
+    connectionManager.onStateChange = (connectionState: ConnectionState) => {
+      dispatch({ type: 'CONNECTION_STATE_CHANGED', state: connectionState })
+      
+      // Update retry attempt when retrying
+      if (connectionState === 'retrying') {
+        const metrics = connectionManager.getMetrics()
+        dispatch({ type: 'RETRY_ATTEMPT', attemptNumber: metrics.totalAttempts })
       }
+      
+      // Update metrics
+      const metrics = connectionManager.getMetrics()
+      dispatch({ type: 'METRICS_UPDATED', metrics })
     }
+
+    connectionManager.onMessage = (event: ServerSentEvent) => {
+      handleServerEvent(event)
+    }
+
+    connectionManager.onError = (error: Error) => {
+      console.error('Connection error:', error)
+      dispatch({ type: 'SET_ERROR', error: error.message })
+    }
+
+    // Store reference
+    connectionManagerRef.current = connectionManager
+
+    // Initiate connection
+    connectionManager.connect().catch((error) => {
+      console.error('Failed to connect:', error)
+    })
   }
 
   const handleServerEvent = (event: ServerSentEvent) => {
@@ -264,7 +303,7 @@ export const MultiplayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   const createGame = async (hostName: string) => {
     try {
-      dispatch({ type: 'SET_CONNECTION_STATUS', status: 'connecting' })
+      dispatch({ type: 'CONNECTION_STATE_CHANGED', state: 'connecting' })
       dispatch({ type: 'SET_ERROR', error: null })
       
       const response = await apiClient.createGame(hostName)
@@ -278,7 +317,7 @@ export const MultiplayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
         playerName: hostName
       })
     } catch (error) {
-      dispatch({ type: 'SET_CONNECTION_STATUS', status: 'error' })
+      dispatch({ type: 'CONNECTION_STATE_CHANGED', state: 'failed' })
       dispatch({ type: 'SET_ERROR', error: error instanceof Error ? error.message : 'Failed to create game' })
       throw error
     }
@@ -286,7 +325,7 @@ export const MultiplayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   const joinGame = async (gameCode: string, playerName: string) => {
     try {
-      dispatch({ type: 'SET_CONNECTION_STATUS', status: 'connecting' })
+      dispatch({ type: 'CONNECTION_STATE_CHANGED', state: 'connecting' })
       dispatch({ type: 'SET_ERROR', error: null })
       
       const response = await apiClient.joinGame(gameCode, playerName)
@@ -303,7 +342,7 @@ export const MultiplayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
         throw new Error(response.error || 'Failed to join game')
       }
     } catch (error) {
-      dispatch({ type: 'SET_CONNECTION_STATUS', status: 'error' })
+      dispatch({ type: 'CONNECTION_STATE_CHANGED', state: 'failed' })
       dispatch({ type: 'SET_ERROR', error: error instanceof Error ? error.message : 'Failed to join game' })
       throw error
     }
@@ -329,9 +368,9 @@ export const MultiplayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
   }
 
   const leaveGame = () => {
-    if (eventSourceRef.current) {
-      eventSourceRef.current.close()
-      eventSourceRef.current = null
+    if (connectionManagerRef.current) {
+      connectionManagerRef.current.disconnect()
+      connectionManagerRef.current = null
     }
     dispatch({ type: 'RESET' })
   }
@@ -353,6 +392,17 @@ export const MultiplayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
     }
   }
 
+  const manualRetry = async () => {
+    if (connectionManagerRef.current) {
+      try {
+        await connectionManagerRef.current.manualRetry()
+      } catch (error) {
+        console.error('Manual retry failed:', error)
+        dispatch({ type: 'SET_ERROR', error: error instanceof Error ? error.message : 'Manual retry failed' })
+      }
+    }
+  }
+
   const contextValue: MultiplayerContextType = {
     state,
     dispatch,
@@ -361,7 +411,8 @@ export const MultiplayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
     joinGame,
     startGame,
     leaveGame,
-    submitAction
+    submitAction,
+    manualRetry
   }
 
   return (

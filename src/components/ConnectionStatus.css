@@ -1,0 +1,247 @@
+/* ConnectionStatus Component Styles */
+
+.connection-status-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+.connection-status-container {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  padding: 2.5rem;
+  max-width: 500px;
+  width: 90%;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.connection-status-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  text-align: center;
+}
+
+/* Spinner Styles */
+.connection-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid #e9ecef;
+  border-top: 4px solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Message Styles */
+.connection-message {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #2c3e50;
+  margin: 0;
+}
+
+.retry-attempt-count {
+  font-size: 1rem;
+  color: #6c757d;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+}
+
+/* Error State Styles */
+.connection-error-icon {
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
+}
+
+.connection-error-message {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #dc3545;
+  margin: 0;
+}
+
+.connection-error-details {
+  font-size: 1rem;
+  color: #6c757d;
+  line-height: 1.5;
+  margin: 0.5rem 0 1rem 0;
+  max-width: 400px;
+}
+
+/* Retry Button Styles */
+.retry-button {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 1rem 2rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
+  min-width: 180px;
+  margin-top: 0.5rem;
+}
+
+.retry-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(40, 167, 69, 0.6);
+}
+
+.retry-button:active {
+  transform: translateY(0);
+}
+
+.retry-button:focus {
+  outline: 2px solid #28a745;
+  outline-offset: 2px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .connection-status-container {
+    padding: 2rem;
+    width: 85%;
+  }
+
+  .connection-message {
+    font-size: 1.1rem;
+  }
+
+  .connection-error-message {
+    font-size: 1.2rem;
+  }
+
+  .connection-error-details {
+    font-size: 0.95rem;
+  }
+
+  .retry-button {
+    padding: 0.875rem 1.75rem;
+    font-size: 1rem;
+    min-width: 160px;
+  }
+}
+
+@media (max-width: 480px) {
+  .connection-status-container {
+    padding: 1.5rem;
+    width: 90%;
+  }
+
+  .connection-spinner {
+    width: 40px;
+    height: 40px;
+    border-width: 3px;
+  }
+
+  .connection-message {
+    font-size: 1rem;
+  }
+
+  .retry-attempt-count {
+    font-size: 0.9rem;
+    padding: 0.4rem 0.8rem;
+  }
+
+  .connection-error-icon {
+    font-size: 2.5rem;
+  }
+
+  .connection-error-message {
+    font-size: 1.1rem;
+  }
+
+  .connection-error-details {
+    font-size: 0.9rem;
+  }
+
+  .retry-button {
+    padding: 0.75rem 1.5rem;
+    font-size: 0.95rem;
+    min-width: 140px;
+  }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .connection-spinner {
+    animation: none;
+    border-top-color: #667eea;
+  }
+
+  .connection-status-container {
+    animation: none;
+  }
+
+  .retry-button {
+    transition: none;
+  }
+
+  .retry-button:hover {
+    transform: none;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .connection-status-overlay {
+    background: rgba(0, 0, 0, 0.8);
+  }
+
+  .connection-status-container {
+    border: 2px solid #000;
+  }
+
+  .retry-attempt-count {
+    border-color: #000;
+  }
+
+  .retry-button {
+    border: 2px solid #000;
+  }
+}
+
+/* Focus styles for keyboard navigation */
+.retry-button:focus:not(:focus-visible) {
+  outline: none;
+}
+
+.retry-button:focus-visible {
+  outline: 2px solid #28a745;
+  outline-offset: 2px;
+}

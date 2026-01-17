@@ -6,13 +6,14 @@ import { PlayerArea } from './PlayerArea'
 import { HomeScreen } from './HomeScreen'
 import { AdminFooter } from './AdminFooter'
 import { CardTracker } from './CardTracker'
+import { ConnectionStatus } from './ConnectionStatus'
 import { GameAction, GamePhase, Card } from '../types'
 import { getPlayerOfferCreationState } from '../game-logic/gameReducer'
 import './GameBoard.css'
 
 export const GameBoard: React.FC = () => {
   const { gameState, dispatch } = useGameContext()
-  const { state: multiplayerState, submitAction } = useMultiplayer()
+  const { state: multiplayerState, submitAction, manualRetry } = useMultiplayer()
   const [localGameStarting, setLocalGameStarting] = React.useState(false)
 
   // Auto-set perspective for multiplayer mode
@@ -699,12 +700,16 @@ export const GameBoard: React.FC = () => {
         {multiplayerState.mode === 'multiplayer' && (
           <div className="debug-section">
             <div className="connection-status">
-              <span className={`status-indicator ${multiplayerState.connectionStatus}`}>
-                {multiplayerState.connectionStatus === 'connected' ? '🟢' : 
-                 multiplayerState.connectionStatus === 'connecting' ? '🟡' : 
-                 multiplayerState.connectionStatus === 'error' ? '🔴' : '⚫'}
+              <span className={`status-indicator ${multiplayerState.connectionState}`}>
+                {multiplayerState.connectionState === 'connected' ? '🟢' : 
+                 multiplayerState.connectionState === 'connecting' ? '🟡' : 
+                 multiplayerState.connectionState === 'retrying' ? '🟠' :
+                 multiplayerState.connectionState === 'failed' ? '🔴' : '⚫'}
               </span>
-              <span>Connection: {multiplayerState.connectionStatus}</span>
+              <span>Connection: {multiplayerState.connectionState}</span>
+              {multiplayerState.retryAttempt > 0 && (
+                <span className="retry-info"> (Attempt {multiplayerState.retryAttempt})</span>
+              )}
               {multiplayerState.error && (
                 <span className="error-message"> - {multiplayerState.error}</span>
               )}
@@ -1003,6 +1008,15 @@ export const GameBoard: React.FC = () => {
 
       {/* Card Tracker for debugging card loss - Hidden but available for future debugging */}
       {/* <CardTracker gameState={gameState} /> */}
+
+      {/* Connection Status Overlay - Only shown in multiplayer mode when not connected */}
+      {multiplayerState.mode === 'multiplayer' && (
+        <ConnectionStatus
+          connectionState={multiplayerState.connectionState}
+          retryAttempt={multiplayerState.retryAttempt}
+          onRetry={manualRetry}
+        />
+      )}
     </div>
   )
 }
