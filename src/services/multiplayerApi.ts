@@ -230,6 +230,26 @@ export class MultiplayerApiClient {
   }
 
   /**
+   * Request current game state (used after reconnection)
+   */
+  async requestGameState(gameId: string, playerId: string): Promise<void> {
+    const response = await fetch(`${this.baseUrl}/games/${gameId}/state?playerId=${playerId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || 'Failed to request game state')
+    }
+
+    // The server will send the game state through the SSE connection
+    // No need to return anything here
+  }
+
+  /**
    * Extract game code from URL or return the code directly
    */
   static extractGameCode(input: string): string | null {

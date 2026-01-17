@@ -73,6 +73,7 @@ export class ConnectionManager {
   private connectionTimer: NodeJS.Timeout | null = null
   private retryTimer: NodeJS.Timeout | null = null
   private currentAttempt: ConnectionAttempt | null = null
+  private wasConnected: boolean = false // Track if we were previously connected
 
   // Event handler callbacks (to be set by consumer)
   public onStateChange?: (state: ConnectionState) => void
@@ -243,13 +244,48 @@ export class ConnectionManager {
       this.updateAverageConnectionTime()
     }
 
+    // Check if this is a reconnection (was connected before)
+    const isReconnection = this.wasConnected && this.state !== 'connected'
+
+    // Mark that we've been connected (for detecting mid-game disconnections)
+    this.wasConnected = true
+
     // Update state
     this.setState('connected')
     this.retryCount = 0
     
     const duration = this.currentAttempt?.duration || 0
-    this.logConnectionEvent('connected', undefined, duration)
+    
+    if (isReconnection) {
+      this.logConnectionEvent('connected', 'Reconnected successfully', duration)
+      // Request game state sync after reconnection
+      this.requestGameStateSync()
+    } else {
+      this.logConnectionEvent('connected', undefined, duration)
+    }
+    
     this.currentAttempt = null
+  }
+
+  /**
+   * Request game state synchronization from server after reconnection
+   */
+  private requestGameStateSync(): void {
+    console.log('[ConnectionManager] Requesting game state sync after reconnection')
+    
+    // Send a message through the EventSource to request current game state
+    // The server should respond with a game-state-update event
+    // This is handled by sending a custom event that the server will process
+    
+    // Note: Since EventSource is unidirectional (server to client), 
+    // we need to make an HTTP request to trigger the sync
+    this.apiClient.requestGameState(this.gameId, this.playerId)
+      .then(() => {
+        console.log('[ConnectionManager] Game state sync requested')
+      })
+      .catch((error: Error) => {
+        console.error('[ConnectionManager] Failed to request game state sync:', error)
+      })
   }
 
   /**
@@ -290,6 +326,9 @@ export class ConnectionManager {
       this.connectionTimer = null
     }
 
+    // Detect if this is a mid-game disconnection
+    const isMidGameDisconnection = this.wasConnected && this.state === 'connected'
+
     // Complete current attempt as failed
     if (this.currentAttempt) {
       this.currentAttempt.endTime = Date.now()
@@ -301,7 +340,13 @@ export class ConnectionManager {
     }
 
     const errorMessage = error?.message || 'Unknown error'
-    this.logConnectionEvent('error', errorMessage)
+    
+    if (isMidGameDisconnection) {
+      this.logConnectionEvent('error', `Mid-game disconnection: ${errorMessage}`)
+    } else {
+      this.logConnectionEvent('error', errorMessage)
+    }
+    
     this.currentAttempt = null
 
     // Close the EventSource
@@ -315,8 +360,15 @@ export class ConnectionManager {
       this.onError(error instanceof Error ? error : new Error(errorMessage))
     }
 
-    // Schedule retry if retries remain
-    this.scheduleRetry()
+    // For mid-game disconnections, automatically trigger background reconnection
+    // by scheduling retry (if auto-reconnect is enabled)
+    if (isMidGameDisconnection && this.config.enableAutoReconnect) {
+      console.log('[ConnectionManager] Mid-game disconnection detected, initiating background reconnection')
+      this.scheduleRetry()
+    } else {
+      // For initial connection failures, also schedule retry
+      this.scheduleRetry()
+    }
   }
 
   /**

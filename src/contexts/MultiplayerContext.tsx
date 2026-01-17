@@ -197,6 +197,9 @@ export const MultiplayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
     }
   }, [])
 
+  // Track previous connection state for detecting mid-game disconnections
+  const previousConnectionStateRef = useRef<ConnectionState>('disconnected')
+
   // Set up ConnectionManager when we have gameId and playerId
   useEffect(() => {
     if (state.gameId && state.playerId && state.mode === 'multiplayer') {
@@ -210,6 +213,26 @@ export const MultiplayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
       }
     }
   }, [state.gameId, state.playerId, state.mode])
+
+  // Detect mid-game disconnections and trigger background reconnection
+  useEffect(() => {
+    const previousState = previousConnectionStateRef.current
+    const currentState = state.connectionState
+
+    // Detect mid-game disconnection: was connected, now disconnected/retrying
+    const wasMidGameDisconnection = 
+      previousState === 'connected' && 
+      (currentState === 'retrying' || currentState === 'disconnected')
+
+    if (wasMidGameDisconnection && state.gameStarted) {
+      console.log('[MultiplayerContext] Mid-game disconnection detected, background reconnection in progress')
+      // ConnectionManager will automatically handle reconnection through its retry logic
+      // No additional action needed here - the retry mechanism is already triggered
+    }
+
+    // Update previous state reference
+    previousConnectionStateRef.current = currentState
+  }, [state.connectionState, state.gameStarted])
 
   const connectToGameEvents = () => {
     if (!state.gameId || !state.playerId) return
