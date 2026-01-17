@@ -98,16 +98,20 @@ This implementation plan adds connection resilience to the SSE-based multiplayer
   - Wire ConnectionManager callbacks to dispatch actions
   - _Requirements: 5.6, 8.1, 8.2, 8.3, 8.4, 8.5_
 
-- [ ] 9. Implement background reconnection logic
+- [x] 9. Implement background reconnection logic
   - Detect mid-game disconnections in MultiplayerContext
   - Trigger automatic reconnection using ConnectionManager
   - Maintain game state during reconnection
   - Sync game state after successful reconnection
   - _Requirements: 7.1, 7.2, 7.3, 7.5_
 
-- [ ]* 9.1 Write property test for background reconnection trigger
+- [x] 9.1 Write property test for background reconnection trigger
   - **Property 8: Background Reconnection Trigger**
   - **Validates: Requirements 7.1, 7.2**
+  - **Status: PASSED** (50 iterations for Property 8, 30 iterations for Property 8b)
+  - Test validates that mid-game disconnections (connected -> disconnected/retrying) are detected and logged
+  - Test confirms that initial connection failures do NOT trigger mid-game reconnection logic
+  - Test verifies game state is maintained during disconnection
 
 - [x] 10. Expose manualRetry method in MultiplayerContext
   - Add `manualRetry()` method to MultiplayerContextType interface
